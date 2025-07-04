@@ -1,4 +1,4 @@
-/*  DFN Nonsense Patrol  –  v1.1.1   (2025-07-14)
+/*  DFN Nonsense Patrol  –  v1.1.2   (2025-07-14)
     ------------------------------------------------
     • supports <dfn-badge>  and  <dfn-patrol>
     • live alerts: whale-sell/-buy, dev-sell, mint/burn, bundle
@@ -89,7 +89,8 @@ function renderClusters(el,rows){
 }
 
 /*─────────────  WEB-SOCKET LIFECYCLE ─────────────*/
-let ws, embed='IDK', reconnectT;
+let ws, embed;
+let reconnectT;
 function connect(){
   clearTimeout(reconnectT);
   ws=new WebSocket(`${ENDPOINT}?embed=${embed}`);
@@ -123,9 +124,9 @@ function mountBadge(b){
 }
 function mountPanel(p){
   injectCSS();
-  const id=p.getAttribute('embed')||'???';
+  embed = p.getAttribute('embed') || 'IDK';
   p.innerHTML=`
-    <div class="dfn-head"><strong>DFN Patrol — ${id}</strong>
+    <div class="dfn-head"><strong>DFN Patrol — ${embed}</strong>
       <span class="dfn-tag">live</span></div>
     <div class="dfn-grid">
       <div>Price<br><span class="dfn-val" id="price">–</span></div>
@@ -143,13 +144,13 @@ function mountPanel(p){
          Full feed ↗</a>
     </div>`;
   attachPicker(p);
+  connect();
 }
 
 /*─────────────  BOOT  ─────────────────────*/
 document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('dfn-badge').forEach(mountBadge);
-  const panel=$('dfn-patrol');
-  if(panel){mountPanel(panel); connect();}
+  document.querySelectorAll('dfn-patrol').forEach(mountPanel);
   console.info('DFN Patrol: initialized');
 });
 
