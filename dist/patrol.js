@@ -1,25 +1,23 @@
-/*  DFN Nonsense Patrol  –  v1.1.2   (2025-07-14)
+/*  DFN Nonsense Patrol  –  v1.1.3   (2025-07-14)
     ------------------------------------------------
-    • supports <dfn-badge>  and  <dfn-patrol>
-    • live alerts: whale-sell/-buy, dev-sell, mint/burn, bundle
-    • LP-locked, risk light, clusters, toast engine
-    • internal token-picker (data-allow-pick)
-    • WS endpoint: wss://edge.dfn.wtf/alerts
-    ≈ 15 KB  gzip
+    • same features as v1.1.2
+    • WS endpoint now points directly at our workers.dev domain
+    • no DNS or CNAME needed on your side
+    ≈ 15 KB gzipped
 */
 
 (() => {
 /*────────────────────  CONFIG  ────────────────────*/
-const ENDPOINT  = 'wss://edge.dfn.wtf/alerts';
-const SNAPSHOT_INTERVAL = 60_000;          // 60 s
-const TOAST_LIFE        = 7_000;           // 7 s
+const ENDPOINT = 'wss://dfn-alerts-gateway.YOUR_ACCOUNT.workers.dev/alerts';
+const SNAPSHOT_INTERVAL = 60_000; // 60 s
+const TOAST_LIFE = 7_000;        // 7 s
 
 /*─────────────────  UTILITIES  ───────────────────*/
-const $ = (sel, ctx=document) => ctx.querySelector(sel);
-const h = (tag, attrs={}, ...kids) => {
+const $ = (sel, ctx = document) => ctx.querySelector(sel);
+const h = (tag, attrs = {}, ...kids) => {
   const el = document.createElement(tag);
-  Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k,v));
-  kids.flat().forEach(k=> el.append(k));
+  Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+  kids.flat().forEach(k => el.append(k));
   return el;
 };
 
