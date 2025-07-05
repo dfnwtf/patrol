@@ -1,8 +1,8 @@
+
 console.log("[DFN Patrol] initialized");
 
-const panel = document.querySelector("dfn-patrol");
 let ws;
-let currentToken = panel?.getAttribute("embed") || "";
+let currentToken = document.querySelector("dfn-patrol")?.getAttribute("embed") || "";
 
 function connectToWebSocket(token) {
   if (!token) return;
@@ -13,7 +13,6 @@ function connectToWebSocket(token) {
   }
 
   console.log("[DFN Patrol] setToken", token);
-  panel?.setAttribute("embed", token);
   currentToken = token;
 
   ws = new WebSocket(`wss://dfn-alerts-gateway.official-716.workers.dev/?embed=${token}`);
@@ -25,6 +24,8 @@ function connectToWebSocket(token) {
   ws.addEventListener("message", (e) => {
     try {
       const data = JSON.parse(e.data);
+      const panel = document.querySelector("dfn-patrol"); // 🔧 критически важно
+
       if (data.type === "snapshot") {
         console.log("[DFN Patrol] snapshot >", data);
         panel?.setSnapshot(data);
@@ -49,6 +50,14 @@ document.querySelector("#token-search")?.addEventListener("submit", (e) => {
   const field = document.querySelector("#token-input");
   const token = field.value.trim();
   if (!token || token === currentToken) return;
+
+  const oldPanel = document.querySelector("dfn-patrol");
+  if (oldPanel) oldPanel.remove();
+
+  const newPanel = document.createElement("dfn-patrol");
+  newPanel.setAttribute("embed", token);
+  newPanel.id = "patrol";
+  document.querySelector("#patrol-container")?.appendChild(newPanel);
 
   connectToWebSocket(token);
   field.value = "";
