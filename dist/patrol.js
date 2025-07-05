@@ -7,6 +7,8 @@
   const insertBadge = () => {
     if (document.querySelector("dfn-badge")) return;
     const badge = document.createElement("dfn-badge");
+    badge.setAttribute("embed", "6FtbGaqgZzti1TxJksBV4PSya5of9VqA9vJNDxPwbonk");
+    badge.setAttribute("data-position", "br");
     document.body.appendChild(badge);
   };
 
@@ -96,7 +98,10 @@
       form.addEventListener("submit", (e) => {
         e.preventDefault();
         const mint = input.value.trim();
-        if (mint.length > 0) setToken(mint);
+        if (mint.length > 0) {
+          document.getElementById("patrol").setAttribute("embed", mint);
+          setToken(mint);
+        }
       });
     }
 
@@ -107,4 +112,6 @@
     // 🔥 Default token
     setToken("6FtbGaqgZzti1TxJksBV4PSya5of9VqA9vJNDxPwbonk");
   });
+
+  window.setToken = setToken;
 })();
