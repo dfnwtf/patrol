@@ -12,12 +12,12 @@
 
   const showToast = (msg) => {
     const toast = document.createElement("div");
-    toast.style = `
+    toast.style = \`
       position:fixed;bottom:80px;right:20px;z-index:9999;
       background:#222;color:#fff;padding:10px 14px;
       border-radius:8px;font-family:sans-serif;
       box-shadow:0 0 6px rgba(0,0,0,0.4);
-    `;
+    \`;
     toast.innerText = msg;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 5000);
@@ -28,12 +28,12 @@
 
     const panel = document.createElement("div");
     panel.id = "dfn-patrol-panel";
-    panel.style = `
+    panel.style = \`
       position:fixed;bottom:20px;right:20px;
       background:#111;color:#f5d742;padding:12px 16px;
       border-radius:12px;font-weight:bold;z-index:9999;
       font-family:monospace;box-shadow:0 0 10px rgba(0,0,0,0.5);
-    `;
+    \`;
     panel.innerText = "🛡 DFN Patrol active";
     document.body.appendChild(panel);
 
@@ -45,12 +45,12 @@
       currentWS.close();
     }
 
-    const ws = new WebSocket(`${WS_URL}?embed=${embed}`);
+    const ws = new WebSocket(\`\${WS_URL}?embed=\${embed}\`);
     currentWS = ws;
 
     ws.onopen = () => {
       log("WS open");
-      showToast(`✅ Patrol connected to ${embed}`);
+      showToast(\`✅ Patrol connected to \${embed}\`);
     };
 
     ws.onmessage = (e) => {
@@ -59,7 +59,7 @@
         if (msg.type === "snapshot") {
           log("snapshot received", msg.data);
         } else if (msg.type === "alert") {
-          const alertText = `🚨 [DFN] ${msg.event}: ${msg.amount || "–"}`;
+          const alertText = \`🚨 [DFN] \${msg.event}: \${msg.amount || "–"}\`;
           showToast(alertText);
           log("alert", msg);
         }
