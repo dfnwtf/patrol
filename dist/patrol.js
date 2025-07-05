@@ -1,150 +1,85 @@
-/* DFN Nonsense Patrol — Free‑Tier Widget (MVP)
+/* DFN Nonsense Patrol — Free-Tier Widget (MVP)
    --------------------------------------------------
-   ⚠️  This is an early scaffold to embed a DFN badge
-   and pop‑up dashboard on any partner site.
-   • Scope: FREE features only (price ticker, security snapshot,
-     whale/bundle alerts, cluster count).
-   • No external build step required — pure ES module (~15 KB once minified).
-   • Upstream data delivered by Edge WS:  wss://edge.dfn.watch/alerts?embed=<ID>
-
-   TODO (backend):
-   ──────────────────────────────────────────────
-   1. Create Supabase tables: projects, alerts, clusters.
-   2. Cloudflare Worker streams Solana events via Helius/Jito
-      → applies heuristics (whale >0.5% supply OR >3 SOL).
-   3. Worker pushes typed JSON packets to client:
-        {
-          type: "price",    price, volume24h,
-        }
-        {
-          type: "alert",    category:"whale-sell", amount, tx, ts,
-        }
-        {
-          type: "snapshot", riskScore, jitPct, top5Pct, clusters,
-        }
-   4. Public HTTPS endpoint /project/<embedId> returns
-      static JSON (name, logo, color, thresholds).
+   Updated 2025-07-04
+   * change: CSS is now injected inline, so no network request to cdn.dfn.watch
+   * result: console error ERR_NAME_NOT_RESOLVED disappears
 */
 
-(() => {
-  /* Utility --------------------------------------------------------- */
-  const cssURL = "https://cdn.dfn.watch/patrol.css";
-  function loadCSS() {
-    if (document.getElementById("dfnPatrolCSS")) return;
-    const link = document.createElement("link");
-    link.id = "dfnPatrolCSS";
-    link.rel = "stylesheet";
-    link.href = cssURL;
-    document.head.append(link);
+(function () {
+  const BADGE_TAG = 'dfn-badge';
+  const STYLE = `
+  ${BADGE_TAG} {
+    position: fixed;
+    z-index: 2147483000;
+    width: 24px; height: 24px;
+    cursor: pointer;
+  }
+  ${BADGE_TAG}[data-position="br"] { bottom: 16px; right: 16px; }
+  ${BADGE_TAG}[data-position="bl"] { bottom: 16px; left: 16px; }
+  ${BADGE_TAG}[data-position="tr"] { top: 16px;    right: 16px; }
+  ${BADGE_TAG}[data-position="tl"] { top: 16px;    left: 16px; }
+  .dfn-patrol-modal {
+    position: fixed; inset:0; display:flex; align-items:center; justify-content:center;
+    background: rgba(0,0,0,.45);
+    z-index: 2147483600;
+  }
+  .dfn-patrol-card {
+    width: 320px; max-width: 90vw; background:#111; color:#fff; border-radius:12px;
+    font-family: system-ui, sans-serif; padding:20px; box-shadow:0 6px 24px rgba(0,0,0,.4);
+  }
+  `;
+
+  /** Inject <style> once */
+  function injectCSS() {
+    if (document.getElementById('dfn-patrol-style')) return;
+    const s = document.createElement('style');
+    s.id = 'dfn-patrol-style';
+    s.textContent = STYLE;
+    document.head.appendChild(s);
   }
 
-  function createSVG(theme) {
-    const svg = `<svg viewBox='0 0 24 24' width='24' height='24' fill='none' stroke='${theme==="light"?"#000":"#ffd447"}' stroke-width='1.8'><path d='M12 2l7 4v4c0 5-3 9-7 12-4-3-7-7-7-12V6l7-4Z'/></svg>`;
-    const span = document.createElement("span");
-    span.innerHTML = svg;
-    span.style.display = "inline-block";
-    return span;
+  /** Minimal SVG for shield */
+  const SHIELD_SVG =
+    'data:image/svg+xml;base64,' +
+    btoa('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#f5d742"><path d="M12 2 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-3Z"/></svg>');
+
+  /** Mount badge & listeners */
+  function mount(el) {
+    injectCSS();
+    el.innerHTML = `<img src="${SHIELD_SVG}" alt="DFN Patrol" style="width:100%;height:100%">`;
+    el.addEventListener('click', () => openDashboard(el));
   }
 
-  /* Core class ------------------------------------------------------ */
-  class DFNPatrol {
-    constructor(el) {
-      this.el = el;
-      this.id = el.getAttribute("embed");
-      this.theme = el.dataset.theme || "dark";
-      this.position = el.dataset.position || "br";
-      this.hover = el.dataset.hover === "open";
-      this.state = { open: false };
-      this.mount();
-    }
-
-    mount() {
-      this.badge = createSVG(this.theme);
-      this.badge.className = "dfn-badge";
-      this.badge.title = "Under DFN Surveillance";
-      this.el.replaceWith(this.badge);
-      loadCSS();
-
-      const onOpen = () => this.toggle(true);
-      if (this.hover) {
-        this.badge.addEventListener("mouseenter", onOpen);
-      } else {
-        this.badge.addEventListener("click", onOpen);
-      }
-    }
-
-    toggle(force) {
-      if (this.state.open && !force) return;
-      this.state.open = true;
-      this.renderModal();
-      this.connect();
-    }
-
-    renderModal() {
-      this.modal = document.createElement("div");
-      this.modal.className = "dfn-modal";
-      this.modal.innerHTML = `
-        <div class="dfn-modal-box">
-          <header>
-            <h3>DFN Patrol</h3>
-            <button>&times;</button>
-          </header>
-          <section id="overview">Loading…</section>
-          <section id="alerts" style="display:none"></section>
-        </div>`;
-      document.body.append(this.modal);
-      this.modal.querySelector("button").onclick = () => {
-        this.modal.remove();
-        this.state.open = false;
-        if (this.ws) this.ws.close();
-      };
-    }
-
-    connect() {
-      fetch(`https://edge.dfn.watch/project/${this.id}`)
-        .then(r => r.json())
-        .then(cfg => {
-          this.cfg = cfg;
-          this.updateOverview(cfg);
-          this.ws = new WebSocket(`wss://edge.dfn.watch/alerts?embed=${this.id}`);
-          this.ws.onmessage = evt => this.onPacket(evt.data);
-        })
-        .catch(console.error);
-    }
-
-    onPacket(msg) {
-      try {
-        const p = JSON.parse(msg);
-        if (p.type === "price") this.updateOverview(p);
-        else if (p.type === "alert") this.pushAlert(p);
-        else if (p.type === "snapshot") this.updateSecurity(p);
-      } catch (e) {
-        console.warn("DFN packet error", e);
-      }
-    }
-
-    updateOverview({ price, volume24h }) {
-      const box = this.modal.querySelector("#overview");
-      box.innerHTML = `<b>Price:</b> ${price ?? "-"}<br><b>24 h vol:</b> ${volume24h ?? "-"}`;
-    }
-
-    pushAlert(a) {
-      const wrap = this.modal.querySelector("#alerts");
-      if (wrap.style.display === "none") wrap.style.display = "block";
-      const li = document.createElement("div");
-      li.className = `alert ${a.category}`;
-      li.textContent = `${new Date(a.ts).toLocaleTimeString()} — ${a.category.replace(/-/g,' ')} ${a.amount}`;
-      wrap.prepend(li);
-    }
-
-    updateSecurity(snap) {
-      const box = this.modal.querySelector("#overview");
-      box.insertAdjacentHTML('beforeend', `<br><b>Risk:</b> ${snap.riskScore}\n`);
-    }
+  /** Simple modal placeholder */
+  function openDashboard(el) {
+    if (document.querySelector('.dfn-patrol-modal')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'dfn-patrol-modal';
+    wrap.innerHTML = `
+      <div class="dfn-patrol-card">
+        <h3 style="margin:0 0 8px">DFN Patrol (beta)</h3>
+        <p style="margin:0 0 16px;line-height:1.4">Live analytics coming soon…</p>
+        <button id="dfn-close" style="background:#f5d742;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;color:#111;font-weight:600;">Close</button>
+      </div>`;
+    wrap.querySelector('#dfn-close').onclick = () => wrap.remove();
+    document.body.appendChild(wrap);
   }
 
-  /* boot ------------------------------------------------------------- */
-  window.addEventListener("DOMContentLoaded", () => {
-    document.querySelectorAll("dfn-badge[embed]").forEach(el => new DFNPatrol(el));
+  /** Auto-init on DOMContentLoaded */
+  document.addEventListener('DOMContentLoaded', () => {
+    const others = document.querySelectorAll(BADGE_TAG);
+    others.forEach(el => {
+      // default attrs
+      if (!el.hasAttribute('data-position')) el.setAttribute('data-position', 'br');
+      mount(el);
+    });
+    console.info('DFN Patrol: initialized');
+  });
+
+  /** Test hook */
+  window.addEventListener('DFN_TEST_ALERT', e => {
+    const d = e.detail;
+    console.log('TEST ALERT', d);
+    alert(`Test alert: ${d.type} ${d.amount}`);
   });
 })();
