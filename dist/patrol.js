@@ -1,5 +1,6 @@
 (function () {
   const WS_URL = "wss://alerts.dfn.wtf/alerts";
+  let currentWS = null;
 
   const log = (...args) => console.log("[DFN Patrol]", ...args);
 
@@ -40,11 +41,16 @@
   };
 
   const connect = (embed) => {
+    if (currentWS) {
+      currentWS.close();
+    }
+
     const ws = new WebSocket(`${WS_URL}?embed=${embed}`);
+    currentWS = ws;
 
     ws.onopen = () => {
       log("WS open");
-      showToast("✅ Patrol connected");
+      showToast(`✅ Patrol connected to ${embed}`);
     };
 
     ws.onmessage = (e) => {
@@ -63,7 +69,7 @@
     };
 
     ws.onclose = () => {
-      log("WS closed; retry in 3s");
+      log("WS closed; retrying in 3s");
       setTimeout(() => connect(embed), 3000);
     };
 
@@ -97,5 +103,8 @@
     window.addEventListener("DFN_TEST_ALERT", () => {
       showToast("🚨 [DFN] TEST ALERT: Whale sold 9.3 SOL");
     });
+
+    // 🔥 Default token
+    setToken("6FtbGaqgZzti1TxJksBV4PSya5of9VqA9vJNDxPwbonk");
   });
 })();
