@@ -1,5 +1,5 @@
 (function () {
-  const WS_URL = "wss://alerts.dfn.wtf/alerts";
+  const WS_URL = "wss://dfn-alerts-gateway.dfnwtf.workers.dev/alerts";
   let currentWS = null;
 
   const log = (...args) => console.log("[DFN Patrol]", ...args);
