@@ -1,0 +1,21 @@
+{
+  "name": "dfnwtf-patrol",
+  "version": "1.1.9",
+  "description": "DFN Nonsense Patrol \u2013 Realtime watchdog widget for meme coins",
+  "main": "dist/patrol.js",
+  "module": "dist/patrol.js",
+  "exports": {
+    ".": "./dist/patrol.js",
+    "./component": "./dist/component.js"
+  },
+  "keywords": [
+    "dfn",
+    "crypto",
+    "widget",
+    "websocket",
+    "webcomponent",
+    "solana"
+  ],
+  "author": "DFN Team",
+  "license": "MIT"
+}
