@@ -24,7 +24,7 @@ function connectToWebSocket(token) {
   ws.addEventListener("message", (e) => {
     try {
       const data = JSON.parse(e.data);
-      const panel = document.querySelector("dfn-patrol"); // 🔧 критически важно
+      const panel = document.querySelector("dfn-patrol");
 
       if (data.type === "snapshot") {
         console.log("[DFN Patrol] snapshot >", data);
@@ -57,7 +57,7 @@ document.querySelector("#token-search")?.addEventListener("submit", (e) => {
   const newPanel = document.createElement("dfn-patrol");
   newPanel.setAttribute("embed", token);
   newPanel.id = "patrol";
-  document.querySelector("#patrol-container")?.appendChild(newPanel);
+  document.querySelector("#patrol-block")?.appendChild(newPanel); // updated container
 
   connectToWebSocket(token);
   field.value = "";
