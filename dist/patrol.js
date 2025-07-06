@@ -1,5 +1,5 @@
 
-console.log("[DFN Patrol] v1.3.3 initialized");
+console.log("[DFN Patrol] v1.3.5 initialized");
 
 let ws;
 
