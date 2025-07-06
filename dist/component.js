@@ -41,7 +41,7 @@ class DFNPatrol extends HTMLElement {
   render() {
     const { embed, snapshot, alerts } = this.state;
 
-    this.shadowRoot.innerHTML = \`
+    this.shadowRoot.innerHTML = `
       <style>
         :host {
           display: block;
