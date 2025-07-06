@@ -67,7 +67,7 @@ class DFNPatrol extends HTMLElement {
         <h3>💰 Top Holders</h3>
         <div class="section">
           \${snapshot && snapshot.holders?.length
-            ? '<ul>' + snapshot.holders.map(h => `<li>\${h.address}: \${h.balance}</li>`).join('') + '</ul>'
+            ? '<ul>' + snapshot.holders.map(h => `<li>${h.address}: ${h.balance}</li>`).join('') + '</ul>'
             : '<div class="placeholder">Waiting for data...</div>'}
         </div>
 
