@@ -1,4 +1,4 @@
-console.log("[DFN Components] v1.3.4 initialized");
+console.log("[DFN Components] v1.3.5 initialized");
 
 class DFNPatrol extends HTMLElement {
   constructor() {
@@ -35,9 +35,9 @@ class DFNPatrol extends HTMLElement {
   setAlert(data) {
     console.log("[Component] setAlert called", data);
     this.state.alerts.unshift(data);
-    this.showToast(data.event + (data.amount ? `: ${data.amount}` : ''));
     if (this.state.alerts.length > 5) this.state.alerts.pop();
     this.render();
+    this.showToast(data.event + (data.amount ? `: ${data.amount}` : ''));
   }
 
   render() {
