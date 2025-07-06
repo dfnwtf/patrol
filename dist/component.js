@@ -62,37 +62,37 @@ class DFNPatrol extends HTMLElement {
 
       <div>
         <h3>📡 Monitoring Token:</h3>
-        <div class="section">\${embed}</div>
+        <div class="section">${embed}</div>
 
         <h3>💰 Top Holders</h3>
         <div class="section">
-          \${snapshot && snapshot.holders?.length
+          ${snapshot && snapshot.holders?.length
             ? '<ul>' + snapshot.holders.map(h => `<li>${h.address}: ${h.balance}</li>`).join('') + '</ul>'
             : '<div class="placeholder">Waiting for data...</div>'}
         </div>
 
         <h3>🌊 Liquidity</h3>
         <div class="section">
-          \${snapshot && snapshot.liquidity
-            ? \`Pool: \${snapshot.liquidity.pool}<br/>Volume: \${snapshot.liquidity.volume}<br/>Price: \${snapshot.liquidity.price}\`
+          ${snapshot && snapshot.liquidity
+            ? `Pool: ${snapshot.liquidity.pool}<br/>Volume: ${snapshot.liquidity.volume}<br/>Price: ${snapshot.liquidity.price}`
             : '<div class="placeholder">No liquidity info yet.</div>'}
         </div>
 
         <h3>🧬 Clusters</h3>
         <div class="section">
-          \${snapshot && snapshot.cluster?.length
-            ? '<ul>' + snapshot.cluster.map(a => `<li>\${a}</li>`).join('') + '</ul>'
+          ${snapshot && snapshot.cluster?.length
+            ? '<ul>' + snapshot.cluster.map(a => `<li>${a}</li>`).join('') + '</ul>'
             : '<div class="placeholder">No cluster data.</div>'}
         </div>
 
         <h3>🚨 Recent Alerts</h3>
         <div class="section">
-          \${alerts.length
-            ? '<ul>' + alerts.map(a => `<li>\${a.event}: \${a.amount || '–'}</li>`).join('') + '</ul>'
+          ${alerts.length
+            ? '<ul>' + alerts.map(a => `<li>${a.event}: ${a.amount || '–'}</li>`).join('') + '</ul>'
             : '<div class="placeholder">No alerts yet.</div>'}
         </div>
       </div>
-    \`;
+    `;
   }
 }
 
