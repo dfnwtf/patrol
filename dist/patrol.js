@@ -1,4 +1,4 @@
-/*  DFN Nonsense Patrol  –  v1.1.0   (2025-07-14)
+/*  DFN Nonsense Patrol  –  v1.1.1   (2025-07-14)
     ------------------------------------------------
     • supports <dfn-badge>  and  <dfn-patrol>
     • live alerts: whale-sell/-buy, dev-sell, mint/burn, bundle
