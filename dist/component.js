@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v1.5.1 initialized");
+console.log("[DFN Components] v2.0.1 initialized");
 
 class DFNPatrol extends HTMLElement {
   constructor() {
