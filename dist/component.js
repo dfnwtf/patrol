@@ -38,7 +38,8 @@ class DFNPatrol extends HTMLElement {
     this.state.alerts.unshift(data);
     if (this.state.alerts.length > 5) this.state.alerts.pop();
     this.render();
-    this.showToast(data.event + (data.amount ? `: ${data.amount}` : ''));
+    // Изменяем toast-сообщение, чтобы оно использовало полное сообщение-шепот
+    this.showToast(data.event); 
   }
 
   render() {
@@ -161,14 +162,12 @@ class DFNPatrol extends HTMLElement {
             : '<div class="placeholder">Waiting for data...</div>'}
         </div>
 
-        <h3>🌊 Liquidity</h3>
+        <h3>🌊 Liquidity Pool Status</h3>
         <div class="section">
           ${snapshot && snapshot.liquidity
             ? `
               Pool: ${snapshot.liquidity.pool}<br/>
-              Price: ${snapshot.liquidity.price}<br/>
-              Volume (24h): ${snapshot.liquidity.volume}<br/>
-              TVL (Liquidity): ${snapshot.liquidity.tvl}
+              Status: ${snapshot.liquidity.status}
             `
             : '<div class="placeholder">No liquidity info yet.</div>'}
         </div>
@@ -180,11 +179,11 @@ class DFNPatrol extends HTMLElement {
             : '<div class="placeholder">No cluster data.</div>'}
         </div>
 
-        <h3>🚨 Recent Alerts</h3>
+        <h3>🚨 Recent Whispers</h3>
         <div class="section">
           ${alerts.length
-            ? '<ul>' + alerts.map(a => `<li>${a.event}: ${a.amount || '–'}</li>`).join('') + '</ul>'
-            : '<div class="placeholder">No alerts yet.</div>'}
+            ? '<ul>' + alerts.map(a => `<li>${a.event}</li>`).join('') + '</ul>'
+            : '<div class="placeholder">No whispers yet. All is quiet... too quiet.</div>'}
         </div>
       </div>
     `;
