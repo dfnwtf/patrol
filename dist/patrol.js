@@ -1,183 +1,92 @@
-/*  DFN Nonsense Patrol  –  v1.1.4   (2025-07-04)
-    ------------------------------------------------
-    • same features as v1.1.3
-    • WS endpoint now hard-coded to our public workers.dev domain
-    • no manual DNS/CNAME changes required
-    ≈ 15 KB gzipped
-*/
+(function () {
+  const WS_URL = "wss://alerts.dfn.wtf/alerts"
 
-(() => {
-/*────────────────────  CONFIG  ────────────────────*/
-const ENDPOINT = 'wss://dfn-alerts-gateway.dfnwtf.workers.dev/alerts';
-const SNAPSHOT_INTERVAL = 60_000; // 60 s
-const TOAST_LIFE        = 7_000;  // 7 s
+  const mountPanel = () => {
+    if (document.getElementById("dfn-patrol-panel")) return
 
-/*─────────────────  UTILITIES  ───────────────────*/
-const $ = (sel, ctx = document) => ctx.querySelector(sel);
-const h = (tag, attrs = {}, ...kids) => {
-  const el = document.createElement(tag);
-  Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
-  kids.flat().forEach(k => el.append(k));
-  return el;
-};
+    const panel = document.createElement("div")
+    panel.id = "dfn-patrol-panel"
+    panel.style = `
+      position:fixed;bottom:20px;right:20px;
+      background:#111;color:#f5d742;padding:12px 16px;
+      border-radius:12px;font-weight:bold;z-index:9999;
+      font-family:monospace;box-shadow:0 0 10px rgba(0,0,0,0.5);
+    `
+    panel.innerText = "🔍 DFN Patrol active"
+    document.body.appendChild(panel)
 
-/*───────────────  STYLE (injected once)  ─────────*/
-const STYLE = `
-:root{
-  --dfn-bg:#111; --dfn-card:#181818; --dfn-accent:#f5d742;
-  --dfn-radius:12px; --dfn-shadow:0 6px 20px rgba(0,0,0,.4);
-  --dfn-font:system-ui,sans-serif;
-}
-/* badge */
-dfn-badge{position:fixed;z-index:2147483000;width:24px;height:24px;cursor:pointer}
-dfn-badge[data-position="br"]{bottom:16px;right:16px}
-dfn-badge[data-position="bl"]{bottom:16px;left:16px}
-dfn-badge[data-position="tr"]{top:16px;right:16px}
-dfn-badge[data-position="tl"]{top:16px;left:16px}
-/* toast */
-.dfn-toast{position:fixed;right:16px;bottom:16px;width:320px;
-  background:#222;border-left:6px solid var(--clr);padding:10px 14px;
-  border-radius:8px;color:#fff;font:14px/1.35 var(--dfn-font);
-  box-shadow:var(--dfn-shadow);opacity:0;transform:translateY(20px);
-  transition:all .25s}
-.dfn-toast.show{opacity:1;transform:none}
-/* panel */
-dfn-patrol{display:block;background:var(--dfn-card);color:#fff;
-  border-radius:var(--dfn-radius);padding:22px;box-shadow:var(--dfn-shadow);
-  font-family:var(--dfn-font)}
-dfn-patrol[data-layout="card"]{max-width:420px;margin:0 auto}
-.dfn-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-.dfn-grid{display:grid;gap:10px 14px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
-.dfn-grid div{background:#0005;padding:8px 10px;border-radius:8px;font-size:.85rem}
-.dfn-val{font-weight:600}
-.dfn-tag{background:var(--dfn-accent);color:#000;padding:2px 6px;border-radius:4px;font-size:.7rem}
-`;
-function injectCSS(){
-  if(!$('#dfn-style')){
-    const s = h('style', { id:'dfn-style' });
-    s.textContent = STYLE;
-    document.head.append(s);
+    setTimeout(() => panel.remove(), 4000)
   }
-}
 
-/*─────────────  TOAST ENGINE  ─────────────*/
-const toasts = [];
-function toast({msg, color='var(--dfn-accent)'}) {
-  const el = h('div', { class:'dfn-toast', style:`--clr:${color}` }, msg);
-  document.body.append(el);
-  requestAnimationFrame(() => el.classList.add('show'));
-  toasts.push(el);
-  setTimeout(() => {
-    el.classList.remove('show');
-    setTimeout(() => el.remove(), 250);
-  }, TOAST_LIFE);
-}
+  const showToast = (text) => {
+    const toast = document.createElement("div")
+    toast.style = `
+      position:fixed;bottom:80px;right:20px;
+      background:#222;color:#fff;padding:10px 14px;
+      border-radius:8px;font-family:sans-serif;
+      box-shadow:0 0 6px rgba(0,0,0,0.4);z-index:9999;
+    `
+    toast.innerText = text
+    document.body.appendChild(toast)
+    setTimeout(() => toast.remove(), 5000)
+  }
 
-/*──────────────  PANEL RENDER  ────────────*/
-function renderPanel(el, snap) {
-  $('#price', el).textContent  = snap.price;
-  $('#lp', el).textContent     = snap.lp_locked_pct + ' %';
-  $('#risk', el).textContent   = snap.risk;
-  $('#whale', el).textContent  = snap.whale24;
-  $('#dev', el).textContent    = snap.dev24;
-  $('#supply', el).textContent = (snap.supply_change24 > 0 ? '+' : '') + snap.supply_change24 + ' %';
-  renderClusters(el, snap.clusters);
-}
-function renderClusters(el, rows) {
-  const box = $('#clusters', el);
-  box.innerHTML = '';
-  rows.forEach(r => {
-    box.append(h('div', {}, `${r.id} · ${r.wallets} wlts · ${r.vol}`));
-  });
-}
+  const connect = (embed) => {
+    const ws = new WebSocket(`${WS_URL}?embed=${embed}`)
 
-/*─────────────  WEB-SOCKET LIFECYCLE ─────────────*/
-let ws, embed;
-let reconnectT;
-function connect() {
-  clearTimeout(reconnectT);
-  ws = new WebSocket(`${ENDPOINT}?embed=${embed}`);
-  ws.onopen    = () => console.info('[Patrol] WS open');
-  ws.onmessage = e => {
-    const obj = JSON.parse(e.data);
-    if (obj.type === 'snapshot') renderPanel($('#patrol'), obj);
-    else if (obj.type === 'toast')    toast(obj.payload);
-  };
-  ws.onclose = () => {
-    console.warn('[Patrol] WS closed; retry');
-    reconnectT = setTimeout(connect, 3000);
-  };
-}
-function changeEmbed(mint) {
-  embed = mint;
-  ws?.close();
-}
-
-/*─────────────  TOKEN PICKER  ─────────────*/
-function attachPicker(panel) {
-  if (!panel.hasAttribute('data-allow-pick')) return;
-  const icon = h('span', { style:'cursor:pointer;margin-left:auto;font-size:18px' }, '🔍');
-  $('.dfn-head', panel).append(icon);
-  icon.onclick = () => {
-    const mint = prompt('Paste mint address or symbol:');
-    if (mint) {
-      panel.setAttribute('embed', mint);
-      changeEmbed(mint);
+    ws.onopen = () => {
+      console.log("[Patrol] WS open")
+      showToast("✅ DFN Patrol connected")
     }
-  };
-}
 
-/*─────────────  MOUNT ─────────────────────*/
-function mountBadge(b) {
-  injectCSS();
-  const svg = 'data:image/svg+xml;base64,'+btoa(
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="'+
-    getComputedStyle(document.documentElement)
-           .getPropertyValue('--dfn-accent').trim()+
-    '"><path d="M12 2 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-3Z"/></svg>'
-  );
-  b.innerHTML = `<img src="${svg}" style="width:100%;height:100%">`;
-  b.onclick = () => toast({ msg:'Patrol running…' });
-}
-function mountPanel(p) {
-  injectCSS();
-  embed = p.getAttribute('embed') || 'IDK';
-  p.innerHTML = `
-    <div class="dfn-head"><strong>DFN Patrol — ${embed}</strong>
-      <span class="dfn-tag">live</span></div>
-    <div class="dfn-grid">
-      <div>Price<br><span class="dfn-val" id="price">–</span></div>
-      <div>LP Locked<br><span class="dfn-val" id="lp">–</span></div>
-      <div>Risk<br><span class="dfn-val" id="risk">–</span></div>
-      <div>Whale Alerts<br><span class="dfn-val" id="whale">0</span></div>
-      <div>Dev Sells<br><span class="dfn-val" id="dev">0</span></div>
-      <div>Supply Δ 24h<br><span class="dfn-val" id="supply">0 %</span></div>
-    </div>
-    <h4 style="margin:18px 0 6px">Clusters</h4>
-    <div id="clusters" style="display:grid;gap:6px"></div>
-    <div style="text-align:right;margin-top:12px">
-      <a href="https://dfn.wtf" target="_blank"
-         style="color:var(--dfn-accent);font-size:.8rem;text-decoration:none">
-         Full feed ↗</a>
-    </div>`;
-  attachPicker(p);
-  connect();
-}
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data)
+        if (msg.type === "snapshot") {
+          console.log("[Patrol] snapshot received", msg.data)
+        } else if (msg.type === "alert") {
+          showToast(`🚨 [DFN] ${msg.event}: ${msg.amount || ""}`)
+          console.log("[Patrol] alert", msg)
+        }
+      } catch (err) {
+        console.warn("Invalid message", e.data)
+      }
+    }
 
-/*─────────────  BOOT  ─────────────────────*/
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('dfn-badge').forEach(mountBadge);
-  document.querySelectorAll('dfn-patrol').forEach(mountPanel);
-  console.info('DFN Patrol: initialized');
-});
+    ws.onclose = () => {
+      console.warn("[Patrol] WS closed; retry")
+      setTimeout(() => connect(embed), 3000)
+    }
 
-/* public API */
-window.DFNPatrol = {
-  setToken: mint => {
-    const p = $('dfn-patrol');
-    if (!p) return;
-    p.setAttribute('embed', mint);
-    changeEmbed(mint);
+    ws.onerror = (err) => {
+      console.error("[Patrol] WS error", err)
+      ws.close()
+    }
   }
-};
-})();
+
+  const setToken = (mint) => {
+    console.log("[Patrol] setToken", mint)
+    connect(mint)
+  }
+
+  // Init on load
+  window.addEventListener("load", () => {
+    console.log("DFN Patrol: initialized")
+    mountPanel()
+
+    const form = document.querySelector("#token-search")
+    const input = document.querySelector("#token-input")
+    if (form && input) {
+      form.addEventListener("submit", (e) => {
+        e.preventDefault()
+        const val = input.value.trim()
+        if (val.length > 0) setToken(val)
+      })
+    }
+
+    // Test alert shortcut
+    window.addEventListener("DFN_TEST_ALERT", () => {
+      showToast("🚨 [DFN] TEST ALERT: Whale sold 9.3 SOL")
+    })
+  })
+})()
