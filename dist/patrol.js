@@ -1,9 +1,10 @@
 // patrol.js
-console.log("[DFN Patrol] v3.0.8 initialized (Report Mode)");
+console.log("[DFN Patrol] v3.0.9 initialized (Report Mode)");
 let ws;
 function connectToWebSocket(token) {
   if (!token) return;
   if (ws) ws.close();
+  // Используйте ваш реальный домен
   ws = new WebSocket(`wss://dfn.wtf/api/?embed=${token}`);
   ws.addEventListener("message", (e) => {
     const data = JSON.parse(e.data);
