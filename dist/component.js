@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v3.1.2 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.1.3 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -60,8 +60,8 @@ class DFNPatrol extends HTMLElement {
         <ul>
           ${'isMutable' in security ? `<li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>` : ''}
           ${'mintRenounced' in security ? `<li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? 'Mint authority is renounced.' : 'Dev can mint more tokens.'}</li>` : ''}
-          ${'lpIsLocked' in security ? `<li class="${security.lpIsLocked ? 'ok' : 'bad'}">${distribution.lpAddress ? (security.lpIsLocked ? 'Liquidity is Locked/Burned.' : 'Unlocked Liquidity Risk!') : 'Liquidity pool not found.'}</li>` : ''}
           ${'isNewPool' in security ? `<li class="${!security.isNewPool ? 'ok' : 'warn'}">${!security.isNewPool ? 'Pool exists > 24h.' : 'Pool created < 24h ago.'}</li>` : ''}
+          ${security.lpIsLocked ? `<li class="ok">LP exists & Mint is renounced.</li>` : ''}
         </ul>
       </div>
     `;
