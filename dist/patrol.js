@@ -1,22 +1,13 @@
 // patrol.js
-console.log("[DFN Patrol] v2.1.0 initialized (with new endpoint)");
+console.log("[DFN Patrol] v3.0.0 initialized (Report Mode)");
 
 let ws;
 
 function connectToWebSocket(token) {
-  if (!token) {
-    console.warn("[DFN Patrol] No token provided for WebSocket.");
-    return;
-  }
+  if (!token) return;
+  if (ws) ws.close();
 
-  if (ws) {
-    console.log("[DFN Patrol] Closing existing WebSocket.");
-    ws.close();
-  }
-
-  console.log("[DFN Patrol] Connecting WebSocket to token:", token);
-
-  // ИСПОЛЬЗУЕТСЯ НОВЫЙ, ПРАВИЛЬНЫЙ АДРЕС
+  console.log("[DFN Patrol] Connecting to WebSocket for token:", token);
   ws = new WebSocket(`wss://dfn.wtf/api/?embed=${token}`);
 
   ws.addEventListener("open", () => {
@@ -27,20 +18,14 @@ function connectToWebSocket(token) {
     try {
       const data = JSON.parse(e.data);
       const panel = document.querySelector("dfn-patrol");
-
-      if (!panel) {
-        console.warn("[DFN Patrol] Panel not found in DOM.");
-        return;
-      }
+      if (!panel) return;
 
       customElements.whenDefined("dfn-patrol").then(() => {
-        if (data.type === "snapshot") {
-          panel.setSnapshot(data);
-        } else if (data.type === "alert") {
-          panel.setAlert(data);
-        } else if (data.type === "debug_info") {
-          console.log("--- WORKER DEBUG INFO ---");
-          console.table(data.payload);
+        // Изменено: теперь мы ожидаем сообщение с типом 'report'
+        if (data.type === "report") {
+          console.log("[DFN Patrol] Report received:", data.data);
+          // Вызываем новую функцию в компоненте
+          panel.setReport(data.data);
         } else {
           console.log("[DFN Patrol] Unknown message type:", data);
         }
@@ -50,8 +35,8 @@ function connectToWebSocket(token) {
     }
   });
 
-  ws.addEventListener("close", (e) => {
-    console.log("[DFN Patrol] WebSocket closed.", e);
+  ws.addEventListener("close", () => {
+    console.log("[DFN Patrol] WebSocket closed.");
   });
   
   ws.addEventListener("error", (e) => {
@@ -59,15 +44,12 @@ function connectToWebSocket(token) {
   });
 }
 
-// Form handling
+// Form handling (без изменений)
 document.querySelector("#token-search")?.addEventListener("submit", (e) => {
   e.preventDefault();
   const field = document.querySelector("#token-input");
   const token = field.value.trim();
-  if (!token) {
-    console.warn("[DFN Patrol] Empty token submitted.");
-    return;
-  }
+  if (!token) return;
 
   const oldPanel = document.querySelector("dfn-patrol");
   if (oldPanel) oldPanel.remove();
@@ -81,7 +63,7 @@ document.querySelector("#token-search")?.addEventListener("submit", (e) => {
   field.value = "";
 });
 
-// Wait until dfn-patrol is in DOM before initializing
+// Initializer (без изменений)
 function waitForPatrolReady() {
   const panel = document.querySelector("dfn-patrol");
   if (panel) {
@@ -89,8 +71,6 @@ function waitForPatrolReady() {
     if (token) {
       console.log("[DFN Patrol] Found panel on page load, connecting...");
       connectToWebSocket(token);
-    } else {
-      console.warn("[DFN Patrol] Panel found, but no token.");
     }
   } else {
     setTimeout(waitForPatrolReady, 100);
