@@ -1,37 +1,20 @@
 // patrol.js
-console.log("[DFN Patrol] v3.0.1 initialized (Stable)");
-
+console.log("[DFN Patrol] v3.0.2 initialized (Report Mode)");
 let ws;
-
 function connectToWebSocket(token) {
   if (!token) return;
   if (ws) ws.close();
-
   ws = new WebSocket(`wss://dfn.wtf/api/?embed=${token}`);
-  ws.addEventListener("open", () => console.log("[DFN Patrol] WebSocket connection opened."));
-
   ws.addEventListener("message", (e) => {
-    try {
-      const data = JSON.parse(e.data);
-      const panel = document.querySelector("dfn-patrol");
-      if (!panel) return;
-
+    const data = JSON.parse(e.data);
+    const panel = document.querySelector("dfn-patrol");
+    if (panel && data.type === "report") {
       customElements.whenDefined("dfn-patrol").then(() => {
-        // ИСПРАВЛЕНО: Теперь он понимает "snapshot"
-        if (data.type === "snapshot") {
-          panel.setSnapshot(data);
-        } else {
-          console.log("[DFN Patrol] Unknown message type:", data);
-        }
+        panel.setReport(data.data);
       });
-    } catch (err) {
-      console.error("[DFN Patrol] Failed to parse message:", err);
     }
   });
-  ws.addEventListener("close", () => console.log("[DFN Patrol] WebSocket closed."));
-  ws.addEventListener("error", (e) => console.error("[DFN Patrol] WebSocket error:", e));
 }
-
 document.querySelector("#token-search")?.addEventListener("submit", (e) => {
   e.preventDefault();
   const field = document.querySelector("#token-input");
@@ -46,7 +29,6 @@ document.querySelector("#token-search")?.addEventListener("submit", (e) => {
   connectToWebSocket(token);
   field.value = "";
 });
-
 function waitForPatrolReady() {
   const panel = document.querySelector("dfn-patrol");
   if (panel) {
@@ -56,5 +38,4 @@ function waitForPatrolReady() {
     setTimeout(waitForPatrolReady, 100);
   }
 }
-
 waitForPatrolReady();
