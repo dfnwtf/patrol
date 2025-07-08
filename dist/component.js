@@ -1,105 +1,56 @@
-// component.js
-console.log("[DFN Components] v2.0.3 initialized");
-
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
-    this.state = {
-      embed: this.getAttribute("embed") || "",
-      snapshot: null,
-      alerts: []
-    };
   }
-
-  static get observedAttributes() {
-    return ["embed"];
-  }
-
-  attributeChangedCallback(name, oldVal, newVal) {
-    if (name === "embed" && oldVal !== newVal) {
-      this.state.embed = newVal;
-      this.render();
-    }
-  }
-
-  connectedCallback() {
+  connectedCallback() { this.render(); }
+  
+  // Новая функция для приема отчета
+  setReport(report) {
+    this.report = report;
     this.render();
-  }
-
-  setSnapshot(data) {
-    this.state.snapshot = data;
-    this.render();
-  }
-
-  setAlert(data) {
-    this.state.alerts.unshift(data);
-    if (this.state.alerts.length > 5) this.state.alerts.pop();
-    this.render();
-    this.showToast(data.event); 
   }
 
   render() {
-    const { embed, snapshot, alerts } = this.state;
-
-    this.shadowRoot.innerHTML = `
-      <style>
-        :host { display: block; font-family: sans-serif; background: #111; color: #eee; padding: 16px; border-radius: 12px; box-shadow: 0 0 12px rgba(0,0,0,0.4); margin-top: 20px; }
-        h3 { margin: 0 0 10px; font-size: 18px; color: #f5d742; }
-        .section { margin-bottom: 16px; }
-        ul { list-style: none; padding-left: 0; font-size: 14px; }
-        li { margin-bottom: 4px; overflow-wrap: break-word; }
-        .placeholder { font-style: italic; color: #777; }
-        li a { color: #ffd447; text-decoration: none; font-family: monospace; font-size: 0.8rem; margin-left: 8px; }
-        li a:hover { text-decoration: underline; }
-        .dfn-badge { position: fixed; bottom: 16px; left: 16px; background: #222; color: #ffd447; padding: 8px 14px; border-radius: 12px; font-size: 0.85rem; font-weight: bold; box-shadow: 0 0 8px rgba(255,212,71,0.3); z-index: 10000; opacity: 0.85; backdrop-filter: blur(4px); }
-        .dfn-toast-container { position: fixed; bottom: 16px; right: 16px; display: flex; flex-direction: column; gap: 10px; z-index: 10000; }
-        .dfn-toast { background: #222; color: #fff; padding: 10px 16px; border-left: 4px solid #ffd447; border-radius: 8px; font-size: 0.85rem; box-shadow: 0 4px 10px rgba(0,0,0,0.4); animation: fadein 0.4s ease, fadeout 0.4s ease 7.6s; }
-        @keyframes fadein { from {opacity:0;transform:translateY(10px)} to {opacity:1;transform:none} }
-        @keyframes fadeout { to {opacity:0;transform:translateY(10px)} }
-      </style>
-      <div id="badge" class="dfn-badge">🛡 DFN Patrol running</div>
-      <div id="toastContainer" class="dfn-toast-container"></div>
-      <div>
-        <h3>📡 Monitoring Token:</h3>
-        <div class="section">
-          ${snapshot && snapshot.tokenInfo ? `<strong>${snapshot.tokenInfo.name} (${snapshot.tokenInfo.symbol})</strong><br/>${embed}` : embed}
-        </div>
-        <h3>💰 Top Holders</h3>
-        <div class="section">
-          ${snapshot && snapshot.holders?.length ? '<ul>' + snapshot.holders.map(h => `<li>${h.address}: ${h.balance}</li>`).join('') + '</ul>' : '<div class="placeholder">Waiting for data...</div>'}
-        </div>
-        <h3>🌊 Liquidity Pool Status</h3>
-        <div class="section">
-          ${snapshot && snapshot.liquidity 
-            ? `Pool Address: ${snapshot.liquidity.pool}<br/>Status: ${snapshot.liquidity.status}` 
-            : '<div class="placeholder">Searching for LP info...</div>'}
-        </div>
-        <h3>🧬 Clusters</h3>
-        <div class="section">
-          ${snapshot && snapshot.cluster?.length ? '<ul>' + snapshot.cluster.map(a => `<li>${a}</li>`).join('') + '</ul>' : '<div class="placeholder">No cluster data.</div>'}
-        </div>
-        <h3>🚨 Recent Whispers</h3>
-        <div class="section">
-          ${alerts.length
-            ? '<ul>' + alerts.map(a => `<li>${a.event} ${a.signature ? `<a href="https://solscan.io/tx/${a.signature}" target="_blank">[view tx]</a>` : ''}</li>`).join('') + '</ul>'
-            : '<div class="placeholder">No whispers yet. All is quiet... too quiet.</div>'}
-        </div>
-      </div>
+    this.shadowRoot.innerHTML = `<style>/* ... стили ... */</style>`; // Стили для краткости опущены
+    
+    if (!this.report) {
+      this.shadowRoot.innerHTML += `<div class="placeholder">Generating token health report...</div>`;
+      return;
+    }
+    if (this.report.error) {
+       this.shadowRoot.innerHTML += `<div class="error">${this.report.error}</div>`;
+       return;
+    }
+    
+    const { tokenInfo, security, distribution, socials } = this.report;
+    
+    // --- Генерация HTML для каждой секции ---
+    const securityHTML = `
+      <h3>🛡️ Security</h3>
+      <ul>
+        <li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? '✅ Fixed Supply' : '🔴 Inflation Risk'}</li>
+        <li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? '✅ Immutable Metadata' : '🔴 Mutable Metadata'}</li>
+        <li class="${security.lpIsLocked ? 'ok' : 'bad'}">${security.lpIsLocked ? '✅ Liquidity Locked/Safe' : '🔴 Unlocked Liquidity Risk'}</li>
+      </ul>
     `;
-  }
-
-  showToast(msg) {
-    const container = this.shadowRoot.querySelector("#toastContainer");
-    if (!container) return;
-    const el = document.createElement("div");
-    el.className = "dfn-toast";
-    el.textContent = msg;
-    container.appendChild(el);
-    setTimeout(() => el.remove(), 8000);
+    
+    const distributionHTML = `
+      <h3>💰 Distribution & LP</h3>
+      <p>LP Address: ${distribution.lpAddress || 'Not Found'}</p>
+      <p>Copycat tokens with same name: ${distribution.copycatCount}</p>
+      <p>Top holders considered "fresh" (under 24h): ${distribution.freshWallets?.length || 0} / 5</p>
+      <h4>Top 5 Holders:</h4>
+      <ul>${distribution.topHolders?.map(h => `<li>${h.address.slice(0,6)}...: ${h.balance}</li>`).join('') || '<li>N/A</li>'}</ul>
+    `;
+    
+    this.shadowRoot.innerHTML += `
+      <h2>Report for ${tokenInfo.name} (${tokenInfo.symbol})</h2>
+      ${securityHTML}
+      ${distributionHTML}
+      `;
   }
 }
-
 if (!customElements.get("dfn-patrol")) {
   customElements.define("dfn-patrol", DFNPatrol);
 }
