@@ -1,59 +1,66 @@
-// patrol.js
-console.log("[DFN Components] v3.0.0 initialized (Report Mode)");
+// component.js
+console.log("[DFN Components] v3.0.1 initialized (Stable)");
 
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
+    this.state = {
+      embed: this.getAttribute("embed") || "",
+      snapshot: null,
+      alerts: [] // Оставляем для будущих алертов
+    };
   }
+
+  static get observedAttributes() { return ["embed"]; }
+
+  attributeChangedCallback(name, oldVal, newVal) {
+    if (name === "embed" && oldVal !== newVal) {
+      this.state.embed = newVal;
+      this.render();
+    }
+  }
+
   connectedCallback() { this.render(); }
-  
-  // Новая функция для приема отчета
-  setReport(report) {
-    this.report = report;
+
+  // Возвращаем функцию setSnapshot
+  setSnapshot(data) {
+    this.state.snapshot = data;
     this.render();
   }
 
   render() {
-    this.shadowRoot.innerHTML = `<style>/* ... стили ... */</style>`; // Стили для краткости опущены
-    
-    if (!this.report) {
-      this.shadowRoot.innerHTML += `<div class="placeholder">Generating token health report...</div>`;
-      return;
-    }
-    if (this.report.error) {
-       this.shadowRoot.innerHTML += `<div class="error">${this.report.error}</div>`;
-       return;
-    }
-    
-    const { tokenInfo, security, distribution, socials } = this.report;
-    
-    // --- Генерация HTML для каждой секции ---
-    const securityHTML = `
-      <h3>🛡️ Security</h3>
-      <ul>
-        <li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? '✅ Fixed Supply' : '🔴 Inflation Risk'}</li>
-        <li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? '✅ Immutable Metadata' : '🔴 Mutable Metadata'}</li>
-        <li class="${security.lpIsLocked ? 'ok' : 'bad'}">${security.lpIsLocked ? '✅ Liquidity Locked/Safe' : '🔴 Unlocked Liquidity Risk'}</li>
-      </ul>
+    const { embed, snapshot } = this.state;
+
+    this.shadowRoot.innerHTML = `
+      <style>
+        :host { display: block; font-family: sans-serif; background: #111; color: #eee; padding: 16px; border-radius: 12px; }
+        h3 { margin: 16px 0 10px; font-size: 18px; color: #f5d742; }
+        .section { margin-bottom: 16px; overflow-wrap: break-word; }
+        ul { list-style: none; padding-left: 0; font-size: 14px; }
+        li { margin-bottom: 4px; }
+        .placeholder { color: #777; }
+      </style>
+      <div>
+        <h3>📡 Monitoring Token:</h3>
+        <div class="section">
+          ${snapshot && snapshot.tokenInfo ? `<strong>${snapshot.tokenInfo.name} (${snapshot.tokenInfo.symbol})</strong><br/>${embed}` : '<div class="placeholder">Loading...</div>'}
+        </div>
+
+        <h3>💰 Top Holders</h3>
+        <div class="section">
+          ${snapshot && snapshot.holders?.length ? '<ul>' + snapshot.holders.map(h => `<li>${h.address}: ${h.balance}</li>`).join('') + '</ul>' : '<div class="placeholder">Waiting for data...</div>'}
+        </div>
+        
+        <h3>🌊 Liquidity Pool Status</h3>
+        <div class="section">
+           ${snapshot && snapshot.liquidity ? `${snapshot.liquidity.pool}` : '<div class="placeholder">...</div>'}
+        </div>
+      </div>
     `;
-    
-    const distributionHTML = `
-      <h3>💰 Distribution & LP</h3>
-      <p>LP Address: ${distribution.lpAddress || 'Not Found'}</p>
-      <p>Copycat tokens with same name: ${distribution.copycatCount}</p>
-      <p>Top holders considered "fresh" (under 24h): ${distribution.freshWallets?.length || 0} / 5</p>
-      <h4>Top 5 Holders:</h4>
-      <ul>${distribution.topHolders?.map(h => `<li>${h.address.slice(0,6)}...: ${h.balance}</li>`).join('') || '<li>N/A</li>'}</ul>
-    `;
-    
-    this.shadowRoot.innerHTML += `
-      <h2>Report for ${tokenInfo.name} (${tokenInfo.symbol})</h2>
-      ${securityHTML}
-      ${distributionHTML}
-      `;
   }
 }
+
 if (!customElements.get("dfn-patrol")) {
   customElements.define("dfn-patrol", DFNPatrol);
 }
