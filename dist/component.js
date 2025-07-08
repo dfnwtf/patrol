@@ -1,13 +1,21 @@
 // component.js
-console.log("[DFN Components] v3.0.5 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.0.6 initialized (Raw Debug Mode)");
 
+// component.js (с отображением статуса)
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
+    this.statusMessage = "Generating token health report...";
   }
   connectedCallback() { this.render(); }
   
+  // Новая функция для обновления статуса
+  setStatus(message) {
+    this.statusMessage = message;
+    this.render();
+  }
+
   setReport(report) {
     this.report = report;
     this.render();
@@ -37,7 +45,7 @@ class DFNPatrol extends HTMLElement {
     `;
     
     if (!this.report) {
-      this.shadowRoot.innerHTML += `<div class="placeholder">Generating token health report...</div>`;
+      this.shadowRoot.innerHTML += `<div class="placeholder">${this.statusMessage}</div>`;
       return;
     }
     if (this.report.error) {
@@ -74,7 +82,7 @@ class DFNPatrol extends HTMLElement {
       <div>
           <h3>ℹ️ Project & Socials</h3>
           <p class="${project.copycatCount > 5 ? 'bad' : (project.copycatCount > 0 ? 'warn' : 'ok')}"><b>Similar token names found:</b> ${project.copycatCount}</p>
-          <p><b>Website:</b> ${project.links.external_url ? `<a href="${project.links.external_url}" target="_blank">Visit</a>` : 'Not Provided'}</p>
+          <p><b>Website:</b> ${project.links.website ? `<a href="${project.links.website}" target="_blank">Visit</a>` : 'Not Provided'}</p>
           <p><b>Twitter:</b> ${project.links.twitter ? `<a href="${project.links.twitter}" target="_blank">Visit</a>` : 'Not Provided'}</p>
       </div>
     `;
