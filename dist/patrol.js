@@ -1,5 +1,5 @@
-
-console.log("[DFN Patrol] v2.0.3 initialized");
+// patrol.js
+console.log("[DFN Patrol] v2.1.0 initialized (with new endpoint)");
 
 let ws;
 
@@ -16,7 +16,8 @@ function connectToWebSocket(token) {
 
   console.log("[DFN Patrol] Connecting WebSocket to token:", token);
 
-  ws = new WebSocket(`wss://dfn-alerts-gateway.official-716.workers.dev/?embed=${token}`);
+  // ИСПОЛЬЗУЕТСЯ НОВЫЙ, ПРАВИЛЬНЫЙ АДРЕС
+  ws = new WebSocket(`wss://dfn.wtf/api/?embed=${token}`);
 
   ws.addEventListener("open", () => {
     console.log("[DFN Patrol] WebSocket connection opened.");
@@ -34,11 +35,12 @@ function connectToWebSocket(token) {
 
       customElements.whenDefined("dfn-patrol").then(() => {
         if (data.type === "snapshot") {
-          console.log("[DFN Patrol] Snapshot received:", data);
           panel.setSnapshot(data);
         } else if (data.type === "alert") {
-          console.log("[DFN Patrol] Alert received:", data);
           panel.setAlert(data);
+        } else if (data.type === "debug_info") {
+          console.log("--- WORKER DEBUG INFO ---");
+          console.table(data.payload);
         } else {
           console.log("[DFN Patrol] Unknown message type:", data);
         }
@@ -48,8 +50,12 @@ function connectToWebSocket(token) {
     }
   });
 
-  ws.addEventListener("close", () => {
-    console.log("[DFN Patrol] WebSocket closed.");
+  ws.addEventListener("close", (e) => {
+    console.log("[DFN Patrol] WebSocket closed.", e);
+  });
+  
+  ws.addEventListener("error", (e) => {
+    console.error("[DFN Patrol] WebSocket error:", e);
   });
 }
 
