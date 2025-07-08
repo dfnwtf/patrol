@@ -1,5 +1,5 @@
 // patrol.js
-console.log("[DFN Patrol] v3.0.2 initialized (Report Mode)");
+console.log("[DFN Patrol] v3.0.0 initialized (Report Mode)");
 let ws;
 function connectToWebSocket(token) {
   if (!token) return;
