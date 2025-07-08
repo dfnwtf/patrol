@@ -1,24 +1,36 @@
 // patrol.js
-console.log("[DFN Patrol] v3.1.1 initialized (Report Mode)");
+console.log("[DFN Patrol] v3.1.2 initialized (Report Mode)");
 let ws;
 
 function connectToWebSocket(token) {
   if (!token) return;
-  if (ws) ws.close();
+
+  // Если WebSocket уже открыт или подключается, закрываем его перед созданием нового.
+  if (ws && ws.readyState < 2) { // readyState < 2 означает CONNECTING или OPEN
+      ws.close();
+  }
 
   const scanButton = document.querySelector('#token-search button[type="submit"]');
 
   // Используйте ваш реальный домен
   ws = new WebSocket(`wss://dfn.wtf/api/?embed=${token}`);
 
+  // Функция для возвращения кнопки в исходное состояние
+  const cleanup = () => {
+      if (scanButton) {
+          scanButton.disabled = false;
+          scanButton.textContent = 'Scan';
+      }
+  };
+  
   ws.addEventListener("message", (e) => {
-    const data = JSON.parse(e.data);
-    const panel = document.querySelector("dfn-patrol");
-    if (panel && data.type === "report") {
-      customElements.whenDefined("dfn-patrol").then(() => {
-        panel.setReport(data.data);
-      });
-    }
+      const data = JSON.parse(e.data);
+      const panel = document.querySelector("dfn-patrol");
+      if (panel && data.type === "report") {
+          customElements.whenDefined("dfn-patrol").then(() => {
+              panel.setReport(data.data);
+          });
+      }
   });
 
   ws.addEventListener("error", (e) => {
@@ -27,15 +39,10 @@ function connectToWebSocket(token) {
       if (panel) {
           panel.setReport({ error: "Connection to analysis server failed." });
       }
+      cleanup(); // Возвращаем кнопку в исходное состояние при ошибке
   });
 
-  // Повторно включаем кнопку, когда соединение закрывается (при успехе или ошибке)
-  ws.addEventListener("close", () => {
-    if (scanButton) {
-        scanButton.disabled = false;
-        scanButton.textContent = 'Scan';
-    }
-  });
+  ws.addEventListener("close", cleanup); // Возвращаем кнопку, когда соединение закрывается
 }
 
 document.querySelector("#token-search")?.addEventListener("submit", (e) => {
@@ -47,7 +54,6 @@ document.querySelector("#token-search")?.addEventListener("submit", (e) => {
   
   if (!token) return;
 
-  // Отключаем кнопку и показываем обратную связь
   if(scanButton) {
     scanButton.disabled = true;
     scanButton.textContent = 'Scanning...';
@@ -62,20 +68,22 @@ document.querySelector("#token-search")?.addEventListener("submit", (e) => {
   document.querySelector("#patrol-block")?.appendChild(newPanel);
   
   connectToWebSocket(token);
-  field.value = "";
 });
 
-function waitForPatrolReady() {
-  const panel = document.querySelector("dfn-patrol");
-  if (panel) {
-    const token = panel.getAttribute("embed");
-    if (token) connectToWebSocket(token);
-  } else {
-    setTimeout(waitForPatrolReady, 100);
-  }
-}
-
-// Запускаем это только при начальной загрузке страницы, если панель уже существует
-if (document.querySelector("dfn-patrol")) {
-    waitForPatrolReady();
-}
+// --- ЛОГИКА ДЛЯ НАЧАЛЬНОЙ ЗАГРУЗКИ СТРАНИЦЫ ---
+// Этот код выполняется один раз, когда страница полностью загружена.
+document.addEventListener('DOMContentLoaded', () => {
+    const initialPanel = document.querySelector("dfn-patrol");
+    if (initialPanel) {
+        const initialToken = initialPanel.getAttribute("embed");
+        if (initialToken) {
+            // Показываем, что идет загрузка для встроенного токена
+            const scanButton = document.querySelector('#token-search button[type="submit"]');
+            if(scanButton) {
+                scanButton.disabled = true;
+                scanButton.textContent = 'Scanning...';
+            }
+            connectToWebSocket(initialToken);
+        }
+    }
+});
