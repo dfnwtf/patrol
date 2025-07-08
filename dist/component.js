@@ -1,3 +1,6 @@
+// patrol.js
+console.log("[DFN Components] v3.0.0 initialized (Report Mode)");
+
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
