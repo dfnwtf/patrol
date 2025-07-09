@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v3.2.3 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.3.1 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
