@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v3.2.9 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.3.0 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -39,7 +39,6 @@ class DFNPatrol extends HTMLElement {
         .market-list li { margin-bottom: 0; }
         .market-list b { color: #aaa; }
         .note { font-size: 0.85em; color: #888; margin-left: 4px; }
-        /* Добавляем классы для цветного текста */
         .text-ok { color: #9eff9e; }
         .text-bad { color: #ff6b7b; }
       </style>
@@ -93,7 +92,8 @@ class DFNPatrol extends HTMLElement {
     let marketHTML = '';
     if (market && market.priceUsd) {
         const formatNum = (num) => num ? Number(num).toLocaleString('en-US', {maximumFractionDigits: 0}) : 'N/A';
-        const priceChangeColor = market.priceChange24h >= 0 ? 'ok' : 'bad';
+        // ИЗМЕНЕНИЕ ЗДЕСЬ: используем 'text-ok' и 'text-bad'
+        const priceChangeColor = market.priceChange24h >= 0 ? 'text-ok' : 'text-bad';
         const price = Number(market.priceUsd) < 0.000001 ? Number(market.priceUsd).toExponential(2) : Number(market.priceUsd).toLocaleString('en-US', {maximumFractionDigits: 8});
         
         let txnsHTML = '';
@@ -102,9 +102,9 @@ class DFNPatrol extends HTMLElement {
             const sells = market.txns24h.sells;
             let txClass = '';
             if (buys > sells) {
-                txClass = 'text-ok'; // Зеленый класс для текста
+                txClass = 'text-ok';
             } else if (sells > buys) {
-                txClass = 'text-bad'; // Красный класс для текста
+                txClass = 'text-bad';
             }
             txnsHTML = `<li><b>24h Txs:</b> <span class="${txClass}">${formatNum(buys)} Buys / ${formatNum(sells)} Sells</span></li>`;
         }
