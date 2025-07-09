@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v3.2.2 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.2.3 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -51,7 +51,7 @@ class DFNPatrol extends HTMLElement {
        return;
     }
     
-    const { tokenInfo, security, distribution, market } = this.report;
+    const { tokenInfo, security, distribution, project, market } = this.report;
     
     const tokenHTML = `<div class="full-width"><h2>Report: ${tokenInfo.name} (${tokenInfo.symbol})</h2></div>`;
     
@@ -106,6 +106,34 @@ class DFNPatrol extends HTMLElement {
             </div>
         `;
     }
+    
+    let projectHTML = '';
+    if (project && project.links && Object.keys(project.links).length > 0) {
+        const createLink = (key, url) => {
+            if (!url) return '';
+            const title = key.charAt(0).toUpperCase() + key.slice(1);
+            return `<li><b>${title}:</b> <a href="${url}" target="_blank" rel="noopener nofollow">Visit</a></li>`;
+        };
+
+        const linksHTML = [
+            createLink('website', project.links.website),
+            createLink('twitter', project.links.twitter),
+            createLink('telegram', project.links.telegram),
+            createLink('discord', project.links.discord)
+        ].join('');
+
+        // Показываем блок, только если есть хотя бы одна ссылка
+        if (linksHTML.trim() !== '') {
+            projectHTML = `
+              <div>
+                <h3>ℹ️ Project & Socials</h3>
+                <ul>
+                  ${linksHTML}
+                </ul>
+              </div>
+            `;
+        }
+    }
 
     this.shadowRoot.innerHTML += `
       <div class="report-grid">
@@ -113,6 +141,7 @@ class DFNPatrol extends HTMLElement {
         ${marketHTML}
         ${securityHTML}
         ${distributionHTML}
+        ${projectHTML}
       </div>
     `;
   }
