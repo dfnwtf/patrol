@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v3.1.9 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.2.0 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -55,14 +55,14 @@ class DFNPatrol extends HTMLElement {
     
     const tokenHTML = `<div class="full-width"><h2>Report: ${tokenInfo.name} (${tokenInfo.symbol})</h2></div>`;
     
-    // Статус минта с примечанием
+    // Статус минта теперь всегда "bad", если не отозван, и с новым текстом
     const mintRenouncedHTML = 'mintRenounced' in security 
-        ? `<li class="${security.mintRenounced ? 'ok' : 'warn'}">${security.mintRenounced ? 'Mint authority is renounced.' : 'Dev can mint more tokens <span class="note">(standard for new pump.fun tokens)</span>.'}</li>` 
+        ? `<li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? 'Mint authority is renounced.' : 'Dev can mint more tokens <span class="note">(ignore for pump.fun/meteora)</span>.'}</li>` 
         : '';
         
-    // Статус заморозки с примечанием
+    // Статус заморозки с новым текстом
     const freezeAuthorityHTML = security.freezeAuthorityEnabled 
-        ? `<li class="bad">Freeze authority is enabled <span class="note">(standard for new pump.fun tokens)</span>.</li>` 
+        ? `<li class="bad">Freeze authority is enabled <span class="note">(ignore for pump.fun/meteora)</span>.</li>` 
         : '';
 
     const securityHTML = `
