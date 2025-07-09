@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v3.1.7 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.1.8 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -59,9 +59,9 @@ class DFNPatrol extends HTMLElement {
         <h3>🛡️ Security Flags</h3>
         <ul>
           ${'isMutable' in security ? `<li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>` : ''}
+          ${security.freezeAuthorityEnabled ? `<li class="bad">Freeze authority is enabled.</li>` : ''}
           ${'isNewPool' in security ? `<li class="${!security.isNewPool ? 'ok' : 'warn'}">${!security.isNewPool ? 'Pool exists > 24h.' : 'Pool created < 24h ago.'}</li>` : ''}
           ${'hasSufficientLiquidity' in security ? `<li class="${security.hasSufficientLiquidity ? 'ok' : 'bad'}">${security.hasSufficientLiquidity ? 'Liquidity > $10,000' : 'Liquidity < $10,000'}</li>` : ''}
-          
           ${'holderConcentration' in security ? `<li class="${security.holderConcentration > 25 ? 'bad' : (security.holderConcentration > 10 ? 'warn' : 'ok')}">Top 10 holders own ${security.holderConcentration.toFixed(2)}%.</li>` : ''}
         </ul>
       </div>
