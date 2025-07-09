@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v3.2.0 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.2.1 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -55,12 +55,10 @@ class DFNPatrol extends HTMLElement {
     
     const tokenHTML = `<div class="full-width"><h2>Report: ${tokenInfo.name} (${tokenInfo.symbol})</h2></div>`;
     
-    // Статус минта теперь всегда "bad", если не отозван, и с новым текстом
     const mintRenouncedHTML = 'mintRenounced' in security 
         ? `<li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? 'Mint authority is renounced.' : 'Dev can mint more tokens <span class="note">(ignore for pump.fun/meteora)</span>.'}</li>` 
         : '';
         
-    // Статус заморозки с новым текстом
     const freezeAuthorityHTML = security.freezeAuthorityEnabled 
         ? `<li class="bad">Freeze authority is enabled <span class="note">(ignore for pump.fun/meteora)</span>.</li>` 
         : '';
@@ -72,6 +70,7 @@ class DFNPatrol extends HTMLElement {
           ${'isMutable' in security ? `<li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>` : ''}
           ${freezeAuthorityHTML}
           ${mintRenouncedHTML}
+          ${'transferTax' in security ? `<li class="warn">Token has a transfer tax: ${security.transferTax}%.</li>` : ''}
           ${'isNewPool' in security ? `<li class="${!security.isNewPool ? 'ok' : 'warn'}">${!security.isNewPool ? 'Pool exists > 24h.' : 'Pool created < 24h ago.'}</li>` : ''}
           ${'hasSufficientLiquidity' in security ? `<li class="${security.hasSufficientLiquidity ? 'ok' : 'bad'}">${security.hasSufficientLiquidity ? 'Liquidity > $10,000' : 'Liquidity < $10,000'}</li>` : ''}
           ${'holderConcentration' in security ? `<li class="${security.holderConcentration > 25 ? 'bad' : (security.holderConcentration > 10 ? 'warn' : 'ok')}">Top 10 holders own ${security.holderConcentration.toFixed(2)}%.</li>` : ''}
