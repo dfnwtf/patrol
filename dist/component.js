@@ -1,12 +1,12 @@
 // component.js
-console.log("[DFN Components] v3.2.4 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.2.5 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
   }
   connectedCallback() { this.render(); }
-  
+
   setReport(report) {
     this.report = report;
     this.render();
@@ -19,7 +19,7 @@ class DFNPatrol extends HTMLElement {
         h2 { font-size: 22px; text-align: center; margin-bottom: 24px; word-break: break-all; }
         h3 { margin: 20px 0 10px; font-size: 18px; color: #f5d742; border-top: 1px solid #333; padding-top: 20px; }
         ul { list-style: none; padding-left: 0; font-size: 14px; }
-        li { margin-bottom: 8px; line-height: 1.4; display: flex; align-items: center; }
+        li { margin-bottom: 8px; line-height: 1.4; display: flex; align-items: center; word-break: break-word; }
         .placeholder { text-align: center; padding: 40px; font-size: 1.1em; color: #888; }
         .error { color: #ff6b7b; text-align: center; font-size: 1.1em; padding: 20px;}
         .ok::before, .bad::before, .warn::before { content: '✓'; margin-right: 8px; font-weight: bold; }
@@ -35,13 +35,13 @@ class DFNPatrol extends HTMLElement {
         p { margin-bottom: 8px; }
         a { color: #ffd447; text-decoration: none; }
         a:hover { text-decoration: underline; }
-        .market-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px 16px; }
+        .market-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; }
         .market-list li { margin-bottom: 0; }
         .market-list b { color: #aaa; }
         .note { font-size: 0.85em; color: #888; margin-left: 4px; }
       </style>
     `;
-    
+
     if (!this.report) {
       this.shadowRoot.innerHTML += `<div class="placeholder">Generating token health report...</div>`;
       return;
@@ -50,17 +50,17 @@ class DFNPatrol extends HTMLElement {
        this.shadowRoot.innerHTML += `<div class="error">${this.report.error}</div>`;
        return;
     }
-    
+
     const { tokenInfo, security, distribution, project, market } = this.report;
-    
+
     const tokenHTML = `<div class="full-width"><h2>Report: ${tokenInfo.name} (${tokenInfo.symbol})</h2></div>`;
-    
-    const mintRenouncedHTML = 'mintRenounced' in security 
-        ? `<li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? 'Mint authority is renounced.' : 'Dev can mint more tokens <span class="note">(ignore for pump.fun/meteora)</span>.'}</li>` 
+
+    const mintRenouncedHTML = 'mintRenounced' in security
+        ? `<li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? 'Mint authority is renounced.' : 'Dev can mint more tokens <span class="note">(ignore for pump.fun/meteora)</span>.'}</li>`
         : '';
-        
-    const freezeAuthorityHTML = security.freezeAuthorityEnabled 
-        ? `<li class="bad">Freeze authority is enabled <span class="note">(ignore for pump.fun/meteora)</span>.</li>` 
+
+    const freezeAuthorityHTML = security.freezeAuthorityEnabled
+        ? `<li class="bad">Freeze authority is enabled <span class="note">(ignore for pump.fun/meteora)</span>.</li>`
         : '';
 
     const securityHTML = `
@@ -77,7 +77,7 @@ class DFNPatrol extends HTMLElement {
         </ul>
       </div>
     `;
-    
+
     const distributionHTML = `
       <div>
         <h3>💰 Distribution</h3>
@@ -92,7 +92,7 @@ class DFNPatrol extends HTMLElement {
         const formatNum = (num) => num ? Number(num).toLocaleString('en-US', {maximumFractionDigits: 2}) : 'N/A';
         const priceChangeColor = market.priceChange24h >= 0 ? 'ok' : 'bad';
         const price = Number(market.priceUsd) < 0.000001 ? Number(market.priceUsd).toExponential(2) : Number(market.priceUsd).toLocaleString('en-US', {maximumFractionDigits: 8});
-        
+
         marketHTML = `
             <div class="full-width">
                 <h3>📈 Market Data</h3>
@@ -100,14 +100,16 @@ class DFNPatrol extends HTMLElement {
                     <li><b>Price:</b> $${price}</li>
                     <li><b>Market Cap:</b> $${formatNum(market.marketCap)}</li>
                     <li><b>Liquidity:</b> $${formatNum(market.liquidity)}</li>
-                    <li><b>24h Volume:</b> $${formatNum(market.volume24h)}</li>
-                    <li><b>24h Change:</b> <span class="${priceChangeColor}">${market.priceChange24h?.toFixed(2) || 'N/A'}%</span></li>
+                    <li>
+                        <b>24h Volume:</b> $${formatNum(market.volume24h)}<br>
+                        <b>24h Change:</b> <span class="${priceChangeColor}">${market.priceChange24h?.toFixed(2) || 'N/A'}%</span>
+                    </li>
                     ${market.txns24h ? `<li><b>24h Txs:</b> ${formatNum(market.txns24h.buys)} Buys / ${formatNum(market.txns24h.sells)} Sells</li>` : ''}
                 </ul>
             </div>
         `;
     }
-    
+
     let projectHTML = '';
     if (project && project.links && Object.keys(project.links).length > 0) {
         const createLink = (key, url) => {
