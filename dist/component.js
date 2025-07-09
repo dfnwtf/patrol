@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v3.2.3 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.2.4 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -35,7 +35,7 @@ class DFNPatrol extends HTMLElement {
         p { margin-bottom: 8px; }
         a { color: #ffd447; text-decoration: none; }
         a:hover { text-decoration: underline; }
-        .market-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; }
+        .market-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px 16px; }
         .market-list li { margin-bottom: 0; }
         .market-list b { color: #aaa; }
         .note { font-size: 0.85em; color: #888; margin-left: 4px; }
@@ -102,6 +102,7 @@ class DFNPatrol extends HTMLElement {
                     <li><b>Liquidity:</b> $${formatNum(market.liquidity)}</li>
                     <li><b>24h Volume:</b> $${formatNum(market.volume24h)}</li>
                     <li><b>24h Change:</b> <span class="${priceChangeColor}">${market.priceChange24h?.toFixed(2) || 'N/A'}%</span></li>
+                    ${market.txns24h ? `<li><b>24h Txs:</b> ${formatNum(market.txns24h.buys)} Buys / ${formatNum(market.txns24h.sells)} Sells</li>` : ''}
                 </ul>
             </div>
         `;
@@ -122,7 +123,6 @@ class DFNPatrol extends HTMLElement {
             createLink('discord', project.links.discord)
         ].join('');
 
-        // Показываем блок, только если есть хотя бы одна ссылка
         if (linksHTML.trim() !== '') {
             projectHTML = `
               <div>
