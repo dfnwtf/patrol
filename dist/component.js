@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v3.3.8 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.3.9 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -16,7 +16,9 @@ class DFNPatrol extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>
         :host { display: block; font-family: sans-serif; background: #1a1a1a; color: #eee; padding: 16px; border-radius: 12px; }
-        h2 { font-size: 22px; text-align: center; margin-bottom: 24px; word-break: break-all; }
+        .token-header { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; }
+        .token-logo { width: 40px; height: 40px; border-radius: 50%; background: #333; }
+        h2 { font-size: 22px; text-align: center; margin: 0; word-break: break-all; }
         h3 { margin: 20px 0 10px; font-size: 18px; color: #f5d742; border-top: 1px solid #333; padding-top: 20px; }
         ul { list-style: none; padding-left: 0; font-size: 14px; }
         li { margin-bottom: 8px; line-height: 1.4; display: flex; align-items: center; word-break: break-word; }
@@ -31,7 +33,7 @@ class DFNPatrol extends HTMLElement {
         .warn::before { content: '🟡'; }
         .report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px 32px; }
         .report-grid > div { background: #111; padding: 16px; border-radius: 8px; border: 1px solid #222;}
-        .full-width { grid-column: 1 / -1; }
+        .full-width { grid-column: 1 / -1; margin-bottom: 16px;}
         p { margin-bottom: 8px; }
         a { color: #ffd447; text-decoration: none; }
         a:hover { text-decoration: underline; }
@@ -54,7 +56,14 @@ class DFNPatrol extends HTMLElement {
     
     const { tokenInfo, security, distribution, market } = this.report;
     
-    const tokenHTML = `<div class="full-width"><h2>Report: ${tokenInfo.name} (${tokenInfo.symbol})</h2></div>`;
+    const logoHTML = tokenInfo.logoUrl 
+        ? `<img src="${tokenInfo.logoUrl}" alt="${tokenInfo.symbol} logo" class="token-logo">` 
+        : '';
+    const tokenHTML = `
+      <div class="full-width token-header">
+        ${logoHTML}
+        <h2>Report: ${tokenInfo.name} (${tokenInfo.symbol})</h2>
+      </div>`;
     
     const lpLockedHTML = security.isLpLocked ? `<li class="ok">Liquidity Pool Locked - 100%</li>` : '';
 
@@ -110,7 +119,6 @@ class DFNPatrol extends HTMLElement {
             txnsHTML = `<li><b>24h Txs:</b> <span class="${txClass}">${formatNum(buys)} Buys / ${formatNum(sells)} Sells</span></li>`;
         }
 
-        // V-- ИЗМЕНЁННЫЙ БЛОК --V
         marketHTML = `
             <div class="full-width">
                 <h3>📈 Market Data</h3>
@@ -118,13 +126,11 @@ class DFNPatrol extends HTMLElement {
                     <li><b>Price:</b> $${price}</li>
                     <li><b>Market Cap:</b> $${formatNum(market.marketCap)}</li>
                     <li><b>Liquidity:</b> $${formatNum(market.liquidity)}</li>
-                    ${distribution.holderCount ? `<li><b>Holders:</b> ${formatNum(distribution.holderCount)}</li>` : ''}
                     <li><b>24h Volume:</b> $${formatNum(market.volume24h)}</li>
                     <li><b>24h Change:</b> <span class="${priceChangeColor}">${market.priceChange24h?.toFixed(2) || 'N/A'}%</span></li>
                     ${txnsHTML}
                 </ul>
             </div>`;
-        // ^-- КОНЕЦ ИЗМЕНЁННОГО БЛОКА --^
     }
 
     this.shadowRoot.innerHTML += `
