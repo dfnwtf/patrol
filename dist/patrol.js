@@ -43,9 +43,7 @@
   };
 
   const connect = (embed) => {
-    if (currentWS) {
-      currentWS.close();
-    }
+    if (currentWS) currentWS.close();
 
     const ws = new WebSocket(`${WS_URL}?embed=${embed}`);
     currentWS = ws;
@@ -58,12 +56,13 @@
     ws.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data);
+        const panel = document.getElementById("patrol");
+
         if (msg.type === "snapshot") {
-          log("snapshot received", msg.data);
+          panel?.setSnapshot?.(msg);
         } else if (msg.type === "alert") {
-          const alertText = `🚨 [DFN] ${msg.event}: ${msg.amount || "–"}`;
-          showToast(alertText);
-          log("alert", msg);
+          showToast(`🚨 [DFN] ${msg.event}: ${msg.amount || "–"}`);
+          panel?.setAlert?.(msg);
         }
       } catch (err) {
         console.warn("Invalid WS message:", e.data);
@@ -99,7 +98,7 @@
         e.preventDefault();
         const mint = input.value.trim();
         if (mint.length > 0) {
-          document.getElementById("patrol").setAttribute("embed", mint);
+          document.getElementById("patrol")?.setAttribute("embed", mint);
           setToken(mint);
         }
       });
@@ -109,7 +108,6 @@
       showToast("🚨 [DFN] TEST ALERT: Whale sold 9.3 SOL");
     });
 
-    // 🔥 Default token
     setToken("6FtbGaqgZzti1TxJksBV4PSya5of9VqA9vJNDxPwbonk");
   });
 
