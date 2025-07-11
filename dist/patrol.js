@@ -6,11 +6,15 @@ let turnstileToken = null;
 // Эта функция будет вызвана автоматически скриптом Turnstile, когда он будет готов
 function onloadTurnstileCallback() {
     const searchForm = document.querySelector('#token-search');
-    if (!searchForm) return;
+    if (!searchForm) {
+        console.error("Turnstile target #token-search not found.");
+        return;
+    }
 
     try {
         turnstile.render(searchForm, {
-            sitekey: 'ВАШ_SITE_KEY', // <-- ВАЖНО: ЗАМЕНИТЕ НА ВАШ КЛЮЧ
+            // V-- ВАЖНО: Вставьте сюда ваш Site Key от Cloudflare Turnstile --V
+            sitekey: 'ВАШ_SITE_KEY', 
             callback: onTurnstileSuccess,
             'error-callback': onTurnstileError,
             theme: 'dark',
@@ -36,7 +40,7 @@ function onTurnstileSuccess(token) {
 }
 
 function onTurnstileError() {
-    console.error("Turnstile challenge failed.");
+    console.error("Turnstile challenge failed. Please refresh the page.");
     const panel = document.querySelector("dfn-patrol");
     if (panel) {
         panel.setReport({ error: "Security check failed. Please refresh." });
@@ -115,6 +119,7 @@ document.querySelector("#token-search")?.addEventListener("submit", (e) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Эта логика нужна для предзагрузки токена, который уже есть в HTML
     const initialPanel = document.querySelector("dfn-patrol");
     if (initialPanel) {
         const initialToken = initialPanel.getAttribute("embed");
