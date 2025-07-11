@@ -1,6 +1,5 @@
-// component.js - ИСПРАВЛЕННАЯ ВЕРСИЯ
-
-console.log("[DFN Components] v4.1.7 initialized - Optimized");
+// component.js - v4.1.7 - Улучшена обработка соц. ссылок
+console.log("[DFN Components] v4.1.8 initialized - Optimized");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -9,7 +8,7 @@ function sanitizeHTML(str) {
 }
 
 function sanitizeUrl(url) {
-    // Новая проверка, чтобы избежать ошибок, если url не строка
+    // Проверка, чтобы избежать ошибок, если url не строка
     if (typeof url !== 'string' || !url) {
         return '#';
     }
@@ -123,7 +122,13 @@ class DFNPatrol extends HTMLElement {
             <div class="full-width">
                 <h3>🔗 Socials</h3>
                 <ul class="socials-list">
-                    ${socials.map(social => `<li><a href="${sanitizeUrl(social.url)}" target="_blank" rel="noopener nofollow">${sanitizeHTML(social.label || social.type || 'Link')}</a></li>`).join('')}
+                    ${socials.map(social => {
+                        const link = typeof social === 'string' ? social : social.url;
+                        const label = typeof social === 'string'
+                                      ? (new URL(link).hostname.replace('www.',''))
+                                      : (social.label || social.type || 'Link');
+                        return `<li><a href="${sanitizeUrl(link)}" target="_blank" rel="noopener nofollow">${sanitizeHTML(label)}</a></li>`;
+                    }).join('')}
                 </ul>
             </div>` : ''}
 
