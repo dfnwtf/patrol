@@ -22,17 +22,17 @@ class DFNPatrol extends HTMLElement {
 
   connectedCallback() {
     this.render();
+  }
 
-    window.addEventListener("dfn-snapshot", (e) => {
-      this.state.snapshot = e.detail;
-      this.render();
-    });
+  setSnapshot(data) {
+    this.state.snapshot = data;
+    this.render();
+  }
 
-    window.addEventListener("dfn-alert", (e) => {
-      this.state.alerts.unshift(e.detail);
-      if (this.state.alerts.length > 5) this.state.alerts.pop();
-      this.render();
-    });
+  setAlert(data) {
+    this.state.alerts.unshift(data);
+    if (this.state.alerts.length > 5) this.state.alerts.pop();
+    this.render();
   }
 
   render() {
