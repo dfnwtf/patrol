@@ -1,5 +1,26 @@
 // component.js
-console.log("[DFN Components] v4.0.1 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v4.0.2 initialized");
+
+// --- ПУНКТЫ 1 и 2: БЕЗОПАСНЫЕ ФУНКЦИИ-ПОМОЩНИКИ ---
+function sanitizeHTML(str) {
+    if (!str) return '';
+    // Простая функция для удаления HTML тегов
+    return str.toString().replace(/<[^>]*>?/gm, '');
+}
+
+function sanitizeUrl(url) {
+    try {
+        const u = new URL(url);
+        // Разрешаем только безопасные протоколы
+        if (u.protocol === 'http:' || u.protocol === 'https:') {
+            return u.href;
+        }
+    } catch (e) {
+        // Если URL невалидный, ничего не возвращаем
+    }
+    return '#'; // Возвращаем безопасный "пустой" href
+}
+
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -101,7 +122,6 @@ class DFNPatrol extends HTMLElement {
         .drain-bar { background: linear-gradient(to right, #ff6b7b, #e05068); height: 100%; border-radius: 3px 0 0 3px; font-size: 12px; line-height: 20px; text-align: right; color: #fff; padding-right: 6px; box-sizing: border-box; white-space: nowrap; }
         .drain-result { margin-left: 10px; font-weight: bold; text-align: left; color: #ddd;}
         
-        /* --- НОВЫЙ БЛОК: АДАПТИВНОСТЬ ДЛЯ МОБИЛЬНЫХ --- */
         @media (max-width: 600px) {
             .summary-block {
                 flex-direction: column;
@@ -155,10 +175,10 @@ class DFNPatrol extends HTMLElement {
     const summaryHTML = `
         <div class="summary-block">
             <div class="summary-token-info">
-                ${tokenInfo.logoUrl ? `<img src="${tokenInfo.logoUrl}" alt="${tokenInfo.symbol} logo" class="token-logo">` : ''}
+                ${tokenInfo.logoUrl ? `<img src="${sanitizeUrl(tokenInfo.logoUrl)}" alt="${sanitizeHTML(tokenInfo.symbol)} logo" class="token-logo">` : ''}
                 <div class="token-name-symbol">
-                    <h2>${tokenInfo.name}</h2>
-                    <span>${tokenInfo.symbol}</span>
+                    <h2>${sanitizeHTML(tokenInfo.name)}</h2>
+                    <span>${sanitizeHTML(tokenInfo.symbol)}</span>
                 </div>
             </div>
             ${marketStatsHTML}
@@ -210,8 +230,9 @@ class DFNPatrol extends HTMLElement {
                 <ul class="socials-list">
         `;
         socials.forEach(social => {
+            let safeUrl = sanitizeUrl(social.url);
             let label = social.label || social.type || 'Link';
-            socialHTML += `<li><a href="${social.url}" target="_blank" rel="noopener">${label.charAt(0).toUpperCase() + label.slice(1)}</a></li>`;
+            socialHTML += `<li><a href="${safeUrl}" target="_blank" rel="noopener nofollow">${sanitizeHTML(label)}</a></li>`;
         });
         socialHTML += '</ul></div>';
     }
@@ -234,7 +255,7 @@ class DFNPatrol extends HTMLElement {
                 const impact = Math.min(100, Math.max(0, item.marketCapDropPercentage));
                 drainHTML += `
                   <div class="drain-bar-row">
-                    <span class="drain-label">${item.group}</span>
+                    <span class="drain-label">${sanitizeHTML(item.group)}</span>
                     <div class="drain-bar-container">
                       <div class="drain-bar" style="width: ${impact}%;">${impact > 20 ? `-${impact}%` : ''}</div>
                     </div>
