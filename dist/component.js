@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v3.4.7 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.4.8 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -42,12 +42,6 @@ class DFNPatrol extends HTMLElement {
         .market-list b { color: #aaa; }
         .text-ok { color: #9eff9e; }
         .text-bad { color: #ff6b7b; }
-        .drain-simulator { margin-top: 10px; padding: 0 5px; }
-        .drain-bar-row { display: flex; align-items: center; margin-bottom: 8px; font-size: 13px; }
-        .drain-label { width: 110px; flex-shrink: 0; color: #bbb; }
-        .drain-bar-container { flex-grow: 1; background: rgba(0,0,0,0.2); border: 1px solid #333; border-radius: 4px; height: 20px; overflow: hidden; }
-        .drain-bar { background: linear-gradient(to right, #ff6b7b, #e05068); height: 100%; border-radius: 3px 0 0 3px; font-size: 12px; line-height: 20px; text-align: right; color: #fff; padding-right: 6px; box-sizing: border-box; white-space: nowrap; }
-        .drain-result { margin-left: 10px; font-weight: bold; text-align: left; color: #ddd;}
         .chart-container { background: #111; border: 1px solid #222; border-radius: 8px; padding: 16px; height: 100px; display: flex; align-items: center; justify-content: center;}
         .sparkline { stroke-width: 2; fill: none; }
         .chart-placeholder { font-size: 14px; color: #666; }
@@ -63,7 +57,7 @@ class DFNPatrol extends HTMLElement {
        return;
     }
     
-    const { tokenInfo, security, distribution, market, liquidityDrain } = this.report;
+    const { tokenInfo, security, distribution, market } = this.report;
     
     const logoHTML = tokenInfo.logoUrl ? `<img src="${tokenInfo.logoUrl}" alt="${tokenInfo.symbol} logo" class="token-logo">` : '';
     const tokenHTML = `<div class="full-width token-header">${logoHTML}<h2>Report: ${tokenInfo.name} (${tokenInfo.symbol})</h2></div>`;
@@ -168,36 +162,6 @@ class DFNPatrol extends HTMLElement {
     } else {
         chartHTML = `<div class="full-width chart-container"><div class="chart-placeholder">24h chart data not available</div></div>`;
     }
-    
-    let drainHTML = '';
-    if (liquidityDrain && liquidityDrain.length > 0) {
-        const formatCap = (num) => {
-            if (num < 1000) return `$${num.toFixed(0)}`;
-            if (num < 1000000) return `$${(num/1000).toFixed(1)}K`;
-            return `$${(num/1000000).toFixed(2)}M`;
-        }
-        const validResults = liquidityDrain.filter(item => item.marketCapDropPercentage && item.marketCapDropPercentage > 0);
-        if (validResults.length > 0) {
-            drainHTML = `
-            <div class="full-width">
-                <h3>🌊 Liquidity Drain Simulator</h3>
-                <div class="drain-simulator">
-            `;
-            validResults.forEach(item => {
-                const impact = Math.min(100, Math.max(0, item.marketCapDropPercentage));
-                drainHTML += `
-                  <div class="drain-bar-row">
-                    <span class="drain-label">${item.group}</span>
-                    <div class="drain-bar-container">
-                      <div class="drain-bar" style="width: ${impact}%;">${impact > 20 ? `-${impact}%` : ''}</div>
-                    </div>
-                    <span class="drain-result">${impact > 20 ? '' : `-${impact}%`} → ${formatCap(item.marketCapAfterSale)}</span>
-                  </div>
-                `;
-            });
-            drainHTML += '</div></div>';
-        }
-    }
 
     this.shadowRoot.innerHTML += `
       <div class="report-grid">
@@ -206,7 +170,6 @@ class DFNPatrol extends HTMLElement {
         ${chartHTML}
         ${securityHTML}
         ${distributionHTML}
-        ${drainHTML}
       </div>
     `;
   }
