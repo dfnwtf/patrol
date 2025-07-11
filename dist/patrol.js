@@ -1,5 +1,5 @@
 // patrol.js
-console.log("[DFN Patrol] v4.0.6 initialized");
+console.log("[DFN Patrol] v4.0.7 initialized");
 let ws;
 let turnstileToken = null;
 
