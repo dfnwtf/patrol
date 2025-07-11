@@ -1,6 +1,6 @@
-// component.js - ШАГ 5: Оптимизация рендеринга с <template>
+// component.js - ИСПРАВЛЕННАЯ ВЕРСИЯ
 
-console.log("[DFN Components] v4.1.5 initialized - Optimized");
+console.log("[DFN Components] v4.1.6 initialized - Optimized");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -11,7 +11,8 @@ function sanitizeHTML(str) {
 function sanitizeUrl(url) {
     try {
         const u = new URL(url);
-        if (u.protocol === 'http:' || u.protocol === 'https:) {
+        // ИСПРАВЛЕНИЕ ЗДЕСЬ: убрана лишняя скобка
+        if (u.protocol === 'http:' || u.protocol === 'https:') {
             return u.href;
         }
     } catch (e) {}
@@ -165,7 +166,6 @@ class DFNPatrol extends HTMLElement {
         </div>
     `;
     
-    // Вместо полного обновления innerHTML всего компонента, обновляем только контейнер с данными
     this.container.innerHTML = newContent;
   }
 }
