@@ -4,8 +4,8 @@ console.log("[DFN Components] v4.1.3 initialized");
 // --- ПУНКТЫ 1 и 2: БЕЗОПАСНЫЕ ФУНКЦИИ-ПОМОЩНИКИ ---
 function sanitizeHTML(str) {
     if (!str) return '';
-    // Простая функция для удаления HTML тегов
-    return str.toString().replace(/<[^>]*>?/gm, '');
+    // Используем DOMPurify для надёжной защиты от XSS
+    return DOMPurify.sanitize(str.toString());
 }
 
 function sanitizeUrl(url) {
