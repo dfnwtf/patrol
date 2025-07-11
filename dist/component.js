@@ -9,9 +9,12 @@ function sanitizeHTML(str) {
 }
 
 function sanitizeUrl(url) {
+    // Новая проверка, чтобы избежать ошибок, если url не строка
+    if (typeof url !== 'string' || !url) {
+        return '#';
+    }
     try {
         const u = new URL(url);
-        // ИСПРАВЛЕНИЕ ЗДЕСЬ: убрана лишняя скобка
         if (u.protocol === 'http:' || u.protocol === 'https:') {
             return u.href;
         }
