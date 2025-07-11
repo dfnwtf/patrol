@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v4.0.4 initialized");
+console.log("[DFN Components] v4.0.5 initialized");
 
 function sanitizeHTML(str) {
     if (!str) return '';
