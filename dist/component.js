@@ -1,6 +1,6 @@
 // component.js - ИСПРАВЛЕННАЯ ВЕРСИЯ
 
-console.log("[DFN Components] v4.1.6 initialized - Optimized");
+console.log("[DFN Components] v4.1.7 initialized - Optimized");
 
 function sanitizeHTML(str) {
     if (!str) return '';
