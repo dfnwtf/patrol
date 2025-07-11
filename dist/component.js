@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v4.0.0 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v4.0.1 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -33,7 +33,6 @@ class DFNPatrol extends HTMLElement {
         .text-ok { color: #9eff9e; }
         .text-bad { color: #ff6b7b; }
 
-        /* --- НОВЫЕ СТИЛИ ДЛЯ ШАПКИ --- */
         .summary-block {
             grid-column: 1 / -1;
             display: flex;
@@ -88,12 +87,10 @@ class DFNPatrol extends HTMLElement {
             font-weight: 600;
         }
         
-        /* --- ОБЩИЕ СТИЛИ --- */
         .report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px 32px; }
         .report-grid > div { background: #111; padding: 16px; border-radius: 8px; border: 1px solid #222;}
         .full-width { grid-column: 1 / -1; }
 
-        /* --- СТИЛИ ДЛЯ ОСТАЛЬНЫХ БЛОКОВ --- */
         .socials-list { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin-top: 4px;}
         .socials-list a { display: inline-block; padding: 4px 12px; background: #252525; border: 1px solid #333; border-radius: 16px; font-size: 13px; }
         .socials-list a:hover { background: #333; }
@@ -103,6 +100,29 @@ class DFNPatrol extends HTMLElement {
         .drain-bar-container { flex-grow: 1; background: rgba(0,0,0,0.2); border: 1px solid #333; border-radius: 4px; height: 20px; overflow: hidden; }
         .drain-bar { background: linear-gradient(to right, #ff6b7b, #e05068); height: 100%; border-radius: 3px 0 0 3px; font-size: 12px; line-height: 20px; text-align: right; color: #fff; padding-right: 6px; box-sizing: border-box; white-space: nowrap; }
         .drain-result { margin-left: 10px; font-weight: bold; text-align: left; color: #ddd;}
+        
+        /* --- НОВЫЙ БЛОК: АДАПТИВНОСТЬ ДЛЯ МОБИЛЬНЫХ --- */
+        @media (max-width: 600px) {
+            .summary-block {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+            .summary-market-stats {
+                width: 100%;
+                text-align: left;
+            }
+            .stat-item {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                padding: 4px 0;
+                border-bottom: 1px solid #222;
+            }
+            .token-name-symbol h2 {
+                font-size: 22px;
+            }
+        }
       </style>
     `;
     
@@ -118,7 +138,6 @@ class DFNPatrol extends HTMLElement {
     const { tokenInfo, security, distribution, market, liquidityDrain, socials } = this.report;
     const formatNum = (num) => num ? Number(num).toLocaleString('en-US', {maximumFractionDigits: 0}) : 'N/A';
     
-    // --- 1. СОБИРАЕМ НОВУЮ ШАПКУ ---
     let marketStatsHTML = '';
     if (market && market.priceUsd) {
         const priceChangeColor = market.priceChange24h >= 0 ? 'text-ok' : 'text-bad';
@@ -146,7 +165,6 @@ class DFNPatrol extends HTMLElement {
         </div>
     `;
 
-    // --- 2. СОБИРАЕМ ОСТАЛЬНЫЕ БЛОКИ ---
     let lpStatusHTML = '';
     if (security.lpStatus) {
         if (security.lpStatus === "Burned") { lpStatusHTML = `<li class="ok">Liquidity is Burned.</li>`; } 
@@ -228,10 +246,9 @@ class DFNPatrol extends HTMLElement {
         }
     }
 
-    // --- 3. ВЫВОДИМ ВСЕ БЛОКИ В НОВОМ ПОРЯДКЕ ---
     this.shadowRoot.innerHTML += `
-      ${summaryHTML}
       <div class="report-grid">
+        ${summaryHTML}
         ${socialHTML}
         ${securityHTML}
         ${distributionHTML}
