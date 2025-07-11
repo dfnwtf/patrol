@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v4.1.0 initialized");
+console.log("[DFN Components] v4.0.2 initialized");
 
 // --- ПУНКТЫ 1 и 2: БЕЗОПАСНЫЕ ФУНКЦИИ-ПОМОЩНИКИ ---
 function sanitizeHTML(str) {
