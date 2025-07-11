@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             turnstile.render(searchForm, {
                 // V-- ВАЖНО: Вставьте сюда ваш Site Key от Cloudflare Turnstile --V
-                sitekey: 'ВАШ_SITE_KEY', 
+                sitekey: '0x4AAAAAABks_T_e262EnxzykJbNgrwCBOE', 
                 callback: onTurnstileSuccess,
                 'error-callback': onTurnstileError,
                 theme: 'dark',
