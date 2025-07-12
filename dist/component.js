@@ -1,6 +1,6 @@
 // component.js - v4.6.1 - Add CTO Badge
 
-console.log("[DFN Components] v4.6.1 initialized - CTO Badge");
+console.log("[DFN Components] v4.6.2 initialized - CTO Badge");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -78,18 +78,17 @@ template.innerHTML = `
     .token-name-symbol h2 { font-size: 1.8rem; margin: 0; line-height: 1.1; color: #fff; display: flex; align-items: flex-start; }
     .token-name-symbol span { font-size: 1rem; color: #999; }
     
-    .cto-badge {
-      font-size: 0.6em;
-      font-weight: 700;
-      vertical-align: super;
-      margin-left: 6px;
-      padding: 2px 5px;
-      border-radius: 4px;
-      background-color: rgba(46, 139, 87, 0.3);
-      border: 1px solid rgba(46, 139, 87, 0.7);
-      color: #9eff9e;
-      text-transform: uppercase;
-    }
+    ..cto-badge {
+ font-size: 0.55em; /* Ещё меньше шрифт */
+ font-weight: 700;
+ vertical-align: top; /* Поднимаем выше имени */
+ margin-left: 4px; /* Уменьшаем отступ */
+ color: #FFD447; /* Желтый цвет DFN */
+ /* background-color: rgba(255, 212, 71, 0.15); /* Можно добавить легкий фон, если захотите */ */
+ /* border: 1px solid rgba(255, 212, 71, 0.4); /* Можно добавить тонкую рамку, если захотите */ */
+ text-transform: uppercase;
+ letter-spacing: 0.5px; /* Небольшое разрежение букв */
+}
 
     .summary-market-stats {
       display: grid;
