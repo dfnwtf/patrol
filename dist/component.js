@@ -1,6 +1,6 @@
-// component.js - v4.6.3 - Add CTO Badge
+// component.js - v4.6.4 - Enhanced CTO Badge
 
-console.log("[DFN Components] v4.6.3 initialized - CTO Badge");
+console.log("[DFN Components] v4.6.4 initialized - Enhanced CTO Badge");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -75,21 +75,34 @@ template.innerHTML = `
     }
     .summary-token-info { display: flex; align-items: center; gap: 16px; }
     .token-logo { width: 48px; height: 48px; border-radius: 50%; background: #222; }
-    .token-name-symbol h2 { font-size: 1.8rem; margin: 0; line-height: 1.1; color: #fff; display: flex; align-items: flex-start; }
+    .token-name-symbol h2 { font-size: 1.8rem; margin: 0; line-height: 1.1; color: #fff; }
     .token-name-symbol span { font-size: 1rem; color: #999; }
-    
-.cto-badge {
- font-size: 0.55em; /* Ещё меньше шрифт */
- font-weight: 700;
- vertical-align: top; /* Поднимаем выше имени */
- margin-left: 4px; /* Уменьшаем отступ */
- color: #FFD447; /* Желтый цвет DFN */
- /* background-color: rgba(255, 212, 71, 0.15); /* Можно добавить легкий фон, если захотите */ */
- /* border: 1px solid rgba(255, 212, 71, 0.4); /* Можно добавить тонкую рамку, если захотите */ */
- text-transform: uppercase;
- letter-spacing: 0.5px; /* Небольшое разрежение букв */
-}
 
+    .ticker-and-badge {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 4px;
+    }
+    .cto-pill-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        background-color: rgba(46, 139, 87, 0.2);
+        border: 1px solid rgba(46, 139, 87, 0.6);
+        border-radius: 6px;
+        color: #9eff9e;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: help;
+    }
+    .cto-pill-badge svg {
+        width: 14px;
+        height: 14px;
+        fill: currentColor;
+    }
+    
     .summary-market-stats {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -287,8 +300,16 @@ class DFNPatrol extends HTMLElement {
             <div class="summary-token-info">
                 ${tokenInfo.logoUrl ? `<img src="${sanitizeUrl(tokenInfo.logoUrl)}" alt="${sanitizeHTML(tokenInfo.symbol)} logo" class="token-logo">` : ''}
                 <div class="token-name-symbol">
-                    <h2>${sanitizeHTML(tokenInfo.name)} ${security.isCto ? '<sup class="cto-badge">CTO</sup>' : ''}</h2>
-                    <span>${sanitizeHTML(tokenInfo.symbol)}</span>
+                    <h2>${sanitizeHTML(tokenInfo.name)}</h2>
+                    <div class="ticker-and-badge">
+                        <span>${sanitizeHTML(tokenInfo.symbol)}</span>
+                        ${security.isCto ? `
+                            <div class="cto-pill-badge" title="${sanitizeHTML(security.ctoDescription || 'This token is managed by its community.')}">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                                <span>CTO</span>
+                            </div>
+                        ` : ''}
+                    </div>
                 </div>
             </div>
             ${marketStatsHTML}
@@ -303,11 +324,11 @@ class DFNPatrol extends HTMLElement {
               <h3>🛡️ Security Flags</h3>
               <ul>
                 ${security.isCto ? `<li class="ok">Community Takeover</li>` : ''}
-                ${security.lpStatus ? `<li class="${security.lpStatus === 'Burned' ? 'ok' : 'bad'}">Liquidity is ${security.lpStatus}.</li>` : ''}
                 ${'isMutable' in security ? `<li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>` : ''}
                 ${'freezeAuthorityEnabled' in security ? `<li class="${!security.freezeAuthorityEnabled ? 'ok' : 'bad'}">Freeze authority is disabled.</li>` : ''}
                 ${'mintRenounced' in security ? `<li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? 'Mint authority is renounced.' : 'Dev can mint more tokens.'}</li>` : ''}
                 ${'transferTax' in security ? `<li class="warn">Token has a transfer tax: ${security.transferTax}%.</li>` : ('noTransferTax' in security ? '<li class="ok">No transfer tax.</li>' : '')}
+                ${security.lpStatus ? `<li class="${security.lpStatus === 'Burned' ? 'ok' : 'bad'}">Liquidity is ${security.lpStatus}.</li>` : ''}
               </ul>
             </div>
             
