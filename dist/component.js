@@ -1,6 +1,6 @@
-// component.js - v4.6.6 - Restore Holder Concentration Flag
+// component.js - v4.6.7 - Fix Trend Indicator Colors
 
-console.log("[DFN Components] v4.6.6 initialized - Restore Holder Concentration Flag");
+console.log("[DFN Components] v4.6.7 initialized - Fix Trend Indicator Colors");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -168,7 +168,11 @@ template.innerHTML = `
       font-size: 1.5rem;
       font-weight: 700;
       margin-top: 8px;
+      color: #fff; /* Общий цвет для цифр */
     }
+    /* ИСПРАВЛЕНИЕ: Конкретные селекторы для цветов, чтобы перебить общий стиль */
+    .trend-item div.text-ok { color: #9eff9e; }
+    .trend-item div.text-bad { color: #ff6b7b; }
     
     @media (max-width: 900px) {
         .summary-block { grid-template-columns: 1fr; }
@@ -288,8 +292,8 @@ class DFNPatrol extends HTMLElement {
             <div>
               <h3>🛡️ Security Flags</h3>
               <ul>
-                ${security.isCto ? `<li class="ok">Community Takeover</li>` : ''}
                 ${'holderConcentration' in security && security.holderConcentration > 0 ? `<li class="${security.holderConcentration > 25 ? 'bad' : (security.holderConcentration > 10 ? 'warn' : 'ok')}">Top 10 holders own ${security.holderConcentration.toFixed(2)}%.</li>` : ''}
+                ${security.isCto ? `<li class="ok">Community Takeover</li>` : ''}
                 ${security.lpStatus ? `<li class="${security.lpStatus === 'Burned' ? 'ok' : 'bad'}">Liquidity is ${security.lpStatus}.</li>` : ''}
                 ${'isMutable' in security ? `<li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>` : ''}
                 ${'freezeAuthorityEnabled' in security ? `<li class="${!security.freezeAuthorityEnabled ? 'ok' : 'bad'}">Freeze authority is disabled.</li>` : ''}
