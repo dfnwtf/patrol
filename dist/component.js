@@ -1,6 +1,6 @@
 // component.js
 
-console.log("[DFN Components] v4.6.9 initialized - Fix Trend Indicator Colors");
+console.log("[DFN Components] v4.7.0 initialized");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -22,7 +22,7 @@ function sanitizeUrl(url) {
 }
 
 const template = document.createElement('template');
-template.innerHTML = `
+template.innerHTML = \`
   <style>
     :host {
       display: block;
@@ -168,9 +168,8 @@ template.innerHTML = `
       font-size: 1.5rem;
       font-weight: 700;
       margin-top: 8px;
-      color: #fff; /* Общий цвет для цифр */
+      color: #fff;
     }
-    /* ИСПРАВЛЕНИЕ: Конкретные селекторы для цветов, чтобы перебить общий стиль */
     .trend-item div.text-ok { color: #9eff9e; }
     .trend-item div.text-bad { color: #ff6b7b; }
     
@@ -186,7 +185,7 @@ template.innerHTML = `
   <div id="report-container">
     <div class="placeholder">Generating token health report...</div>
   </div>
-`;
+\`;
 
 class DFNPatrol extends HTMLElement {
   constructor() {
@@ -305,7 +304,6 @@ class DFNPatrol extends HTMLElement {
             <div>
               <h3>💰 Distribution</h3>
               
-              \${/* ✨ НОВОЕ: Отображаем список отфильтрованных пулов */}
               \${distribution.allLpAddresses && distribution.allLpAddresses.length > 0 ? \`
                   <div style="margin-bottom: 12px;">
                       <b>Programmatic Accounts (Pools, etc.):</b>
