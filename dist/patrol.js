@@ -61,11 +61,15 @@ document.querySelector("#token-search")?.addEventListener("submit", (e) => {
   field.value = "";
 });
 
-// Wait for DOM and then auto-connect
-window.addEventListener("DOMContentLoaded", () => {
+// Retry until <dfn-patrol> is in DOM
+function waitForPatrol() {
   const panel = document.querySelector("dfn-patrol");
   if (panel) {
     const token = panel.getAttribute("embed");
     if (token) connectToWebSocket(token);
+  } else {
+    setTimeout(waitForPatrol, 100);
   }
-});
+}
+
+waitForPatrol();
