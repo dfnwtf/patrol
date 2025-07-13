@@ -24,14 +24,18 @@ function connectToWebSocket(token) {
       const data = JSON.parse(e.data);
       const panel = document.querySelector("dfn-patrol");
 
-      if (data.type === "snapshot") {
-        console.log("[DFN Patrol] snapshot >", data);
-        panel?.setSnapshot(data);
-      }
-      if (data.type === "alert") {
-        console.log("[DFN Patrol] alert >", data);
-        panel?.setAlert(data);
-      }
+      if (!panel) return;
+
+      customElements.whenDefined("dfn-patrol").then(() => {
+        if (data.type === "snapshot") {
+          console.log("[DFN Patrol] snapshot >", data);
+          panel.setSnapshot(data);
+        }
+        if (data.type === "alert") {
+          console.log("[DFN Patrol] alert >", data);
+          panel.setAlert(data);
+        }
+      });
     } catch (err) {
       console.error("[DFN Patrol] Invalid message", err);
     }
