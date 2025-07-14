@@ -1,6 +1,5 @@
 // component.js
-
-console.log("[DFN Components] v4.7.4 initialized - Final Report Structure");
+console.log("[DFN Components] v4.7.5 initialized - Final Report Structure");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -14,7 +13,7 @@ function sanitizeUrl(url) {
     }
     try {
         const u = new URL(url);
-        if (u.protocol === 'http:' || u.protocol === 'https:') {
+        if (u.protocol === 'http:' || u.protocol === 'https:' || u.protocol === 'tg:') {
             return u.href;
         }
     } catch (e) {}
@@ -74,7 +73,7 @@ template.innerHTML = `
       margin-bottom: 24px;
     }
     .summary-token-info { display: flex; align-items: center; gap: 16px; }
-    .token-logo { width: 48px; height: 48px; border-radius: 50%; background: #222; }
+    .token-logo { width: 48px; height: 48px; border-radius: 50%; background: #222; object-fit: cover; }
     .token-name-symbol h2 { font-size: 1.8rem; margin: 0; line-height: 1.1; color: #fff; }
     .token-name-symbol span { font-size: 1rem; color: #999; margin-top: 4px; display: block; }
 
@@ -136,13 +135,7 @@ template.innerHTML = `
       color: #fff;
       border-color: #444;
     }
-    .drain-simulator { margin-top: 10px; padding: 0; }
-    .drain-bar-row { display: flex; align-items: center; margin-bottom: 8px; font-size: 0.9rem; }
-    .drain-label { width: 120px; flex-shrink: 0; color: #aaa; }
-    .drain-bar-container { flex-grow: 1; background: #252525; border-radius: 4px; height: 22px; overflow: hidden; }
-    .drain-bar { background: linear-gradient(to right, #e05068, #ff6b7b); height: 100%; font-size: 0.8rem; line-height: 22px; text-align: right; color: #fff; padding-right: 8px; box-sizing: border-box; white-space: nowrap; }
-    .drain-result { margin-left: 12px; font-weight: 600; text-align: left; color: #fff; }
-    
+
     .trend-indicator {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -173,6 +166,38 @@ template.innerHTML = `
     .trend-item div.text-ok { color: #9eff9e; }
     .trend-item div.text-bad { color: #ff6b7b; }
     
+    /* --- СТИЛИ ДЛЯ НОВОГО АККОРДЕОНА --- */
+    details.programmatic-accounts-details {
+      border: 1px solid #282828;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      background-color: #1c1c1c;
+      transition: background-color 0.2s ease;
+    }
+    details.programmatic-accounts-details:hover {
+        background-color: #222;
+    }
+    summary {
+      cursor: pointer;
+      padding: 12px 16px;
+      font-weight: 600;
+      color: #ccc;
+      outline: none;
+      list-style-position: inside;
+    }
+    details[open] > summary {
+      border-bottom: 1px solid #282828;
+    }
+    .programmatic-list {
+      padding: 12px 16px 4px 40px;
+      list-style-type: square;
+      font-size: 0.85em;
+    }
+    .programmatic-list li {
+      margin-bottom: 8px;
+    }
+    /* --- КОНЕЦ СТИЛЕЙ ДЛЯ АККОРДЕОНА --- */
+
     @media (max-width: 900px) {
         .summary-block { grid-template-columns: 1fr; }
         .summary-market-stats { text-align: left; }
@@ -210,15 +235,15 @@ class DFNPatrol extends HTMLElement {
        return;
     }
 
-    const { tokenInfo, security, distribution, market, liquidityDrain, socials } = this.report;
+    const { tokenInfo, security, distribution, market, socials } = this.report;
     const formatNum = (num) => num ? Number(num).toLocaleString('en-US', {maximumFractionDigits: 0}) : 'N/A';
     const priceChangeColor = market?.priceChange?.h24 >= 0 ? 'text-ok' : 'text-bad';
-    const price = Number(market?.priceUsd) < 0.000001 ? Number(market?.priceUsd).toExponential(2) : Number(market?.priceUsd).toLocaleString('en-US', {maximumFractionDigits: 8});
+    const price = !market?.priceUsd ? 'N/A' : (Number(market.priceUsd) < 0.000001 ? `$${Number(market.priceUsd).toExponential(2)}` : `$${Number(market.priceUsd).toLocaleString('en-US', {maximumFractionDigits: 8})}`);
 
     const marketStatsHTML = `
         <div class="summary-market-stats">
-            <div class="stat-item"><b>Price</b><span>$${price}</span></div>
-            <div class="stat-item"><b>24h Change</b><span class="${priceChangeColor}">${market?.priceChange?.h24?.toFixed(2) || 'N/A'}%</span></div>
+            <div class="stat-item"><b>Price</b><span>${price}</span></div>
+            <div class="stat-item"><b>24h Change</b><span class="${priceChangeColor}">${market?.priceChange?.h24?.toFixed(2) || '0.00'}%</span></div>
             <div class="stat-item"><b>24h Volume</b><span>$${formatNum(market?.volume24h)}</span></div>
             <div class="stat-item"><b>Market Cap</b><span>$${formatNum(market?.marketCap)}</span></div>
             <div class="stat-item"><b>Liquidity</b><span>$${formatNum(market?.liquidity)}</span></div>
@@ -256,25 +281,35 @@ class DFNPatrol extends HTMLElement {
     const socialsHTML = socials && socials.length > 0 ? `
         <div class="full-width">
             <h3>🔗 Socials</h3>
-            <p class="socials-intro-text">Official project channels and community hubs:</p>
             <div class="socials-list">
                 ${socials.map(social => {
                     try {
-                        const link = typeof social === 'string' ? social : social.url;
+                        const link = social.url;
                         if(!link) return '';
-                        const hostname = new URL(link).hostname.replace('www.','');
-                        const label = typeof social === 'string' ? hostname : (social.label || social.type || 'Link');
+                        const label = social.label || social.type.charAt(0).toUpperCase() + social.type.slice(1);
                         return `<a href="${sanitizeUrl(link)}" target="_blank" rel="noopener nofollow">${sanitizeHTML(label)}</a>`;
                     } catch(e) { return ''; }
                 }).join('')}
             </div>
         </div>
     ` : '';
+    
+    // const programmaticAccountsHTML = distribution.allLpAddresses && distribution.allLpAddresses.length > 0 ? `
+      <details class="programmatic-accounts-details">
+          <summary>Filtered Accounts (Pools, CEX, etc.): ${distribution.allLpAddresses.length}</summary>
+          <ul class="programmatic-list">
+              ${distribution.allLpAddresses.map(addr => `
+                  <li><a href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${addr.slice(0, 10)}...${addr.slice(-4)}</a></li>
+              `).join('')}
+          </ul>
+      </details>
+    ` : '';
+
 
     const newContent = `
         <div class="summary-block">
             <div class="summary-token-info">
-                ${tokenInfo.logoUrl ? `<img src="${sanitizeUrl(tokenInfo.logoUrl)}" alt="${sanitizeHTML(tokenInfo.symbol)} logo" class="token-logo">` : ''}
+                ${tokenInfo.logoUrl ? `<img src="${sanitizeUrl(tokenInfo.logoUrl)}" alt="${sanitizeHTML(tokenInfo.symbol)} logo" class="token-logo">` : `<div class="token-logo"></div>`}
                 <div class="token-name-symbol">
                     <h2>${sanitizeHTML(tokenInfo.name)}</h2>
                     <span>${sanitizeHTML(tokenInfo.symbol)}</span>
@@ -295,10 +330,12 @@ class DFNPatrol extends HTMLElement {
                 
                 ${'holderConcentration' in security && security.holderConcentration > 0 ? `<li class="${security.holderConcentration > 25 ? 'bad' : (security.holderConcentration > 10 ? 'warn' : 'ok')}">Top 10 holders own ${security.holderConcentration.toFixed(2)}%.</li>` : ''}
                 ${security.isCto ? `<li class="ok">Community Takeover</li>` : ''}
-                ${security.lpStatus ? `<li class="${security.lpStatus === 'Burned' ? 'ok' : 'bad'}">Liquidity is ${security.lpStatus}.</li>` : ''}
+                ${security.lpStatus ? `<li class="${security.lpStatus === 'Burned' ? 'ok' : 'bad'}">Liquidity is ${security.lpStatus}.</li>` : '<li>Liquidity status is Unknown.</li>'}
+                
                 ${'isMutable' in security ? `<li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>` : ''}
-                ${'freezeAuthorityEnabled' in security ? `<li class="${!security.freezeAuthorityEnabled ? 'ok' : 'bad'}">Freeze authority is disabled.</li>` : ''}
+                ${'freezeAuthorityEnabled' in security ? `<li class="${!security.freezeAuthorityEnabled ? 'ok' : 'bad'}">${!security.freezeAuthorityEnabled ? 'Freeze authority is disabled.' : 'Freeze authority is enabled.'}</li>` : ''}
                 ${'mintRenounced' in security ? `<li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? 'Mint authority is renounced.' : 'Dev can mint more tokens.'}</li>` : ''}
+                
                 ${'transferTax' in security ? `<li class="warn">Token has a transfer tax: ${security.transferTax}%.</li>` : ('noTransferTax' in security ? '<li class="ok">No transfer tax.</li>' : '')}
               </ul>
             </div>
@@ -306,16 +343,7 @@ class DFNPatrol extends HTMLElement {
             <div>
               <h3>💰 Distribution</h3>
               
-              ${distribution.allLpAddresses && distribution.allLpAddresses.length > 0 ? `
-                  <div style="margin-bottom: 12px;">
-                      <b>Programmatic Accounts (Pools, CEX, etc.):</b>
-                      <ul style="font-size: 0.85em; list-style-type: square; padding-left: 20px; margin-top: 4px;">
-                          ${distribution.allLpAddresses.map(addr => `
-                              <li><a href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${addr.slice(0, 10)}...${addr.slice(-4)}</a></li>
-                          `).join('')}
-                      </ul>
-                  </div>
-              ` : ''}
+              ${programmaticAccountsHTML}
               
               <b>Top 10 Holders (Real):</b>
               <ul>
@@ -324,24 +352,6 @@ class DFNPatrol extends HTMLElement {
                       : '<li>No significant individual holders found.</li>'}
               </ul>
             </div>
-
-            ${liquidityDrain && liquidityDrain.filter(item => item.marketCapDropPercentage > 0).length > 0 ? `
-            <div class="full-width">
-                <h3>🌊 Liquidity Drain Simulator</h3>
-                <div class="drain-simulator">
-                    ${liquidityDrain.filter(item => item.marketCapDropPercentage > 0).map(item => {
-                        const impact = Math.min(100, Math.max(0, item.marketCapDropPercentage));
-                        const formatCap = (num) => num < 1000 ? `$${num.toFixed(0)}` : (num < 1000000 ? `$${(num/1000).toFixed(1)}K` : `$${(num/1000000).toFixed(2)}M`);
-                        return `
-                          <div class="drain-bar-row">
-                            <span class="drain-label">${sanitizeHTML(item.group)}</span>
-                            <div class="drain-bar-container"><div class="drain-bar" style="width: ${impact}%;">${impact > 20 ? `-${impact}%` : ''}</div></div>
-                            <span class="drain-result">${impact > 20 ? '' : `-${impact}%`} → ${formatCap(item.marketCapAfterSale)}</span>
-                          </div>
-                        `;
-                    }).join('')}
-                </div>
-            </div>` : ''}
         </div>
     `;
     
