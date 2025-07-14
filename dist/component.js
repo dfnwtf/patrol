@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v4.7.4 initialized - Final Report Structure");
+console.log("[DFN Components] v4.7.8 initialized - Final Report Structure");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -295,7 +295,7 @@ class DFNPatrol extends HTMLElement {
     const programmaticAccountsHTML = distribution.allLpAddresses && distribution.allLpAddresses.length > 0 ?
       `
       <details class="programmatic-accounts-details">
-          <summary>Filtered Accounts (Pools, CEX, etc.): ${distribution.allLpAddresses.length}</summary>
+          <summary>Pools, CEX, etc.: ${distribution.allLpAddresses.length}</summary>
           <ul class="programmatic-list">
               ${distribution.allLpAddresses.map(addr => `
                   <li><a href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${addr.slice(0, 10)}...${addr.slice(-4)}</a></li>
