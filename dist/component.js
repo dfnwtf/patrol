@@ -1,6 +1,6 @@
 // component.js
 
-console.log("[DFN Components] v4.7.1 initialized - Fix Trend Indicator Colors");
+console.log("[DFN Components] v4.7.2 initialized - Final Report Structure");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -291,6 +291,9 @@ class DFNPatrol extends HTMLElement {
             <div>
               <h3>🛡️ Security Flags</h3>
               <ul>
+                ${/* ✨ НОВОЕ: Флаг для хакерских кошельков */}
+                ${security.hackerFound ? `<li class="bad">${sanitizeHTML(security.hackerFound)}</li>` : ''}
+                
                 ${'holderConcentration' in security && security.holderConcentration > 0 ? `<li class="${security.holderConcentration > 25 ? 'bad' : (security.holderConcentration > 10 ? 'warn' : 'ok')}">Top 10 holders own ${security.holderConcentration.toFixed(2)}%.</li>` : ''}
                 ${security.isCto ? `<li class="ok">Community Takeover</li>` : ''}
                 ${security.lpStatus ? `<li class="${security.lpStatus === 'Burned' ? 'ok' : 'bad'}">Liquidity is ${security.lpStatus}.</li>` : ''}
@@ -304,9 +307,10 @@ class DFNPatrol extends HTMLElement {
             <div>
               <h3>💰 Distribution</h3>
               
+              ${/* ✨ НОВОЕ: Отображаем список всех отфильтрованных пулов/адресов */}
               ${distribution.allLpAddresses && distribution.allLpAddresses.length > 0 ? `
                   <div style="margin-bottom: 12px;">
-                      <b>Programmatic Accounts (Pools, etc.):</b>
+                      <b>Programmatic Accounts (Pools, CEX, etc.):</b>
                       <ul style="font-size: 0.85em; list-style-type: square; padding-left: 20px; margin-top: 4px;">
                           ${distribution.allLpAddresses.map(addr => `
                               <li><a href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${addr.slice(0, 10)}...${addr.slice(-4)}</a></li>
