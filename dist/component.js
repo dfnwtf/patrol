@@ -161,7 +161,7 @@ template.innerHTML = `
     .trend-item div.text-bad { color: #ff6b7b; }
     
     details.programmatic-accounts-details {
-      margin-top: 16px; /* Добавляем отступ сверху */
+      margin-top: 16px; 
     }
     summary {
       cursor: pointer;
@@ -184,11 +184,6 @@ template.innerHTML = `
     }
     .programmatic-list li {
       margin-bottom: 8px;
-    }
-    
-    .real-holders-title {
-        font-weight: 600;
-        display: block;
     }
 
     @media (max-width: 900px) {
@@ -336,9 +331,8 @@ class DFNPatrol extends HTMLElement {
             </div>
             
             <div>
-              <h3>💰 Distribution</h3>
+              <h3>💰 Top 10 Holders</h3>
               
-              <b class="real-holders-title">Top 10 Holders (Real):</b>
               <ul>
                   ${distribution.topHolders && distribution.topHolders.length > 0
                       ? distribution.topHolders.map(h => `<li><a href="https://solscan.io/account/${h.address}" target="_blank" rel="noopener">${h.address.slice(0,6)}...${h.address.slice(-4)}</a> (${h.percent}%)</li>`).join('') 
