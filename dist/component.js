@@ -161,7 +161,7 @@ template.innerHTML = `
     .trend-item div.text-bad { color: #ff6b7b; }
     
     details.programmatic-accounts-details {
-      margin-top: 16px; 
+      margin-top: 16px;
     }
     summary {
       cursor: pointer;
@@ -185,6 +185,14 @@ template.innerHTML = `
     .programmatic-list li {
       margin-bottom: 8px;
     }
+
+    /* Стили для симулятора */
+    .drain-simulator { margin-top: 10px; padding: 0; }
+    .drain-bar-row { display: flex; align-items: center; margin-bottom: 8px; font-size: 0.9rem; }
+    .drain-label { width: 120px; flex-shrink: 0; color: #aaa; }
+    .drain-bar-container { flex-grow: 1; background: #252525; border-radius: 4px; height: 22px; overflow: hidden; }
+    .drain-bar { background: linear-gradient(to right, #e05068, #ff6b7b); height: 100%; font-size: 0.8rem; line-height: 22px; text-align: right; color: #fff; padding-right: 8px; box-sizing: border-box; white-space: nowrap; }
+    .drain-result { margin-left: 12px; font-weight: 600; text-align: left; color: #fff; }
 
     @media (max-width: 900px) {
         .summary-block { grid-template-columns: 1fr; }
@@ -223,7 +231,8 @@ class DFNPatrol extends HTMLElement {
        return;
     }
 
-    const { tokenInfo, security, distribution, market, socials } = this.report;
+    // Добавляем liquidityDrain в деструктуризацию
+    const { tokenInfo, security, distribution, market, socials, liquidityDrain } = this.report;
     const formatNum = (num) => num ? Number(num).toLocaleString('en-US', {maximumFractionDigits: 0}) : 'N/A';
     const priceChangeColor = market?.priceChange?.h24 >= 0 ? 'text-ok' : 'text-bad';
     const price = !market?.priceUsd ? 'N/A' : (Number(market.priceUsd) < 0.000001 ? `$${Number(market.priceUsd).toExponential(2)}` : `$${Number(market.priceUsd).toLocaleString('en-US', {maximumFractionDigits: 8})}`);
@@ -295,6 +304,25 @@ class DFNPatrol extends HTMLElement {
       `
     : '';
 
+    // Восстановленный блок для симулятора
+    const liquidityDrainHTML = liquidityDrain && liquidityDrain.filter(item => item.marketCapDropPercentage > 0).length > 0 ? `
+        <div class="full-width">
+            <h3>🌊 Liquidity Drain Simulator</h3>
+            <div class="drain-simulator">
+                ${liquidityDrain.filter(item => item.marketCapDropPercentage > 0).map(item => {
+                    const impact = Math.min(100, Math.max(0, item.marketCapDropPercentage));
+                    const formatCap = (num) => num < 1000 ? `$${num.toFixed(0)}` : (num < 1000000 ? `$${(num/1000).toFixed(1)}K` : `$${(num/1000000).toFixed(2)}M`);
+                    return `
+                      <div class="drain-bar-row">
+                        <span class="drain-label">${sanitizeHTML(item.group)}</span>
+                        <div class="drain-bar-container"><div class="drain-bar" style="width: ${impact}%;">${impact > 20 ? `-${impact.toFixed(0)}%` : ''}</div></div>
+                        <span class="drain-result">${impact > 20 ? '' : `-${impact.toFixed(0)}%`} → ${formatCap(item.marketCapAfterSale)}</span>
+                      </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>` : '';
+
 
     const newContent = `
         <div class="summary-block">
@@ -342,6 +370,8 @@ class DFNPatrol extends HTMLElement {
               ${programmaticAccountsHTML}
 
             </div>
+            
+            ${liquidityDrainHTML}
         </div>
     `;
     
