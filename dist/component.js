@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v4.7.6 initialized - Final Report Structure");
+console.log("[DFN Components] v4.7.4 initialized - Final Report Structure");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -166,7 +166,6 @@ template.innerHTML = `
     .trend-item div.text-ok { color: #9eff9e; }
     .trend-item div.text-bad { color: #ff6b7b; }
     
-    /* --- СТИЛИ ДЛЯ НОВОГО АККОРДЕОНА --- */
     details.programmatic-accounts-details {
       border: 1px solid #282828;
       border-radius: 8px;
@@ -196,7 +195,6 @@ template.innerHTML = `
     .programmatic-list li {
       margin-bottom: 8px;
     }
-    /* --- КОНЕЦ СТИЛЕЙ ДЛЯ АККОРДЕОНА --- */
 
     @media (max-width: 900px) {
         .summary-block { grid-template-columns: 1fr; }
@@ -294,16 +292,18 @@ class DFNPatrol extends HTMLElement {
         </div>
     ` : '';
     
-    // const programmaticAccountsHTML = distribution.allLpAddresses && distribution.allLpAddresses.length > 0 ? `
-     <details class="programmatic-accounts-details">
-  <summary>Filtered Accounts (Pools, CEX, etc.): ${distribution.allLpAddresses.length}</summary>
-  <ul class="programmatic-list">
-    ${distribution.allLpAddresses.map(addr => `
-      <li><a href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${addr.slice(0, 10)}...${addr.slice(-4)}</a></li>
-    `).join('')}
-  </ul>
-</details>
-    ` : '';
+    const programmaticAccountsHTML = distribution.allLpAddresses && distribution.allLpAddresses.length > 0 ?
+      `
+      <details class="programmatic-accounts-details">
+          <summary>Filtered Accounts (Pools, CEX, etc.): ${distribution.allLpAddresses.length}</summary>
+          <ul class="programmatic-list">
+              ${distribution.allLpAddresses.map(addr => `
+                  <li><a href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${addr.slice(0, 10)}...${addr.slice(-4)}</a></li>
+              `).join('')}
+          </ul>
+      </details>
+      `
+    : '';
 
 
     const newContent = `
