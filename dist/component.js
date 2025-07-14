@@ -160,9 +160,8 @@ template.innerHTML = `
     .trend-item div.text-ok { color: #9eff9e; }
     .trend-item div.text-bad { color: #ff6b7b; }
     
-    /* --- ИЗМЕНЕНИЕ СТИЛЕЙ ДЛЯ ИНТЕГРАЦИИ АККОРДЕОНА --- */
     details.programmatic-accounts-details {
-      margin-bottom: 16px;
+      margin-top: 16px; /* Добавляем отступ сверху */
     }
     summary {
       cursor: pointer;
@@ -191,7 +190,6 @@ template.innerHTML = `
         font-weight: 600;
         display: block;
     }
-    /* --- КОНЕЦ ИЗМЕНЕНИЙ --- */
 
     @media (max-width: 900px) {
         .summary-block { grid-template-columns: 1fr; }
@@ -340,14 +338,15 @@ class DFNPatrol extends HTMLElement {
             <div>
               <h3>💰 Distribution</h3>
               
-              ${programmaticAccountsHTML}
-              
               <b class="real-holders-title">Top 10 Holders (Real):</b>
               <ul>
                   ${distribution.topHolders && distribution.topHolders.length > 0
                       ? distribution.topHolders.map(h => `<li><a href="https://solscan.io/account/${h.address}" target="_blank" rel="noopener">${h.address.slice(0,6)}...${h.address.slice(-4)}</a> (${h.percent}%)</li>`).join('') 
                       : '<li>No significant individual holders found.</li>'}
               </ul>
+
+              ${programmaticAccountsHTML}
+
             </div>
         </div>
     `;
