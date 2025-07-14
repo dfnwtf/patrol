@@ -1,6 +1,6 @@
 // component.js
 
-console.log("[DFN Components] v4.7.3 initialized - Final Report Structure");
+console.log("[DFN Components] v4.7.4 initialized - Final Report Structure");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -306,7 +306,6 @@ class DFNPatrol extends HTMLElement {
             <div>
               <h3>💰 Distribution</h3>
               
-              ${/* ✨ НОВОЕ: Отображаем список всех отфильтрованных пулов/адресов */}
               ${distribution.allLpAddresses && distribution.allLpAddresses.length > 0 ? `
                   <div style="margin-bottom: 12px;">
                       <b>Programmatic Accounts (Pools, CEX, etc.):</b>
