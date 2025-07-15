@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.0.5 initialized - Stable Version with Fade-in and Autoscroll");
+console.log("[DFN Components] v5.0.6 initialized - Stable Version with Fade-in and Autoscroll");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -31,10 +31,8 @@ template.innerHTML = `
       padding: 24px;
       border-radius: 12px;
       border: 1px solid #333;
-      /* The component itself will be made visible by the parent */
     }
     #report-container > *:not(.placeholder):not(.error) {
-        /* This animates the content inside the component */
         animation: contentFadeIn 0.5s 0.2s ease-in-out forwards;
         opacity: 0;
     }
@@ -196,7 +194,7 @@ class DFNPatrol extends HTMLElement {
       const drainScenarios = this.report.liquidityDrain;
       const topHolders = this.report.distribution.topHolders;
       if (!drainScenarios || drainScenarios.length === 0) {
-          log.innerHTML = "Not enough data for simulation.";
+          if(log) log.innerHTML = "Not enough data for simulation.";
           return;
       }
       
@@ -262,9 +260,7 @@ class DFNPatrol extends HTMLElement {
     }
     if (this.report.error) {
        this.container.innerHTML = `<div class="error">${sanitizeHTML(this.report.error)}</div>`;
-       // Dispatch event even on error, to allow scrolling
-       const event = new CustomEvent('report-rendered', { bubbles: true, composed: true });
-       this.dispatchEvent(event);
+       this.dispatchEvent(new CustomEvent('report-rendered', { bubbles: true, composed: true }));
        return;
     }
 
@@ -386,7 +382,7 @@ class DFNPatrol extends HTMLElement {
     this.shadowRoot.querySelector('.address-container')?.addEventListener('click', () => this.handleAddressCopy());
     this.shadowRoot.querySelector('#start-sim-btn')?.addEventListener('click', () => this.runSimulation());
     
-    // Dispatch event to notify that the report is rendered
+    // Dispatch an event to notify that the report is rendered
     const event = new CustomEvent('report-rendered', { bubbles: true, composed: true });
     this.dispatchEvent(event);
   }
