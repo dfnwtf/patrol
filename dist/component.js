@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.0.9 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.1.0 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -136,6 +136,15 @@ template.innerHTML = `
     .sim-log-entry strong { color: #eee; }
     @keyframes logFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     
+    .report-fade-in {
+      animation: reportFadeInAnimation 0.5s ease-in-out;
+    }
+
+    @keyframes reportFadeInAnimation {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
     @media (min-width: 901px) {
         .token-logo {
             width: 96px !important;
@@ -368,7 +377,7 @@ class DFNPatrol extends HTMLElement {
         </div>
     `;
     
-    this.container.innerHTML = newContent;
+    this.container.innerHTML = `<div class="report-fade-in">${newContent}</div>`;
 
     this.shadowRoot.querySelector('.address-container')?.addEventListener('click', () => this.handleAddressCopy());
     this.shadowRoot.querySelector('#start-sim-btn')?.addEventListener('click', () => this.runSimulation());
