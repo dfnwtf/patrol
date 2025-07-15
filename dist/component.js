@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.0.3 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.0.4 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -111,6 +111,7 @@ template.innerHTML = `
     .programmatic-list { padding: 12px 0 4px 24px; list-style-type: square; font-size: 0.85em; }
     .programmatic-list li { margin-bottom: 8px; }
     
+    /* --- CASCADE DUMP SIMULATOR STYLES --- */
     #cascade-dump-simulator { text-align: center; background: #191919; padding: 24px; border-radius: 8px; border: 1px solid #282828;}
     #start-sim-btn {
         background-color: var(--accent); color: #000; border: none; padding: 10px 20px; margin-top: 16px;
@@ -135,6 +136,7 @@ template.innerHTML = `
     .sim-log-entry { animation: logFadeIn 0.5s ease; border-bottom: 1px solid #222; padding-bottom: 6px; margin-bottom: 6px; white-space: pre-wrap; }
     .sim-log-entry strong { color: #eee; }
     @keyframes logFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    /* --- END OF SIMULATOR STYLES --- */
     
     @media (min-width: 901px) {
         .token-logo {
