@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.0.0 initialized - Candlestick Chart Simulation with diagnostics");
+console.log("[DFN Components] v5.0.3 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -111,20 +111,37 @@ template.innerHTML = `
     .programmatic-list { padding: 12px 0 4px 24px; list-style-type: square; font-size: 0.85em; }
     .programmatic-list li { margin-bottom: 8px; }
     
-    /* --- CHART SIMULATOR STYLES --- */
-    #chart-simulator { text-align: center; background: #191919; padding: 24px; border-radius: 8px; border: 1px solid #282828;}
-    .chart-container { position: relative; height: 250px; width: 100%; margin-top: 16px; }
+    #cascade-dump-simulator { text-align: center; background: #191919; padding: 24px; border-radius: 8px; border: 1px solid #282828;}
     #start-sim-btn {
         background-color: var(--accent); color: #000; border: none; padding: 10px 20px; margin-top: 16px;
         border-radius: 6px; font-weight: 600; cursor: pointer; transition: background-color 0.2s, transform 0.2s;
     }
     #start-sim-btn:hover:not(:disabled) { background-color: #ffc72c; transform: scale(1.05); }
     #start-sim-btn:disabled { background-color: #555; color: #999; cursor: not-allowed; transform: scale(1); }
-    .sim-log { margin-top: 16px; min-height: 80px; background-color: #111; border-radius: 6px; padding: 12px; text-align: left; font-family: monospace; font-size: 0.9em; color: #aaa; overflow: hidden; display: none; }
-    .sim-log-entry { animation: logFadeIn 0.5s ease; border-bottom: 1px solid #222; padding-bottom: 6px; margin-bottom: 6px; }
+    .sim-display { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; text-align: left; }
+    .sim-bar-container { width: 100%; height: 30px; background-color: #2a2a2a; border-radius: 6px; overflow: hidden; border: 1px solid #333; }
+    .sim-bar {
+        height: 100%; width: 100%;
+        background: linear-gradient(to right, #9eff9e, #34d399);
+        transition: width 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+        display: flex; align-items: center; justify-content: flex-end;
+        font-size: 0.9em; color: #000; font-weight: 600;
+        padding-right: 10px;
+        box-sizing: border-box;
+    }
+    .sim-bar.draining { background: linear-gradient(to right, #ff6b7b, #e05068); color: #fff; }
+    .sim-label { font-size: 0.9em; color: #aaa; }
+    .sim-log { margin-top: 16px; min-height: 105px; background-color: #111; border-radius: 6px; padding: 12px; text-align: left; font-family: monospace; font-size: 0.9em; color: #aaa; overflow: hidden; }
+    .sim-log-entry { animation: logFadeIn 0.5s ease; border-bottom: 1px solid #222; padding-bottom: 6px; margin-bottom: 6px; white-space: pre-wrap; }
     .sim-log-entry strong { color: #eee; }
-    @keyframes logFadeIn { from { opacity: 0; } to { opacity: 1; } }
-
+    @keyframes logFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    @media (min-width: 901px) {
+        .token-logo {
+            width: 96px !important;
+            height: 96px !important;
+        }
+    }
     @media (max-width: 900px) { .summary-block { grid-template-columns: 1fr; } .summary-market-stats { text-align: left; } }
     @media (max-width: 600px) { .summary-market-stats { grid-template-columns: repeat(2, 1fr); } .trend-indicator { grid-template-columns: repeat(2, 1fr); } }
   </style>
@@ -139,7 +156,6 @@ class DFNPatrol extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.shadowRoot.appendChild(template.content.cloneNode(true));
     this.container = this.shadowRoot.querySelector('#report-container');
-    this.priceChart = null;
     this.copyIconSVG = `<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
     this.checkIconSVG = `<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9eff9e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
   }
@@ -161,138 +177,72 @@ class DFNPatrol extends HTMLElement {
     }).catch(err => { console.error('Failed to copy address: ', err); });
   }
 
-  initPriceChart() {
-    if (this.priceChart) {
-        this.priceChart.destroy();
-    }
-    const canvas = this.shadowRoot.querySelector('#price-chart-canvas');
-    const chartContainer = this.shadowRoot.querySelector('.chart-container');
-    if (!canvas || !chartContainer) return;
-
-    if (typeof Chart === 'undefined' || typeof Chart.FinancialController === 'undefined') {
-        console.error("Chart.js or the financial chart plugin is not loaded.");
-        chartContainer.innerHTML = `<div class="error" style="height: 100%; display: flex; align-items: center; justify-content: center;">Chart library failed to load. Please refresh.</div>`;
-        return;
-    }
-    
-    const initialPrice = this.report?.market?.priceUsd;
-    if (typeof initialPrice === 'undefined') {
-        chartContainer.style.display = 'none';
-        return;
-    }
-
-    const ctx = canvas.getContext('2d');
-    
-    const initialData = {
-        x: Date.now() - (10 * 60 * 1000), // 10 minutes ago
-        o: initialPrice,
-        h: initialPrice * 1.001, // Creates a tiny green body
-        l: initialPrice * 0.999,
-        c: initialPrice
-    };
-
-    this.priceChart = new Chart(ctx, {
-        type: 'candlestick',
-        data: {
-            datasets: [{
-                label: 'Price',
-                data: [initialData]
-            }]
-        },
-        options: {
-            maintainAspectRatio: false,
-            scales: {
-                x: {
-                    type: 'time',
-                    time: { tooltipFormat: 'll HH:mm' },
-                    grid: { color: 'rgba(255,255,255,0.05)' },
-                    ticks: { display: false }
-                },
-                y: {
-                    grid: { color: 'rgba(255,255,255,0.05)' },
-                    ticks: { 
-                        color: '#888',
-                        maxTicksLimit: 8,
-                        callback: function(value) {
-                             if (value === 0) return '$0';
-                             return '$' + (Number(value) < 0.0001 ? Number(value).toExponential(2) : Number(value).toPrecision(3));
-                        }
-                    }
-                }
-            },
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const d = context.raw;
-                            return `O: ${d.o.toPrecision(4)} H: ${d.h.toPrecision(4)} L: ${d.l.toPrecision(4)} C: ${d.c.toPrecision(4)}`;
-                        }
-                    }
-                }
-            }
-        }
-    });
-  }
-
   async runSimulation() {
       const btn = this.shadowRoot.querySelector('#start-sim-btn');
       const log = this.shadowRoot.querySelector('#simulation-log');
-      if (!this.priceChart || !this.report || !btn || !log) return;
+      const mcBar = this.shadowRoot.querySelector('.sim-bar');
+      const mcBarValue = this.shadowRoot.querySelector('.sim-bar-value');
+      
+      const drainScenarios = this.report.liquidityDrain;
+      const topHolders = this.report.distribution.topHolders;
+      if (!drainScenarios || drainScenarios.length === 0) {
+          log.innerHTML = "Not enough data for simulation.";
+          return;
+      }
+      
+      const initialMarketCap = this.report.market.marketCap;
+      if (!btn || !log || !mcBar || !mcBarValue || !initialMarketCap) return;
 
       btn.disabled = true;
       btn.textContent = 'Simulating...';
-
-      // Reset chart and log for a new simulation run
-      this.initPriceChart(); 
-      await new Promise(res => setTimeout(res, 100));
       log.innerHTML = '';
-      log.style.display = 'block';
-
-      const drainScenarios = this.report.liquidityDrain;
-      let lastPrice = this.report.market.priceUsd;
-      let lastTimestamp = this.priceChart.data.datasets[0].data[0].x;
-      const initialPrice = this.report.market.priceUsd;
-      const initialMC = this.report.market.marketCap;
-
+      
+      const formatAsCurrency = (num) => `$${Number(num).toLocaleString('en-US', {maximumFractionDigits: 0})}`;
       const wait = (ms) => new Promise(res => setTimeout(res, ms));
 
+      const updateBar = (mc) => {
+          const barWidth = (mc / initialMarketCap) * 100;
+          mcBar.style.width = `${barWidth < 0 ? 0 : barWidth}%`;
+          mcBarValue.textContent = formatAsCurrency(mc);
+      };
+      
       const logEvent = (message) => {
           const entry = document.createElement('div');
           entry.className = 'sim-log-entry';
           entry.innerHTML = message;
           log.prepend(entry);
       };
+      
+      updateBar(initialMarketCap);
+      mcBar.classList.remove('draining');
+      logEvent(`Simulation started. Initial Market Cap: <strong>${formatAsCurrency(initialMarketCap)}</strong>`);
+      await wait(1500);
 
       for (const scenario of drainScenarios) {
-          await wait(1500);
+          mcBar.classList.add('draining');
+          
+          let ownershipPercent = 0;
+          const match = scenario.group.match(/Top (\d+)/);
+          if (match && topHolders) {
+              const count = parseInt(match[1], 10);
+              if (topHolders.length >= count) {
+                  ownershipPercent = topHolders.slice(0, count).reduce((sum, h) => sum + parseFloat(h.percent), 0);
+              }
+          }
+          const ownershipText = ownershipPercent > 0 ? ` (owning ${ownershipPercent.toFixed(2)}% of supply)` : '';
 
-          const newPrice = (scenario.marketCapAfterSale / initialMC) * initialPrice;
-          
-          logEvent(`Simulating sale by <strong>${scenario.group}</strong>...`);
-          
-          const newDataPoint = {
-              x: lastTimestamp + (60 * 1000), // Add 1 minute for each candle
-              o: lastPrice,
-              h: lastPrice,
-              l: newPrice,
-              c: newPrice
-          };
-          
-          this.priceChart.data.datasets[0].data.push(newDataPoint);
-          this.priceChart.update('none'); // Update without animation to add data instantly
+          logEvent(`Analyzing impact of <strong>${scenario.group}</strong>${ownershipText} selling...`);
+          await wait(2000);
 
-          // A small delay to allow the new data point to be added before animating
-          await wait(50);
-          
-          this.priceChart.update(); // Now update with animation
-          lastPrice = newPrice;
-          lastTimestamp = newDataPoint.x;
+          updateBar(scenario.marketCapAfterSale);
+          logEvent(`→ Price would collapse by <strong style="color: #ff6b7b;">-${scenario.marketCapDropPercentage}%</strong>. New Market Cap: <strong>${formatAsCurrency(scenario.marketCapAfterSale)}</strong>`);
+          await wait(3000);
       }
       
-      logEvent('<strong>Simulation Complete.</strong>');
-      btn.textContent = 'Run Simulation Again';
+      mcBar.classList.remove('draining');
+      logEvent(`<strong>SIMULATION END.</strong>`);
       btn.disabled = false;
+      btn.textContent = 'Run Simulation Again';
   }
 
   render() {
@@ -361,16 +311,18 @@ class DFNPatrol extends HTMLElement {
     const programmaticAccountsHTML = distribution.allLpAddresses && distribution.allLpAddresses.length > 0 ?
       `<details class="programmatic-accounts-details"><summary>Pools, CEX, etc.: ${distribution.allLpAddresses.length}</summary><ul class="programmatic-list">${distribution.allLpAddresses.map(addr => `<li><a href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${addr.slice(0, 10)}...${addr.slice(-4)}</a></li>`).join('')}</ul></details>` : '';
 
-    const chartSimulatorHTML = liquidityDrain && liquidityDrain.length > 0 && market.marketCap > 0 ? `
-        <div id="chart-simulator" class="full-width">
-            <h3>💥 Price Chart Simulation</h3>
-            <p style="max-width: 500px; margin: 0 auto 16px; color: #aaa; font-size: 0.9em;">
-                This simulation shows how the price would collapse based on sales from top holder groups.
-            </p>
-            <div class="chart-container">
-                <canvas id="price-chart-canvas"></canvas>
+    const cascadeSimulatorHTML = liquidityDrain && liquidityDrain.length > 0 && market.marketCap > 0 ? `
+        <div id="cascade-dump-simulator" class="full-width">
+            <h3>💥 Price Collapse Drill</h3>
+            <div class="sim-display">
+                <div class="sim-label">Market Cap:</div>
+                <div class="sim-bar-container">
+                    <div class="sim-bar">
+                        <span class="sim-bar-value">$${formatNum(market.marketCap)}</span>
+                    </div>
+                </div>
             </div>
-            <div id="simulation-log" class="sim-log"></div>
+            <div id="simulation-log" class="sim-log">Press the button to simulate "what-if" scenarios.</div>
             <button id="start-sim-btn">Run Simulation</button>
         </div>` : '';
 
@@ -412,7 +364,7 @@ class DFNPatrol extends HTMLElement {
               </ul>
               ${programmaticAccountsHTML}
             </div>
-            ${chartSimulatorHTML}
+            ${cascadeSimulatorHTML}
         </div>
     `;
     
@@ -420,7 +372,6 @@ class DFNPatrol extends HTMLElement {
 
     this.shadowRoot.querySelector('.address-container')?.addEventListener('click', () => this.handleAddressCopy());
     this.shadowRoot.querySelector('#start-sim-btn')?.addEventListener('click', () => this.runSimulation());
-    this.initPriceChart();
   }
 }
 
