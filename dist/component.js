@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.1.0 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.1.1 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -381,6 +381,8 @@ class DFNPatrol extends HTMLElement {
 
     this.shadowRoot.querySelector('.address-container')?.addEventListener('click', () => this.handleAddressCopy());
     this.shadowRoot.querySelector('#start-sim-btn')?.addEventListener('click', () => this.runSimulation());
+    
+    this.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
 
