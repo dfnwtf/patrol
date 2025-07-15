@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.1.6 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.1.7 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -130,6 +130,9 @@ template.innerHTML = `
     .share-button:hover .copy-icon {
         stroke: #eee;
     }
+    .copied-text {
+        color: var(--accent, #FFD447);
+    }
 
     .summary-market-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 24px; text-align: right; }
     .stat-item { display: flex; flex-direction: column; }
@@ -138,6 +141,55 @@ template.innerHTML = `
     .stat-item span.text-ok, .stat-item .buys-sells .text-ok { color: #9eff9e; }
     .stat-item span.text-bad, .stat-item .buys-sells .text-bad { color: #ff6b7b; }
     .stat-item .buys-sells { font-weight: 600; }
+    
+    /* СТИЛИ ДЛЯ TRUST SCORE */
+    .score-container {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        margin-left: auto;
+    }
+    .score-svg {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+    }
+    .score-circle-bg {
+        fill: none;
+        stroke: #2a2a2a;
+        stroke-width: 10;
+    }
+    .score-circle-fg {
+        fill: none;
+        stroke: #ff6b7b; /* По умолчанию красный */
+        stroke-width: 10;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 1s ease-out, stroke 0.5s ease;
+    }
+    .score-text-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+    .score-percentage {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #fff;
+    }
+    .score-label {
+        font-size: 0.8rem;
+        color: #888;
+        text-transform: uppercase;
+        margin-top: -4px;
+    }
+    /* КОНЕЦ СТИЛЕЙ */
     
     .report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
     .report-grid > div { background: #191919; padding: 24px; border-radius: 8px; border: 1px solid #282828; }
@@ -194,13 +246,8 @@ template.innerHTML = `
       to   { opacity: 1; }
     }
 
-    @media (min-width: 901px) {
-        .token-logo {
-            width: 96px !important;
-            height: 96px !important;
-        }
-    }
-    @media (max-width: 900px) { .summary-market-stats { order: 3; width: 100%; text-align: left; } .summary-token-info { order: 1; } }
+    @media (min-width: 901px) { .token-logo { width: 96px !important; height: 96px !important; } }
+    @media (max-width: 900px) { .summary-market-stats { order: 3; width: 100%; text-align: left; } .summary-token-info { order: 1; } .score-container { order: 2; margin-left: 0; margin-top: 20px; } }
     @media (max-width: 600px) { .summary-market-stats { grid-template-columns: repeat(2, 1fr); } .trend-indicator { grid-template-columns: repeat(2, 1fr); } }
   </style>
   <div id="report-container">
@@ -221,6 +268,30 @@ class DFNPatrol extends HTMLElement {
   setReport(report) {
     this.report = report;
     this.render();
+    if (report && typeof report.trustScore !== 'undefined') {
+        this.updateScore(report.trustScore);
+    }
+  }
+
+  updateScore(score) {
+    const circle = this.shadowRoot.querySelector('.score-circle-fg');
+    const percentageText = this.shadowRoot.querySelector('.score-percentage');
+    if (!circle || !percentageText) return;
+
+    const radius = circle.r.baseVal.value;
+    const circumference = 2 * Math.PI * radius;
+    
+    setTimeout(() => {
+        const offset = circumference - (score / 100) * circumference;
+        circle.style.strokeDasharray = `${circumference} ${circumference}`;
+        circle.style.strokeDashoffset = offset;
+
+        if (score >= 75) circle.style.stroke = '#9eff9e';
+        else if (score >= 40) circle.style.stroke = '#ffd447';
+        else circle.style.stroke = '#ff6b7b';
+        
+        percentageText.textContent = `${score}%`;
+    }, 100);
   }
 
   handleAddressCopy() {
@@ -334,8 +405,20 @@ class DFNPatrol extends HTMLElement {
         truncatedAddress = `${tokenInfo.address.slice(0, 4)}...${tokenInfo.address.slice(-4)}`;
     }
     const addressHTML = tokenInfo.address ? `<div class="address-container" title="Copy Address: ${tokenInfo.address}">${this.copyIconSVG}<span>${truncatedAddress}</span></div>` : '';
-
     const shareButtonHTML = tokenInfo.address ? `<button id="share-button" class="share-button" title="Copy report link">${this.copyIconSVG} <span>Share</span></button>` : '';
+    
+    const scoreHTML = typeof this.report.trustScore !== 'undefined' ? `
+        <div class="score-container">
+            <svg class="score-svg" viewBox="0 0 120 120">
+                <circle class="score-circle-bg" cx="60" cy="60" r="54" />
+                <circle class="score-circle-fg" cx="60" cy="60" r="54" style="stroke-dasharray: 339.292; stroke-dashoffset: 339.292;" />
+            </svg>
+            <div class="score-text-container">
+                <div class="score-percentage">0%</div>
+                <div class="score-label">Trust Score</div>
+            </div>
+        </div>
+    ` : '';
 
     const marketStatsHTML = `
         <div class="summary-market-stats">
@@ -356,46 +439,21 @@ class DFNPatrol extends HTMLElement {
     const priceChange = market?.priceChange || {};
     const trendIndicatorHTML = `
       <div class="trend-indicator">
-        <div class="trend-item"><b>5 MIN</b><div class="${priceChange.m5 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.m5?.toFixed(2) ?? '0.00'}%</div></div>
-        <div class="trend-item"><b>1 HOUR</b><div class="${priceChange.h1 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.h1?.toFixed(2) ?? '0.00'}%</div></div>
-        <div class="trend-item"><b>6 HOURS</b><div class="${priceChange.h6 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.h6?.toFixed(2) ?? '0.00'}%</div></div>
-        <div class="trend-item"><b>24 HOURS</b><div class="${priceChange.h24 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.h24?.toFixed(2) ?? '0.00'}%</div></div>
-      </div>
+        </div>
     `;
 
     const socialsHTML = socials && socials.length > 0 ? `
         <div class="full-width">
             <h3>🔗 Socials</h3>
-            <div class="socials-list">
-                ${socials.map(social => {
-                    try {
-                        const link = social.url;
-                        if(!link) return '';
-                        const label = social.label || social.type.charAt(0).toUpperCase() + social.type.slice(1);
-                        return `<a href="${sanitizeUrl(link)}" target="_blank" rel="noopener nofollow">${sanitizeHTML(label)}</a>`;
-                    } catch(e) { return ''; }
-                }).join('')}
             </div>
-        </div>
     ` : '';
     
     const programmaticAccountsHTML = distribution.allLpAddresses && distribution.allLpAddresses.length > 0 ?
-      `<details class="programmatic-accounts-details"><summary>Pools, CEX, etc.: ${distribution.allLpAddresses.length}</summary><ul class="programmatic-list">${distribution.allLpAddresses.map(addr => `<li><a href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${addr.slice(0, 10)}...${addr.slice(-4)}</a></li>`).join('')}</ul></details>` : '';
+      `<details></details>` : '';
 
     const cascadeSimulatorHTML = liquidityDrain && liquidityDrain.length > 0 && market.marketCap > 0 ? `
         <div id="cascade-dump-simulator" class="full-width">
-            <h3>💥 Price Collapse Drill</h3>
-            <div class="sim-display">
-                <div class="sim-label">Market Cap:</div>
-                <div class="sim-bar-container">
-                    <div class="sim-bar">
-                        <span class="sim-bar-value">$${formatNum(market.marketCap)}</span>
-                    </div>
-                </div>
-            </div>
-            <div id="simulation-log" class="sim-log">Press the button to simulate "what-if" scenarios.</div>
-            <button id="start-sim-btn">Run Simulation</button>
-        </div>` : '';
+            </div>` : '';
 
 
     const newContent = `
@@ -408,7 +466,8 @@ class DFNPatrol extends HTMLElement {
                     ${addressHTML}
                     ${shareButtonHTML}
                 </div>
-            </div>
+             </div>
+            ${scoreHTML}
             ${marketStatsHTML}
         </div>
         ${trendIndicatorHTML}
