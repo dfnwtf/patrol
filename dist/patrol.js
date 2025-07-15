@@ -1,5 +1,5 @@
 // patrol.js
-console.log("[DFN Patrol] v4.9.1 initialized - WebSocket Handler");
+console.log("[DFN Patrol] v4.9.2 initialized - WebSocket Handler");
 let ws;
 
 function connectToWebSocket(token) {
@@ -14,8 +14,12 @@ function connectToWebSocket(token) {
 
   ws = new WebSocket(`wss://dfn.wtf/api/?embed=${token}`);
   
-  // --- NEW LINE ADDED HERE ---
-  if(panel) panel.setWebSocket(ws); // Pass the WebSocket connection to the component
+  // Передаем WebSocket соединение в компонент
+  if(panel) {
+      customElements.whenDefined("dfn-patrol").then(() => {
+        panel.setWebSocket(ws);
+      });
+  }
 
   const cleanup = () => {
       if (scanButton) {
@@ -24,14 +28,16 @@ function connectToWebSocket(token) {
       }
   };
 
+  // Этот обработчик теперь в основном нужен для первоначального отчета
   ws.addEventListener("message", (e) => {
       const data = JSON.parse(e.data);
+      // Первоначальный отчет по-прежнему устанавливается здесь
       if (panel && data.type === "report") {
           customElements.whenDefined("dfn-patrol").then(() => {
               panel.setReport(data.data);
           });
       }
-      // The component will now handle its own messages
+      // Остальные сообщения (precise_impact_data и т.д.) обрабатываются внутри самого компонента
   });
 
   ws.addEventListener("error", (e) => {
@@ -67,14 +73,10 @@ document.querySelector("#token-search")?.addEventListener("submit", (e) => {
   newPanel.setAttribute("embed", token);
   newPanel.id = "patrol";
   
-  // Ensure the container exists before appending
-  let patrolBlock = document.getElementById('patrol-block');
-  if(!patrolBlock) {
-      patrolBlock = document.createElement('section');
-      patrolBlock.id = 'patrol-block';
-      document.body.appendChild(patrolBlock); // Or a more specific container
+  const patrolBlock = document.getElementById('patrol-block');
+  if(patrolBlock) {
+    patrolBlock.appendChild(newPanel);
   }
-  patrolBlock.appendChild(newPanel);
   
   if (hiddenField) {
       hiddenField.remove();
