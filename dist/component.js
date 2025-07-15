@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v4.8.3 initialized - Address Copy Feature");
+console.log("[DFN Components] v4.8.4 initialized - Holder list spacing fix");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -77,7 +77,6 @@ template.innerHTML = `
     .token-name-symbol h2 { font-size: 1.8rem; margin: 0; line-height: 1.1; color: #fff; }
     .token-name-symbol span { font-size: 1rem; color: #999; margin-top: 4px; display: block; }
 
-    /* --- NEW STYLES FOR ADDRESS AND COPY ICON --- */
     .address-container {
         display: flex;
         align-items: center;
@@ -103,7 +102,6 @@ template.innerHTML = `
     .address-container:hover .copy-icon {
         stroke: #eee;
     }
-    /* --- END OF NEW STYLES --- */
 
     .summary-market-stats {
       display: grid;
@@ -177,6 +175,12 @@ template.innerHTML = `
     .drain-bar { background: linear-gradient(to right, #e05068, #ff6b7b); height: 100%; font-size: 0.8rem; line-height: 22px; text-align: right; color: #fff; padding-right: 8px; box-sizing: border-box; white-space: nowrap; }
     .drain-result { margin-left: 12px; font-weight: 600; text-align: left; color: #fff; }
 
+    @media (min-width: 901px) {
+        .token-logo {
+            width: 96px !important;
+            height: 96px !important;
+        }
+    }
     @media (max-width: 900px) {
         .summary-block { grid-template-columns: 1fr; }
         .summary-market-stats { text-align: left; }
@@ -206,7 +210,6 @@ class DFNPatrol extends HTMLElement {
     this.render();
   }
 
-  // --- NEW METHOD FOR COPYING ---
   handleAddressCopy() {
     if (!this.report?.tokenInfo?.address) return;
 
@@ -239,7 +242,6 @@ class DFNPatrol extends HTMLElement {
     const priceChangeColor = market?.priceChange?.h24 >= 0 ? 'text-ok' : 'text-bad';
     const price = !market?.priceUsd ? 'N/A' : (Number(market.priceUsd) < 0.000001 ? `$${Number(market.priceUsd).toExponential(2)}` : `$${Number(market.priceUsd).toLocaleString('en-US', {maximumFractionDigits: 8})}`);
     
-    // --- NEW: LOGIC FOR TRUNCATED ADDRESS ---
     let truncatedAddress = '';
     if(tokenInfo.address) {
         truncatedAddress = `${tokenInfo.address.slice(0, 4)}...${tokenInfo.address.slice(-4)}`;
@@ -340,7 +342,9 @@ class DFNPatrol extends HTMLElement {
             <div>
               <h3>💰 Top 10 Holders</h3>
               <ul>
-                  ${distribution.topHolders && distribution.topHolders.length > 0 ? distribution.topHolders.map(h => `<li><a href="https://solscan.io/account/${h.address}" target="_blank" rel="noopener">${h.address.slice(0,6)}...${h.address.slice(-4)}</a> (${h.percent}%)</li>`).join('') : '<li>No significant individual holders found.</li>'}
+                  ${distribution.topHolders && distribution.topHolders.length > 0
+                      ? distribution.topHolders.map(h => `<li><a href="https://solscan.io/account/${h.address}" target="_blank" rel="noopener">${h.address.slice(0,6)}...${h.address.slice(-4)}</a> (${h.percent}%)</li>`).join('') 
+                      : '<li>No significant individual holders found.</li>'}
               </ul>
               ${programmaticAccountsHTML}
             </div>
@@ -350,7 +354,6 @@ class DFNPatrol extends HTMLElement {
     
     this.container.innerHTML = newContent;
 
-    // --- ADD EVENT LISTENER FOR COPY ---
     this.shadowRoot.querySelector('.address-container')?.addEventListener('click', () => this.handleAddressCopy());
   }
 }
