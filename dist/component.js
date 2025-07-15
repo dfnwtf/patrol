@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v4.8.4 initialized - Holder list spacing fix");
+console.log("[DFN Components] v4.8.5 DEBUG - Using &nbsp; for spacing");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -343,7 +343,7 @@ class DFNPatrol extends HTMLElement {
               <h3>💰 Top 10 Holders</h3>
               <ul>
                   ${distribution.topHolders && distribution.topHolders.length > 0
-                      ? distribution.topHolders.map(h => `<li><a href="https://solscan.io/account/${h.address}" target="_blank" rel="noopener">${h.address.slice(0,6)}...${h.address.slice(-4)}</a> (${h.percent}%)</li>`).join('') 
+                      ? distribution.topHolders.map(h => `<li><a href="https://solscan.io/account/${h.address}" target="_blank" rel="noopener">${h.address.slice(0,6)}...${h.address.slice(-4)}</a>&nbsp;(${h.percent}%)</li>`).join('') 
                       : '<li>No significant individual holders found.</li>'}
               </ul>
               ${programmaticAccountsHTML}
