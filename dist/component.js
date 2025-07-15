@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v6.0.0 initialized - On-Demand Precise Simulation");
+console.log("[DFN Components] v4.9.4 initialized - What-If Scenario Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -111,18 +111,33 @@ template.innerHTML = `
     .programmatic-list { padding: 12px 0 4px 24px; list-style-type: square; font-size: 0.85em; }
     .programmatic-list li { margin-bottom: 8px; }
     
-    #precise-impact-simulator { text-align: center; background: #191919; padding: 24px; border-radius: 8px; border: 1px solid #282828;}
-    #precise-sim-btn {
-        background-color: var(--accent); color: #000; border: none; padding: 10px 20px;
-        border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    /* --- CASCADE DUMP SIMULATOR STYLES --- */
+    #cascade-dump-simulator { text-align: center; background: #191919; padding: 24px; border-radius: 8px; border: 1px solid #282828;}
+    #start-sim-btn {
+        background-color: var(--accent); color: #000; border: none; padding: 10px 20px; margin-top: 16px;
+        border-radius: 6px; font-weight: 600; cursor: pointer; transition: background-color 0.2s, transform 0.2s;
     }
-    #precise-sim-btn:hover:not(:disabled) { background-color: #ffc72c; transform: scale(1.05); }
-    #precise-sim-btn:disabled { background-color: #555; color: #999; cursor: not-allowed; transform: scale(1); }
-    .sim-result { margin-top: 16px; padding: 16px; background-color: #111; border-radius: 6px; text-align: center; display: none; animation: fadeInResult 0.5s ease forwards; }
-    .sim-result p { margin: 0; font-size: 1.1em; }
-    .sim-result span { font-size: 1.8em; font-weight: 700; color: #ff6b7b; display: block; margin-top: 8px; }
-    @keyframes fadeInResult { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
+    #start-sim-btn:hover:not(:disabled) { background-color: #ffc72c; transform: scale(1.05); }
+    #start-sim-btn:disabled { background-color: #555; color: #999; cursor: not-allowed; transform: scale(1); }
+    .sim-display { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; text-align: left; }
+    .sim-bar-container { width: 100%; height: 30px; background-color: #2a2a2a; border-radius: 6px; overflow: hidden; border: 1px solid #333; }
+    .sim-bar {
+        height: 100%; width: 100%;
+        background: linear-gradient(to right, #9eff9e, #34d399); /* Green for "healthy" state */
+        transition: width 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+        display: flex; align-items: center; justify-content: flex-end;
+        font-size: 0.9em; color: #000; font-weight: 600;
+        padding-right: 10px;
+        box-sizing: border-box;
+    }
+    .sim-bar.draining { background: linear-gradient(to right, #ff6b7b, #e05068); } /* Red when draining */
+    .sim-label { font-size: 0.9em; color: #aaa; }
+    .sim-log { margin-top: 16px; min-height: 105px; background-color: #111; border-radius: 6px; padding: 12px; text-align: left; font-family: monospace; font-size: 0.9em; color: #aaa; overflow: hidden; }
+    .sim-log-entry { animation: logFadeIn 0.5s ease; border-bottom: 1px solid #222; padding-bottom: 6px; margin-bottom: 6px; white-space: pre-wrap; }
+    .sim-log-entry strong { color: #eee; }
+    @keyframes logFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    /* --- END OF SIMULATOR STYLES --- */
+    
     @media (max-width: 900px) { .summary-block { grid-template-columns: 1fr; } .summary-market-stats { text-align: left; } }
     @media (max-width: 600px) { .summary-market-stats { grid-template-columns: repeat(2, 1fr); } .trend-indicator { grid-template-columns: repeat(2, 1fr); } }
   </style>
@@ -137,70 +152,10 @@ class DFNPatrol extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.shadowRoot.appendChild(template.content.cloneNode(true));
     this.container = this.shadowRoot.querySelector('#report-container');
-    this.ws = null;
     this.copyIconSVG = `<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
     this.checkIconSVG = `<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9eff9e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
   }
   
-  setWebSocket(ws) {
-      this.ws = ws;
-      this.ws.addEventListener('message', (e) => this.handleWebSocketMessage(e));
-  }
-  
-  handleWebSocketMessage(event) {
-      try {
-          const message = JSON.parse(event.data);
-          // We only care about the precise impact data here. The initial report is handled by setReport.
-          if (message.type === 'precise_impact_data') {
-              this.displayPreciseImpact(message.data);
-          } else if (message.type === 'precise_impact_error') {
-              this.displayPreciseImpact({ error: message.data });
-          }
-      } catch (e) {
-          console.error("Error handling WebSocket message:", e);
-      }
-  }
-
-  requestPreciseImpact() {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-        const btn = this.shadowRoot.querySelector('#precise-sim-btn');
-        const resultBlock = this.shadowRoot.querySelector('.sim-result');
-        
-        if (btn) {
-            btn.disabled = true;
-            btn.textContent = 'Calculating...';
-        }
-        if (resultBlock) resultBlock.style.display = 'none';
-
-        this.ws.send(JSON.stringify({ type: 'get_precise_impact' }));
-    } else {
-        console.error("WebSocket is not connected.");
-        this.displayPreciseImpact({ error: 'Connection lost. Please scan again.' });
-    }
-  }
-
-  displayPreciseImpact(data) {
-      const resultBlock = this.shadowRoot.querySelector('.sim-result');
-      const btn = this.shadowRoot.querySelector('#precise-sim-btn');
-
-      if (!resultBlock || !btn) return;
-
-      if (data.error) {
-          resultBlock.innerHTML = `<p style="color: #ff6b7b;">${sanitizeHTML(data.error)}</p>`;
-      } else {
-          const drop = parseFloat(data.marketCapDropPercentage).toFixed(2);
-          const finalMC = Number(data.marketCapAfterSale).toLocaleString('en-US', {maximumFractionDigits: 0});
-          resultBlock.innerHTML = `
-            <p>A Top 10 holder dump would cause a price collapse of:</p>
-            <span>-${drop}%</span>
-            <p style="margin-top: 12px; font-size: 0.9em; color: #aaa;">Resulting Market Cap: <strong>$${finalMC}</strong></p>
-          `;
-      }
-      resultBlock.style.display = 'block';
-      btn.disabled = false;
-      btn.textContent = 'Recalculate Precise Impact';
-  }
-
   setReport(report) {
     this.report = report;
     this.render();
@@ -216,6 +171,61 @@ class DFNPatrol extends HTMLElement {
             setTimeout(() => { addrContainer.innerHTML = `${this.copyIconSVG} <span>${originalText}</span>`; }, 1500);
         }
     }).catch(err => { console.error('Failed to copy address: ', err); });
+  }
+
+  // --- REWRITTEN "WHAT-IF" SCENARIO SIMULATION LOGIC ---
+  async runSimulation() {
+      const btn = this.shadowRoot.querySelector('#start-sim-btn');
+      const log = this.shadowRoot.querySelector('#simulation-log');
+      const mcBar = this.shadowRoot.querySelector('.sim-bar');
+      const mcBarValue = this.shadowRoot.querySelector('.sim-bar-value');
+      
+      const drainScenarios = this.report.liquidityDrain;
+      if (!drainScenarios || drainScenarios.length === 0) {
+          log.innerHTML = "Not enough data for simulation.";
+          return;
+      }
+      
+      const initialMarketCap = this.report.market.marketCap;
+      if (!btn || !log || !mcBar || !mcBarValue || !initialMarketCap) return;
+
+      btn.disabled = true;
+      btn.textContent = 'Simulating...';
+      log.innerHTML = '';
+      
+      const formatAsCurrency = (num) => `$${Number(num).toLocaleString('en-US', {maximumFractionDigits: 0})}`;
+      const wait = (ms) => new Promise(res => setTimeout(res, ms));
+
+      const updateBar = (mc) => {
+          const barWidth = (mc / initialMarketCap) * 100;
+          mcBar.style.width = `${barWidth < 0 ? 0 : barWidth}%`;
+          mcBarValue.textContent = formatAsCurrency(mc);
+      };
+      
+      const logEvent = (message) => {
+          const entry = document.createElement('div');
+          entry.className = 'sim-log-entry';
+          entry.innerHTML = message;
+          log.prepend(entry);
+      };
+      
+      // --- The "What-If" Simulation Story ---
+      for (const scenario of drainScenarios) {
+          // Reset the bar to 100% to show the full potential of the next scenario
+          mcBar.classList.remove('draining');
+          updateBar(initialMarketCap);
+          logEvent(`<strong>Scenario Analysis:</strong> What if <strong>${scenario.group}</strong> sold everything?`);
+          await wait(2500); // Pause to read the scenario
+
+          mcBar.classList.add('draining');
+          updateBar(scenario.marketCapAfterSale);
+          logEvent(`Price would collapse by <strong style="color: #ff6b7b;">-${scenario.marketCapDropPercentage}%</strong>. New Market Cap: <strong>${formatAsCurrency(scenario.marketCapAfterSale)}</strong>`);
+          await wait(3000); // Pause to see the result
+      }
+      
+      logEvent(`<strong>SIMULATION END:</strong> High ownership concentration poses a significant risk.`);
+      btn.disabled = false;
+      btn.textContent = 'Run Simulation Again';
   }
 
   render() {
@@ -284,16 +294,20 @@ class DFNPatrol extends HTMLElement {
     const programmaticAccountsHTML = distribution.allLpAddresses && distribution.allLpAddresses.length > 0 ?
       `<details class="programmatic-accounts-details"><summary>Pools, CEX, etc.: ${distribution.allLpAddresses.length}</summary><ul class="programmatic-list">${distribution.allLpAddresses.map(addr => `<li><a href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${addr.slice(0, 10)}...${addr.slice(-4)}</a></li>`).join('')}</ul></details>` : '';
 
-    const preciseSimulatorHTML = market.marketCap > 0 ? `
-        <div id="precise-impact-simulator" class="full-width">
-            <h3>💥 Precise Impact Drill</h3>
-            <p style="max-width: 500px; margin: 0 auto 16px; color: #aaa; font-size: 0.9em;">
-                This tool makes a real-time request to calculate the exact price impact of the Top 10 holders selling all their tokens at once.
-            </p>
-            <button id="precise-sim-btn">Calculate Precise Impact</button>
-            <div class="sim-result"></div>
-        </div>
-    ` : '';
+    const cascadeSimulatorHTML = liquidityDrain && liquidityDrain.length > 0 && market.marketCap > 0 ? `
+        <div id="cascade-dump-simulator" class="full-width">
+            <h3>💥 Price Collapse Drill</h3>
+            <div class="sim-display">
+                <div class="sim-label">Market Cap ("Health"):</div>
+                <div class="sim-bar-container">
+                    <div class="sim-bar">
+                        <span class="sim-bar-value">$${formatNum(market.marketCap)}</span>
+                    </div>
+                </div>
+            </div>
+            <div id="simulation-log" class="sim-log">Press the button to simulate "what-if" scenarios.</div>
+            <button id="start-sim-btn">Run Simulation</button>
+        </div>` : '';
 
 
     const newContent = `
@@ -333,14 +347,14 @@ class DFNPatrol extends HTMLElement {
               </ul>
               ${programmaticAccountsHTML}
             </div>
-            ${preciseSimulatorHTML}
+            ${cascadeSimulatorHTML}
         </div>
     `;
     
     this.container.innerHTML = newContent;
 
     this.shadowRoot.querySelector('.address-container')?.addEventListener('click', () => this.handleAddressCopy());
-    this.shadowRoot.querySelector('#precise-sim-btn')?.addEventListener('click', () => this.requestPreciseImpact());
+    this.shadowRoot.querySelector('#start-sim-btn')?.addEventListener('click', () => this.runSimulation());
   }
 }
 
