@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.1.5 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.1.6 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
