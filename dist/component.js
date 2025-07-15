@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.1.3 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.1.4 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -83,16 +83,30 @@ template.innerHTML = `
     .token-name-symbol h2 { font-size: 1.8rem; margin: 0; line-height: 1.1; color: #fff; }
     .token-name-symbol span { font-size: 1rem; color: #999; margin-top: 4px; display: block; }
 
-    .address-container { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; font-family: monospace; font-size: 0.9em; color: #888; cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: background-color 0.2s; }
+    /* ИЗМЕНЕНИЕ ЗДЕСЬ: display: flex вместо inline-flex */
+    .address-container { 
+        display: flex; 
+        align-items: center; 
+        gap: 8px; 
+        margin-top: 12px; /* Увеличим отступ сверху */
+        font-family: monospace; 
+        font-size: 0.9em; 
+        color: #888; 
+        cursor: pointer; 
+        padding: 4px 8px; 
+        border-radius: 4px; 
+        transition: background-color 0.2s; 
+        width: fit-content; /* Чтобы фон не растягивался на всю ширину */
+    }
     .address-container:hover { background-color: #252525; }
     .address-container .copy-icon { width: 14px; height: 14px; stroke: #888; transition: stroke 0.2s; }
     .address-container:hover .copy-icon { stroke: #eee; }
 
-    /* НОВЫЕ СТИЛИ ДЛЯ КНОПКИ SHARE */
+    /* ИЗМЕНЕНИЕ ЗДЕСЬ: display: flex вместо inline-flex */
     .share-button {
         background: none;
         border: none;
-        display: inline-flex;
+        display: flex;
         align-items: center;
         gap: 8px;
         margin-top: 8px;
@@ -103,6 +117,7 @@ template.innerHTML = `
         padding: 4px 8px;
         border-radius: 4px;
         transition: background-color 0.2s;
+        width: fit-content; /* Чтобы фон не растягивался на всю ширину */
     }
     .share-button:hover {
         background-color: #252525;
@@ -117,7 +132,6 @@ template.innerHTML = `
     .share-button:hover .copy-icon {
         stroke: #eee;
     }
-    /* КОНЕЦ НОВЫХ СТИЛЕЙ */
 
     .summary-market-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 24px; text-align: right; }
     .stat-item { display: flex; flex-direction: column; }
