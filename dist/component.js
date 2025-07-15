@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v4.8.8 initialized - Market Cap Collapse Simulation");
+console.log("[DFN Components] v4.8.9 initialized - Market Cap Collapse Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
