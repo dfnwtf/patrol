@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v4.8.9 initialized - Market Cap Collapse Simulation");
+console.log("[DFN Components] v4.9.0 initialized - Agressive Cascade Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -131,7 +131,7 @@ template.innerHTML = `
         box-sizing: border-box;
     }
     .sim-label { font-size: 0.9em; color: #aaa; }
-    .sim-log { margin-top: 16px; min-height: 125px; background-color: #111; border-radius: 6px; padding: 12px; text-align: left; font-family: monospace; font-size: 0.9em; color: #aaa; overflow: hidden; }
+    .sim-log { margin-top: 16px; min-height: 145px; background-color: #111; border-radius: 6px; padding: 12px; text-align: left; font-family: monospace; font-size: 0.9em; color: #aaa; overflow: hidden; }
     .sim-log-entry { animation: logFadeIn 0.5s ease; border-bottom: 1px solid #222; padding-bottom: 6px; margin-bottom: 6px; white-space: pre-wrap; }
     .sim-log-entry strong { color: #eee; }
     @keyframes logFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -172,7 +172,6 @@ class DFNPatrol extends HTMLElement {
     }).catch(err => { console.error('Failed to copy address: ', err); });
   }
 
-  // --- REWRITTEN SIMULATION LOGIC TO USE MARKET CAP ---
   async runSimulation() {
       const btn = this.shadowRoot.querySelector('#start-sim-btn');
       const log = this.shadowRoot.querySelector('#simulation-log');
@@ -180,6 +179,8 @@ class DFNPatrol extends HTMLElement {
       const mcBarValue = this.shadowRoot.querySelector('.sim-bar-value');
       
       const topHolders = this.report.distribution.topHolders;
+      const top10DrainInfo = this.report.liquidityDrain.find(d => d.group === 'Top 10 Holders');
+
       if (!topHolders || topHolders.length < 5) {
           log.innerHTML = "Not enough holder data for a full simulation.";
           return;
@@ -210,46 +211,56 @@ class DFNPatrol extends HTMLElement {
           log.prepend(entry);
       };
 
-      const simulateSale = async (actorName, holder, sellPercentage) => {
+      const simulateSale = async (holder) => {
           const holderShare = parseFloat(holder.percent);
-          const sellAmountPercent = holderShare * (sellPercentage / 100);
-          
-          // Simplified model: holder selling X% of total supply reduces current market cap by X%.
-          const marketCapImpact = currentMarketCap * (sellAmountPercent / 100);
+          const marketCapImpact = currentMarketCap * (holderShare / 100);
           
           currentMarketCap -= marketCapImpact;
           updateBar(currentMarketCap);
           await wait(1000);
       };
 
-      // --- The Simulation Story ---
+      // --- The New Simulation Story ---
       updateBar(initialMarketCap);
       await wait(500);
 
       // Act 1
-      logEvent(`<strong>ACT 1:</strong> A major player (Holder #2) starts taking profit...`);
-      await simulateSale("Profit Taker", topHolders[1], 70);
+      logEvent(`<strong>ACT 1:</strong> The largest whale (Holder #1, ${topHolders[0].percent}%) initiates a sale...`);
+      await simulateSale(topHolders[0]);
 
       // Act 2
+      await wait(1500);
+      logEvent(`<strong>ACT 2:</strong> This move triggers a panic cascade from other large holders...`);
+      await wait(1200);
+      logEvent(`...Holder #2 (${topHolders[1].percent}%) is dumping!`);
+      await simulateSale(topHolders[1]);
+
+      await wait(800);
+      logEvent(`...Holder #3 (${topHolders[2].percent}%) follows suit!`);
+      await simulateSale(topHolders[2]);
+      
+      await wait(800);
+      logEvent(`...Holders #4 & #5 are also selling out!`);
+      await simulateSale(topHolders[3]);
+      await simulateSale(topHolders[4]);
+
+
+      // Act 3: The Finale
+      await wait(2500);
+      logEvent(`<strong>FINALE:</strong> What if all Top 10 Holders sold?`);
+      await wait(1500);
+      
+      if(top10DrainInfo && top10DrainInfo.marketCapAfterSale) {
+        const finalMC = top10DrainInfo.marketCapAfterSale;
+        updateBar(finalMC);
+        logEvent(`Total price collapse of <strong style="color: #ff6b7b;">-${top10DrainInfo.marketCapDropPercentage}%</strong>. Final Market Cap: <strong>${formatAsCurrency(finalMC)}</strong>`);
+      } else {
+        logEvent(`Top 10 holder impact data not available. Concluding simulation.`);
+        updateBar(currentMarketCap); // Show the final state from the cascade
+      }
+
       await wait(2000);
-      logEvent(`<strong>ACT 2:</strong> The price dip triggers a panic sell-off...`);
-      await wait(500);
-      logEvent(`...Holder #4 (<strong>${topHolders[3].percent}%</strong>) is dumping their entire position! Price crashes!`);
-      await simulateSale("Panic Seller 1", topHolders[3], 100);
-
-      await wait(1000);
-      logEvent(`...Holder #5 (<strong>${topHolders[4].percent}%</strong>) follows suit! Further collapse.`);
-      await simulateSale("Panic Seller 2", topHolders[4], 100);
-
-      // Act 3
-      await wait(2000);
-      logEvent(`<strong>ACT 3:</strong> The initial whale exits their remaining position into the crash.`);
-      await simulateSale("Profit Taker", topHolders[1], 30);
-
-      // Conclusion
-      await wait(2000);
-      logEvent(`<strong>SIMULATION END:</strong> Market cap critically compromised. Initial profit-taking led to a cascade failure.`);
-
+      logEvent(`<strong>SIMULATION END:</strong> High ownership concentration poses a significant risk.`);
       btn.disabled = false;
       btn.textContent = 'Run Simulation Again';
   }
@@ -331,7 +342,7 @@ class DFNPatrol extends HTMLElement {
                     </div>
                 </div>
             </div>
-            <div id="simulation-log" class="sim-log">Press the button to simulate a price collapse.</div>
+            <div id="simulation-log" class="sim-log">Press the button to simulate a price collapse caused by top holders.</div>
             <button id="start-sim-btn">Run Simulation</button>
         </div>` : '';
 
