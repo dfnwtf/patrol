@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.0.7 initialized - Final Version with Render Event");
+console.log("[DFN Components] v5.0.8 initialized - Final Version with Render Event");
 
 function sanitizeHTML(str) {
     if (!str) return '';
