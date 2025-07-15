@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v4.9.6 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v4.9.7 initialized - Final What-If Simulation with percentages");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -123,14 +123,14 @@ template.innerHTML = `
     .sim-bar-container { width: 100%; height: 30px; background-color: #2a2a2a; border-radius: 6px; overflow: hidden; border: 1px solid #333; }
     .sim-bar {
         height: 100%; width: 100%;
-        background: linear-gradient(to right, #9eff9e, #34d399); /* Green for "healthy" state */
+        background: linear-gradient(to right, #9eff9e, #34d399);
         transition: width 1.2s cubic-bezier(0.25, 1, 0.5, 1);
         display: flex; align-items: center; justify-content: flex-end;
         font-size: 0.9em; color: #000; font-weight: 600;
         padding-right: 10px;
         box-sizing: border-box;
     }
-    .sim-bar.draining { background: linear-gradient(to right, #ff6b7b, #e05068); color: #fff; } /* Red when draining */
+    .sim-bar.draining { background: linear-gradient(to right, #ff6b7b, #e05068); color: #fff; }
     .sim-label { font-size: 0.9em; color: #aaa; }
     .sim-log { margin-top: 16px; min-height: 105px; background-color: #111; border-radius: 6px; padding: 12px; text-align: left; font-family: monospace; font-size: 0.9em; color: #aaa; overflow: hidden; }
     .sim-log-entry { animation: logFadeIn 0.5s ease; border-bottom: 1px solid #222; padding-bottom: 6px; margin-bottom: 6px; white-space: pre-wrap; }
@@ -173,7 +173,6 @@ class DFNPatrol extends HTMLElement {
     }).catch(err => { console.error('Failed to copy address: ', err); });
   }
 
-  // --- FINAL SIMULATION LOGIC: CONTINUOUS BAR + PRECISE DATA ---
   async runSimulation() {
       const btn = this.shadowRoot.querySelector('#start-sim-btn');
       const log = this.shadowRoot.querySelector('#simulation-log');
@@ -181,6 +180,7 @@ class DFNPatrol extends HTMLElement {
       const mcBarValue = this.shadowRoot.querySelector('.sim-bar-value');
       
       const drainScenarios = this.report.liquidityDrain;
+      const topHolders = this.report.distribution.topHolders;
       if (!drainScenarios || drainScenarios.length === 0) {
           log.innerHTML = "Not enough data for simulation.";
           return;
@@ -209,22 +209,32 @@ class DFNPatrol extends HTMLElement {
           log.prepend(entry);
       };
       
-      // --- The "What-If" Simulation Story with Continuous Bar ---
-      mcBar.classList.add('draining');
       updateBar(initialMarketCap);
+      mcBar.classList.remove('draining');
       logEvent(`Simulation started. Initial Market Cap: <strong>${formatAsCurrency(initialMarketCap)}</strong>`);
       await wait(1500);
 
       for (const scenario of drainScenarios) {
-          logEvent(`Analyzing impact of <strong>${scenario.group}</strong> sale...`);
-          await wait(2000); // Pause to read the scenario
+          mcBar.classList.add('draining');
+          
+          let ownershipPercent = 0;
+          const match = scenario.group.match(/Top (\d+)/);
+          if (match && topHolders) {
+              const count = parseInt(match[1], 10);
+              if (topHolders.length >= count) {
+                  ownershipPercent = topHolders.slice(0, count).reduce((sum, h) => sum + parseFloat(h.percent), 0);
+              }
+          }
+          const ownershipText = ownershipPercent > 0 ? ` (owning ${ownershipPercent.toFixed(2)}% of supply)` : '';
+
+          logEvent(`Analyzing impact of <strong>${scenario.group}</strong>${ownershipText} selling...`);
+          await wait(2000);
 
           updateBar(scenario.marketCapAfterSale);
-          logEvent(`→ Price collapses by <strong style="color: #ff6b7b;">-${scenario.marketCapDropPercentage}%</strong>. New Market Cap: <strong>${formatAsCurrency(scenario.marketCapAfterSale)}</strong>`);
-          await wait(3000); // Pause to see the result
+          logEvent(`→ Price would collapse by <strong style="color: #ff6b7b;">-${scenario.marketCapDropPercentage}%</strong>. New Market Cap: <strong>${formatAsCurrency(scenario.marketCapAfterSale)}</strong>`);
+          await wait(3000);
       }
       
-      mcBar.classList.remove('draining');
       logEvent(`<strong>SIMULATION END.</strong>`);
       btn.disabled = false;
       btn.textContent = 'Run Simulation Again';
