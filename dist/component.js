@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v4.9.8 initialized - Price Chart Simulation");
+console.log("[DFN Components] v4.9.9 initialized - Candlestick Chart Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -110,7 +110,7 @@ template.innerHTML = `
     details[open] > summary { list-style-type: '▾ '; }
     .programmatic-list { padding: 12px 0 4px 24px; list-style-type: square; font-size: 0.85em; }
     .programmatic-list li { margin-bottom: 8px; }
-
+    
     /* --- CHART SIMULATOR STYLES --- */
     #chart-simulator { text-align: center; background: #191919; padding: 24px; border-radius: 8px; border: 1px solid #282828;}
     .chart-container { position: relative; height: 250px; width: 100%; margin-top: 16px; }
@@ -120,7 +120,11 @@ template.innerHTML = `
     }
     #start-sim-btn:hover:not(:disabled) { background-color: #ffc72c; transform: scale(1.05); }
     #start-sim-btn:disabled { background-color: #555; color: #999; cursor: not-allowed; transform: scale(1); }
-    
+    .sim-log { margin-top: 16px; min-height: 80px; background-color: #111; border-radius: 6px; padding: 12px; text-align: left; font-family: monospace; font-size: 0.9em; color: #aaa; overflow: hidden; display: none; }
+    .sim-log-entry { animation: logFadeIn 0.5s ease; border-bottom: 1px solid #222; padding-bottom: 6px; margin-bottom: 6px; }
+    .sim-log-entry strong { color: #eee; }
+    @keyframes logFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
     @media (max-width: 900px) { .summary-block { grid-template-columns: 1fr; } .summary-market-stats { text-align: left; } }
     @media (max-width: 600px) { .summary-market-stats { grid-template-columns: repeat(2, 1fr); } .trend-indicator { grid-template-columns: repeat(2, 1fr); } }
   </style>
@@ -163,39 +167,44 @@ class DFNPatrol extends HTMLElement {
     }
     const canvas = this.shadowRoot.querySelector('#price-chart-canvas');
     const initialPrice = this.report?.market?.priceUsd;
-    if (!canvas || typeof initialPrice === 'undefined') return;
+    if (!canvas || typeof initialPrice === 'undefined' || typeof Chart === 'undefined' || !Chart.FinancialController) {
+        if(canvas) canvas.parentElement.style.display = 'none';
+        return;
+    }
     
     const ctx = canvas.getContext('2d');
+    
+    const initialData = {
+        x: Date.now() - (10 * 60 * 1000), // 10 minutes ago
+        o: initialPrice,
+        h: initialPrice * 1.001,
+        l: initialPrice * 0.999,
+        c: initialPrice
+    };
+
     this.priceChart = new Chart(ctx, {
-        type: 'bar',
+        type: 'candlestick',
         data: {
-            labels: ['Current Price'],
             datasets: [{
-                data: [initialPrice],
-                backgroundColor: ['#34d399'],
-                borderColor: ['#9eff9e'],
-                borderWidth: 1,
-                barPercentage: 0.5,
-                categoryPercentage: 1.0
+                data: [initialData]
             }]
         },
         options: {
             maintainAspectRatio: false,
             scales: {
+                x: {
+                    type: 'time',
+                    time: { tooltipFormat: 'll HH:mm' },
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { display: false }
+                },
                 y: {
                     beginAtZero: false,
-                    ticks: {
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { 
                         color: '#888',
-                        callback: function(value) {
-                             if (value === 0) return '$0';
-                             return '$' + (Number(value) < 0.00001 ? Number(value).toExponential(1) : Number(value).toPrecision(2));
-                        }
-                    },
-                    grid: { color: 'rgba(255,255,255,0.05)' }
-                },
-                x: {
-                    ticks: { color: '#888' },
-                    grid: { color: 'transparent' }
+                        maxTicksLimit: 8
+                    }
                 }
             },
             plugins: {
@@ -203,7 +212,8 @@ class DFNPatrol extends HTMLElement {
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return 'Price: $' + Number(context.raw).toPrecision(6);
+                            const d = context.raw;
+                            return `O: ${d.o.toPrecision(4)} H: ${d.h.toPrecision(4)} L: ${d.l.toPrecision(4)} C: ${d.c.toPrecision(4)}`;
                         }
                     }
                 }
@@ -214,34 +224,54 @@ class DFNPatrol extends HTMLElement {
 
   async runSimulation() {
       const btn = this.shadowRoot.querySelector('#start-sim-btn');
-      if (!this.priceChart || !this.report || !btn) return;
+      const log = this.shadowRoot.querySelector('#simulation-log');
+      if (!this.priceChart || !this.report || !btn || !log) return;
 
       btn.disabled = true;
       btn.textContent = 'Simulating...';
+      log.innerHTML = '';
+      log.style.display = 'block';
 
-      // Reset chart to initial state before running
       this.initPriceChart(); 
-      await new Promise(res => setTimeout(res, 500));
+      await new Promise(res => setTimeout(res, 100));
 
-      const initialPrice = this.report.market.priceUsd;
       const drainScenarios = this.report.liquidityDrain;
-      
+      let lastPrice = this.report.market.priceUsd;
+      let lastTimestamp = this.priceChart.data.datasets[0].data[0].x;
+      const initialPrice = this.report.market.priceUsd;
+
       const wait = (ms) => new Promise(res => setTimeout(res, ms));
 
+      const logEvent = (message) => {
+          const entry = document.createElement('div');
+          entry.className = 'sim-log-entry';
+          entry.innerHTML = message;
+          log.prepend(entry);
+      };
+
       for (const scenario of drainScenarios) {
-          await wait(1500);
+          await wait(2000);
 
-          const priceDropPercent = parseFloat(scenario.marketCapDropPercentage) / 100;
-          const newPrice = initialPrice * (1 - priceDropPercent);
+          const newPrice = initialPrice * (1 - (parseFloat(scenario.marketCapDropPercentage) / 100));
           
-          this.priceChart.data.labels.push(scenario.group.replace(' Holders', ''));
-          this.priceChart.data.datasets[0].data.push(newPrice);
-          this.priceChart.data.datasets[0].backgroundColor.push('#e05068');
-          this.priceChart.data.datasets[0].borderColor.push('#ff6b7b');
+          logEvent(`Simulating sale by <strong>${scenario.group}</strong>... Price drops.`);
           
+          const newDataPoint = {
+              x: lastTimestamp + (60 * 1000), // Add 1 minute for each candle
+              o: lastPrice,
+              h: lastPrice,
+              l: newPrice,
+              c: newPrice
+          };
+          
+          this.priceChart.data.datasets[0].data.push(newDataPoint);
           this.priceChart.update();
-      }
 
+          lastPrice = newPrice;
+          lastTimestamp = newDataPoint.x;
+      }
+      
+      logEvent('<strong>Simulation Complete.</strong>');
       btn.textContent = 'Run Simulation Again';
       btn.disabled = false;
   }
@@ -314,13 +344,14 @@ class DFNPatrol extends HTMLElement {
 
     const chartSimulatorHTML = liquidityDrain && liquidityDrain.length > 0 && market.marketCap > 0 ? `
         <div id="chart-simulator" class="full-width">
-            <h3>💥 Price Collapse Drill</h3>
+            <h3>💥 Price Chart Simulation</h3>
             <p style="max-width: 500px; margin: 0 auto 16px; color: #aaa; font-size: 0.9em;">
                 This simulation shows how the price would collapse based on sales from top holder groups.
             </p>
             <div class="chart-container">
                 <canvas id="price-chart-canvas"></canvas>
             </div>
+            <div id="simulation-log" class="sim-log"></div>
             <button id="start-sim-btn">Run Simulation</button>
         </div>` : '';
 
