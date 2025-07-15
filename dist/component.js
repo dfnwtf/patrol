@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.1.4 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.1.5 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -83,12 +83,11 @@ template.innerHTML = `
     .token-name-symbol h2 { font-size: 1.8rem; margin: 0; line-height: 1.1; color: #fff; }
     .token-name-symbol span { font-size: 1rem; color: #999; margin-top: 4px; display: block; }
 
-    /* ИЗМЕНЕНИЕ ЗДЕСЬ: display: flex вместо inline-flex */
     .address-container { 
         display: flex; 
         align-items: center; 
         gap: 8px; 
-        margin-top: 12px; /* Увеличим отступ сверху */
+        margin-top: 12px;
         font-family: monospace; 
         font-size: 0.9em; 
         color: #888; 
@@ -96,13 +95,12 @@ template.innerHTML = `
         padding: 4px 8px; 
         border-radius: 4px; 
         transition: background-color 0.2s; 
-        width: fit-content; /* Чтобы фон не растягивался на всю ширину */
+        width: fit-content;
     }
     .address-container:hover { background-color: #252525; }
     .address-container .copy-icon { width: 14px; height: 14px; stroke: #888; transition: stroke 0.2s; }
     .address-container:hover .copy-icon { stroke: #eee; }
 
-    /* ИЗМЕНЕНИЕ ЗДЕСЬ: display: flex вместо inline-flex */
     .share-button {
         background: none;
         border: none;
@@ -117,7 +115,7 @@ template.innerHTML = `
         padding: 4px 8px;
         border-radius: 4px;
         transition: background-color 0.2s;
-        width: fit-content; /* Чтобы фон не растягивался на всю ширину */
+        width: fit-content;
     }
     .share-button:hover {
         background-color: #252525;
@@ -419,10 +417,11 @@ class DFNPatrol extends HTMLElement {
             <div>
               <h3>🛡️ Security Flags</h3>
               <ul>
+                ${security.launchpad ? `<li class="ok">Launched on a trusted platform: ${sanitizeHTML(security.launchpad)}.</li>` : ''}
                 ${security.hackerFound ? `<li class="bad">${sanitizeHTML(security.hackerFound)}</li>` : ''}
                 ${'holderConcentration' in security && security.holderConcentration > 0 ? `<li class="${security.holderConcentration > 25 ? 'bad' : (security.holderConcentration > 10 ? 'warn' : 'ok')}">Top 10 holders own ${security.holderConcentration.toFixed(2)}%.</li>` : ''}
                 ${security.isCto ? `<li class="ok">Community Takeover</li>` : ''}
-                ${security.lpStatus ? `<li class="${security.lpStatus === 'Burned' ? 'ok' : 'bad'}">Liquidity is ${security.lpStatus}.</li>` : '<li>Liquidity status is Unknown.</li>'}
+                ${security.lpStatus ? `<li class="${security.lpStatus === 'Burned' || security.lpStatus === 'Locked/Burned' ? 'ok' : 'bad'}">Liquidity is ${security.lpStatus}.</li>` : '<li>Liquidity status is Unknown.</li>'}
                 ${'isMutable' in security ? `<li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>` : ''}
                 ${'freezeAuthorityEnabled' in security ? `<li class="${!security.freezeAuthorityEnabled ? 'ok' : 'bad'}">${!security.freezeAuthorityEnabled ? 'Freeze authority is disabled.' : 'Freeze authority is enabled.'}</li>` : ''}
                 ${'mintRenounced' in security ? `<li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? 'Mint authority is renounced.' : 'Dev can mint more tokens.'}</li>` : ''}
