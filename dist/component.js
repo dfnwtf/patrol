@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.3.3 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.3.4 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -62,29 +62,24 @@ template.innerHTML = `
     a { color: var(--accent, #FFD447); text-decoration: none; font-weight: 500; }
     a:hover { text-decoration: underline; }
 
-    /* НОВАЯ, УПРОЩЕННАЯ СТРУКТУРА */
+    /* БАЗОВЫЕ СТИЛИ ДЛЯ ДЕСКТОПА */
     .summary-block {
       display: flex;
-      flex-direction: column;
-      gap: 24px;
+      flex-wrap: wrap;
+      gap: 16px 24px;
       padding: 24px;
       background: #191919;
       border-radius: 8px;
       border: 1px solid #282828;
       margin-bottom: 24px;
-    }
-    .summary-header { /* Новый контейнер для информации и оценки */
-      display: flex;
-      gap: 24px;
       align-items: center;
-      flex-wrap: wrap; /* Позволяет переноситься, если нужно */
     }
     .summary-token-info {
         display: flex;
         align-items: center;
         gap: 16px;
-        flex: 1 1 300px; /* Позволяет расти и сжиматься с базовой шириной 300px */
-        min-width: 0; 
+        flex: 1 1 auto; /* Позволяет расти и сжиматься */
+        min-width: 0;
     }
     .token-logo { 
         width: 48px; 
@@ -95,7 +90,6 @@ template.innerHTML = `
         flex-shrink: 0; 
     }
     .token-name-symbol {
-        min-width: 0;
         overflow: hidden;
     }
     .token-name-symbol h2 {
@@ -160,7 +154,14 @@ template.innerHTML = `
         color: var(--accent, #FFD447);
     }
 
-    .summary-market-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 24px; text-align: right; }
+    .summary-market-stats { 
+        display: grid; 
+        grid-template-columns: repeat(3, 1fr); 
+        gap: 16px 24px; 
+        text-align: right;
+        flex-basis: 100%; /* Заставляет этот блок всегда быть на новой строке */
+        order: 3; /* Порядок отображения: 3-й */
+    }
     .stat-item { display: flex; flex-direction: column; }
     .stat-item b { font-size: 0.9rem; color: #888; font-weight: 500; margin-bottom: 4px; text-transform: uppercase; }
     .stat-item span { font-size: 1.2rem; font-weight: 600; color: #fff; }
@@ -174,6 +175,7 @@ template.innerHTML = `
         height: 120px;
         margin-left: auto;
         flex-shrink: 0;
+        order: 2; /* Порядок отображения: 2-й */
     }
     .score-svg {
         width: 100%;
@@ -272,24 +274,30 @@ template.innerHTML = `
       to   { opacity: 1; }
     }
 
-    /* ИСПРАВЛЕННЫЕ МЕДИА-ЗАПРОСЫ */
+    /* ФИНАЛЬНЫЕ МЕДИА-ЗАПРОСЫ */
     @media (max-width: 950px) {
         .summary-market-stats { 
             grid-template-columns: repeat(2, 1fr);
         }
     }
-    @media (max-width: 680px) {
-        .summary-header {
+    @media (max-width: 768px) {
+        .summary-block {
             flex-direction: column;
             align-items: center;
         }
         .summary-token-info {
-            flex-direction: column;
-            text-align: center;
+             order: 1;
+             flex-direction: column;
+             text-align: center;
         }
         .score-container {
-            margin-left: 0;
-            margin-top: 16px;
+             order: 2;
+             margin: 20px 0 0 0;
+        }
+        .summary-market-stats {
+            order: 3;
+            width: 100%;
+            text-align: left;
         }
     }
   </style>
@@ -524,7 +532,7 @@ class DFNPatrol extends HTMLElement {
             <button id="start-sim-btn">Run Simulation</button>
         </div>` : '';
 
-    // ИЗМЕНЕННАЯ СТРУКТУРА HTML
+
     const newContent = `
         <div class="summary-header">
             <div class="summary-token-info">
