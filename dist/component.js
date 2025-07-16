@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.2.0 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.2.1 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -183,7 +183,7 @@ template.innerHTML = `
         color: #fff;
     }
     .score-label {
-        font-size: 0.75rem;
+        font-size: 0.6rem;
         color: #888;
         text-transform: uppercase;
         margin-top: -4px;
