@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.2.6 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.2.7 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -267,7 +267,7 @@ template.innerHTML = `
     }
 
     @media (min-width: 901px) { .token-logo { width: 96px !important; height: 96px !important; } }
-    @media (max-width: 900px) { .summary-market-stats { order: 3; width: 100%; text-align: left; } .summary-token-info { order: 1; } .score-container { order: 2; margin-left: 0; margin-top: 20px; } }
+    @media (max-width: 650px) { .summary-market-stats { order: 3; width: 100%; text-align: left; } .summary-token-info { order: 1; flex-basis: 100%; } .score-container { order: 2; margin-left: 0; margin-top: 20px; } }
     @media (max-width: 600px) { .summary-market-stats { grid-template-columns: repeat(2, 1fr); } .trend-indicator { grid-template-columns: repeat(2, 1fr); } }
   </style>
   <div id="report-container">
