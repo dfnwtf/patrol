@@ -1,97 +1,94 @@
 
-class DFNPatrol extends HTMLElement {
-  constructor() {
-    super();
-    this.attachShadow({ mode: "open" });
-    this.state = {
-      embed: this.getAttribute("embed") || "",
-      snapshot: null,
-      alerts: []
-    };
+console.log("[DFN Patrol] v1.2.12 initialized");
+
+let ws;
+
+function connectToWebSocket(token) {
+  if (!token) {
+    console.warn("[DFN Patrol] No token provided for WebSocket.");
+    return;
   }
 
-  static get observedAttributes() {
-    return ["embed"];
+  if (ws) {
+    console.log("[DFN Patrol] Closing existing WebSocket.");
+    ws.close();
   }
 
-  attributeChangedCallback(name, oldVal, newVal) {
-    if (name === "embed" && oldVal !== newVal) {
-      this.state.embed = newVal;
-      this.render();
-    }
-  }
+  console.log("[DFN Patrol] Connecting WebSocket to token:", token);
 
-  connectedCallback() {
-    this.render();
-  }
+  ws = new WebSocket(`wss://dfn-alerts-gateway.official-716.workers.dev/?embed=${token}`);
 
-  setSnapshot(data) {
-    this.state.snapshot = data;
-    this.render();
-  }
+  ws.addEventListener("open", () => {
+    console.log("[DFN Patrol] WebSocket connection opened.");
+  });
 
-  setAlert(data) {
-    this.state.alerts.unshift(data);
-    if (this.state.alerts.length > 5) this.state.alerts.pop();
-    this.render();
-  }
+  ws.addEventListener("message", (e) => {
+    try {
+      const data = JSON.parse(e.data);
+      const panel = document.querySelector("dfn-patrol");
 
-  render() {
-    const { embed, snapshot, alerts } = this.state;
+      if (!panel) {
+        console.warn("[DFN Patrol] Panel not found in DOM.");
+        return;
+      }
 
-    this.shadowRoot.innerHTML = \`
-      <style>
-        :host {
-          display: block;
-          font-family: sans-serif;
-          background: #111;
-          color: #eee;
-          padding: 16px;
-          border-radius: 12px;
-          box-shadow: 0 0 12px rgba(0,0,0,0.4);
-          margin-top: 20px;
+      customElements.whenDefined("dfn-patrol").then(() => {
+        if (data.type === "snapshot") {
+          console.log("[DFN Patrol] Snapshot received:", data);
+          panel.setSnapshot(data);
+        } else if (data.type === "alert") {
+          console.log("[DFN Patrol] Alert received:", data);
+          panel.setAlert(data);
+        } else {
+          console.log("[DFN Patrol] Unknown message type:", data);
         }
-        h3 { margin: 0 0 10px; font-size: 18px; color: #f5d742; }
-        .section { margin-bottom: 16px; }
-        ul { list-style: none; padding-left: 0; font-size: 14px; }
-        li { margin-bottom: 4px; }
-        .placeholder { font-style: italic; color: #777; }
-      </style>
+      });
+    } catch (err) {
+      console.error("[DFN Patrol] Failed to parse message:", err);
+    }
+  });
 
-      <div>
-        <h3>📡 Monitoring Token:</h3>
-        <div class="section">\${embed}</div>
+  ws.addEventListener("close", () => {
+    console.log("[DFN Patrol] WebSocket closed.");
+  });
+}
 
-        <h3>💰 Top Holders</h3>
-        <div class="section">
-          \${snapshot && snapshot.holders?.length
-            ? '<ul>' + snapshot.holders.map(h => `<li>\${h.address}: \${h.balance}</li>`).join('') + '</ul>'
-            : '<div class="placeholder">Waiting for data…</div>'}
-        </div>
+// Form handling
+document.querySelector("#token-search")?.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const field = document.querySelector("#token-input");
+  const token = field.value.trim();
+  if (!token) {
+    console.warn("[DFN Patrol] Empty token submitted.");
+    return;
+  }
 
-        <h3>🌊 Liquidity</h3>
-        <div class="section">
-          \${snapshot && snapshot.liquidity
-            ? \`Pool: \${snapshot.liquidity.pool}<br/>Volume: \${snapshot.liquidity.volume}<br/>Price: \${snapshot.liquidity.price}\`
-            : '<div class="placeholder">No liquidity info yet.</div>'}
-        </div>
+  const oldPanel = document.querySelector("dfn-patrol");
+  if (oldPanel) oldPanel.remove();
 
-        <h3>🧬 Clusters</h3>
-        <div class="section">
-          \${snapshot && snapshot.cluster?.length
-            ? '<ul>' + snapshot.cluster.map(a => `<li>\${a}</li>`).join('') + '</ul>'
-            : '<div class="placeholder">No cluster data.</div>'}
-        </div>
+  const newPanel = document.createElement("dfn-patrol");
+  newPanel.setAttribute("embed", token);
+  newPanel.id = "patrol";
+  document.querySelector("#patrol-block")?.appendChild(newPanel);
 
-        <h3>🚨 Recent Alerts</h3>
-        <div class="section">
-          \${alerts.length
-            ? '<ul>' + alerts.map(a => `<li>\${a.event}: \${a.amount || '–'}</li>`).join('') + '</ul>'
-            : '<div class="placeholder">No alerts yet.</div>'}
-        </div>
-      </div>
-    \`;
+  connectToWebSocket(token);
+  field.value = "";
+});
+
+// Wait until dfn-patrol is in DOM before initializing
+function waitForPatrolReady() {
+  const panel = document.querySelector("dfn-patrol");
+  if (panel) {
+    const token = panel.getAttribute("embed");
+    if (token) {
+      console.log("[DFN Patrol] Found panel on page load, connecting...");
+      connectToWebSocket(token);
+    } else {
+      console.warn("[DFN Patrol] Panel found, but no token.");
+    }
+  } else {
+    setTimeout(waitForPatrolReady, 100);
   }
 }
 
-customElements.define("dfn-patrol", DFNPatrol);
+waitForPatrolReady();
