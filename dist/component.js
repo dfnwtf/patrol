@@ -78,7 +78,7 @@ template.innerHTML = `
         align-items: center;
         gap: 16px;
         flex-grow: 1;
-        min-width: 0; /* ИСПРАВЛЕНИЕ 1: Важное свойство для правильной работы flex и обрезки текста */
+        min-width: 0; /* <-- ИСПРАВЛЕНИЕ 1 */
     }
     .token-logo { 
         width: 48px; 
@@ -86,17 +86,17 @@ template.innerHTML = `
         border-radius: 50%; 
         background: #222; 
         object-fit: cover; 
-        flex-shrink: 0; /* Запрещаем логотипу сжиматься */
+        flex-shrink: 0; 
     }
     .token-name-symbol {
-        min-width: 0; /* ИСПРАВЛЕНИЕ 2: Позволяет этому блоку сжиматься */
+        min-width: 0; /* <-- ИСПРАВЛЕНИЕ 2 */
     }
     .token-name-symbol h2 {
         font-size: 1.8rem;
         margin: 0;
         line-height: 1.1;
         color: #fff;
-        /* ИСПРАВЛЕНИЕ 3: Свойства для обрезки текста */
+        /* <-- ИСПРАВЛЕНИЕ 3 --> */
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -167,7 +167,7 @@ template.innerHTML = `
         width: 120px;
         height: 120px;
         margin-left: auto;
-        flex-shrink: 0; /* Запрещаем контейнеру сжиматься */
+        flex-shrink: 0;
     }
     .score-svg {
         width: 100%;
