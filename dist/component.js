@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.2.2 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.2.3 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -78,18 +78,25 @@ template.innerHTML = `
         align-items: center;
         gap: 16px;
         flex-grow: 1;
-        min-width: 0; /* Важное свойство для правильной работы flex и обрезки текста */
+        min-width: 0; /* ИСПРАВЛЕНИЕ 1: Важное свойство для правильной работы flex и обрезки текста */
     }
-    .token-logo { width: 48px; height: 48px; border-radius: 50%; background: #222; object-fit: cover; flex-shrink: 0; }
+    .token-logo { 
+        width: 48px; 
+        height: 48px; 
+        border-radius: 50%; 
+        background: #222; 
+        object-fit: cover; 
+        flex-shrink: 0; /* Запрещаем логотипу сжиматься */
+    }
     .token-name-symbol {
-        min-width: 0; /* Позволяет этому блоку сжиматься */
+        min-width: 0; /* ИСПРАВЛЕНИЕ 2: Позволяет этому блоку сжиматься */
     }
     .token-name-symbol h2 {
         font-size: 1.8rem;
         margin: 0;
         line-height: 1.1;
         color: #fff;
-        /* --- НОВЫЕ СТРОКИ ДЛЯ ОБРЕЗКИ ТЕКСТА --- */
+        /* ИСПРАВЛЕНИЕ 3: Свойства для обрезки текста */
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -197,7 +204,7 @@ template.innerHTML = `
         color: #fff;
     }
     .score-label {
-        font-size: 0.6rem; /* Запомнил ваше значение */
+        font-size: 0.6rem;
         color: #888;
         text-transform: uppercase;
         margin-top: -4px;
