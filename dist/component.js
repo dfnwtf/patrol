@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.2.8 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.2.9 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -90,6 +90,7 @@ template.innerHTML = `
     }
     .token-name-symbol {
         min-width: 0;
+        overflow: hidden;
     }
     .token-name-symbol h2 {
         font-size: 1.8rem;
@@ -265,31 +266,26 @@ template.innerHTML = `
       to   { opacity: 1; }
     }
 
-    /* ИСПРАВЛЕННЫЕ МЕДИА-ЗАПРОСЫ */
-    @media (max-width: 950px) {
+    /* --- ОКОНЧАТЕЛЬНОЕ ИСПРАВЛЕНИЕ АДАПТИВНОСТИ --- */
+    @media (max-width: 850px) {
+        .summary-block {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .summary-token-info {
+            order: 1;
+        }
+        .score-container {
+            order: 2;
+            margin: 20px auto 0;
+        }
         .summary-market-stats { 
-            grid-template-columns: repeat(2, 1fr); /* Делаем 2 колонки для статов */
+            order: 3;
+            text-align: left;
+            grid-template-columns: repeat(2, 1fr);
         }
     }
 
-    @media (max-width: 768px) {
-        .summary-block {
-            flex-direction: column; /* Все элементы друг под другом */
-            align-items: flex-start; /* Выравнивание по левому краю */
-        }
-        .summary-token-info {
-             width: 100%; /* Занимает всю ширину */
-        }
-        .score-container {
-            margin-left: 0; /* Убираем отступ */
-            margin-top: 20px;
-        }
-        .summary-market-stats { 
-            width: 100%;
-            text-align: left;
-        }
-    }
-    
     @media (max-width: 600px) { 
         .trend-indicator { grid-template-columns: repeat(2, 1fr); } 
     }
