@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.2.7 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.2.8 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -78,7 +78,7 @@ template.innerHTML = `
         align-items: center;
         gap: 16px;
         flex-grow: 1;
-        min-width: 0;
+        min-width: 0; 
     }
     .token-logo { 
         width: 48px; 
@@ -88,18 +88,17 @@ template.innerHTML = `
         object-fit: cover; 
         flex-shrink: 0; 
     }
-    /* ИСПРАВЛЕНИЕ ЗДЕСЬ */
     .token-name-symbol {
-        overflow: hidden; /* 1. Скрываем все, что выходит за рамки этого блока */
+        min-width: 0;
     }
     .token-name-symbol h2 {
         font-size: 1.8rem;
         margin: 0;
         line-height: 1.1;
         color: #fff;
-        white-space: nowrap;     /* 2. Запрещаем перенос текста */
-        text-overflow: ellipsis; /* 3. Добавляем многоточие */
-        overflow: hidden;        /* 4. Дублируем overflow для надежности */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     .token-name-symbol span { font-size: 1rem; color: #999; margin-top: 4px; display: block; }
 
@@ -266,9 +265,34 @@ template.innerHTML = `
       to   { opacity: 1; }
     }
 
-    @media (min-width: 901px) { .token-logo { width: 96px !important; height: 96px !important; } }
-    @media (max-width: 650px) { .summary-market-stats { order: 3; width: 100%; text-align: left; } .summary-token-info { order: 1; flex-basis: 100%; } .score-container { order: 2; margin-left: 0; margin-top: 20px; } }
-    @media (max-width: 600px) { .summary-market-stats { grid-template-columns: repeat(2, 1fr); } .trend-indicator { grid-template-columns: repeat(2, 1fr); } }
+    /* ИСПРАВЛЕННЫЕ МЕДИА-ЗАПРОСЫ */
+    @media (max-width: 950px) {
+        .summary-market-stats { 
+            grid-template-columns: repeat(2, 1fr); /* Делаем 2 колонки для статов */
+        }
+    }
+
+    @media (max-width: 768px) {
+        .summary-block {
+            flex-direction: column; /* Все элементы друг под другом */
+            align-items: flex-start; /* Выравнивание по левому краю */
+        }
+        .summary-token-info {
+             width: 100%; /* Занимает всю ширину */
+        }
+        .score-container {
+            margin-left: 0; /* Убираем отступ */
+            margin-top: 20px;
+        }
+        .summary-market-stats { 
+            width: 100%;
+            text-align: left;
+        }
+    }
+    
+    @media (max-width: 600px) { 
+        .trend-indicator { grid-template-columns: repeat(2, 1fr); } 
+    }
   </style>
   <div id="report-container">
     <div class="placeholder">Generating token health report...</div>
