@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.3.0 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.3.1 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -78,7 +78,7 @@ template.innerHTML = `
         align-items: center;
         gap: 16px;
         flex-grow: 1;
-        min-width: 0; 
+        min-width: 0;
     }
     .token-logo { 
         width: 48px; 
@@ -89,8 +89,8 @@ template.innerHTML = `
         flex-shrink: 0; 
     }
     .token-name-symbol {
-        overflow: hidden;
         min-width: 0;
+        overflow: hidden;
     }
     .token-name-symbol h2 {
         font-size: 1.8rem;
@@ -269,31 +269,33 @@ template.innerHTML = `
     /* --- ОКОНЧАТЕЛЬНОЕ ИСПРАВЛЕНИЕ АДАПТИВНОСТИ --- */
     @media (max-width: 850px) {
       .summary-token-info {
-        flex-basis: 100%; /* Занимает всю ширину, если не помещается */
-        min-width: 280px;  /* Минимальная ширина, чтобы текст не сжимался слишком сильно */
+        min-width: 280px;
       }
       .summary-market-stats {
-        flex-basis: 100%; /* Всегда переносится на новую строку */
+        flex-basis: 100%;
         text-align: left;
         grid-template-columns: repeat(2, 1fr);
       }
-      .score-container {
-        margin: 10px auto; /* Центрируем, если перенесся на новую строку */
-      }
     }
     
-    @media (max-width: 450px) {
-        .summary-block {
-            /* На самых маленьких экранах делаем все в один столбец для порядка */
-            flex-direction: column;
-            align-items: center;
-        }
-        .summary-token-info { text-align: center; flex-direction: column; }
-        .token-name-symbol { text-align: center; }
-        .address-container, .share-button { margin-left: auto; margin-right: auto; }
-        .summary-market-stats { text-align: center; }
+    @media (max-width: 680px) {
+      .summary-block {
+        flex-direction: column;
+        align-items: center;
+      }
+      .summary-token-info {
+        text-align: center;
+        flex-direction: column;
+        align-items: center;
+      }
+       .score-container {
+        margin-left: 0;
+        margin-top: 20px;
+      }
+      .summary-market-stats {
+        text-align: center;
+      }
     }
-
   </style>
   <div id="report-container">
     <div class="placeholder">Generating token health report...</div>
