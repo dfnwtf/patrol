@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.3.4 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.3.5 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -62,10 +62,11 @@ template.innerHTML = `
     a { color: var(--accent, #FFD447); text-decoration: none; font-weight: 500; }
     a:hover { text-decoration: underline; }
 
-    /* БАЗОВЫЕ СТИЛИ ДЛЯ ДЕСКТОПА */
+    /* --- НОВЫЕ СТИЛИ НА CSS GRID --- */
     .summary-block {
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: 1fr auto; /* Левая колонка растягивается, правая - по контенту */
+      grid-template-rows: auto auto; /* Две строки */
       gap: 16px 24px;
       padding: 24px;
       background: #191919;
@@ -78,9 +79,22 @@ template.innerHTML = `
         display: flex;
         align-items: center;
         gap: 16px;
-        flex: 1 1 auto; /* Позволяет расти и сжиматься */
-        min-width: 0;
+        min-width: 0; 
     }
+    .score-container {
+        grid-column: 2 / 3; /* Размещаем во второй колонке */
+        grid-row: 1 / 2; /* Размещаем в первой строке */
+    }
+    .summary-market-stats { 
+        grid-column: 1 / -1; /* Растягиваем на все колонки */
+        grid-row: 2 / 3; /* Размещаем во второй строке */
+        display: grid; 
+        grid-template-columns: repeat(3, 1fr); 
+        gap: 16px 24px; 
+        text-align: right;
+    }
+    /* --- КОНЕЦ НОВЫХ СТИЛЕЙ --- */
+
     .token-logo { 
         width: 48px; 
         height: 48px; 
@@ -90,6 +104,7 @@ template.innerHTML = `
         flex-shrink: 0; 
     }
     .token-name-symbol {
+        min-width: 0;
         overflow: hidden;
     }
     .token-name-symbol h2 {
@@ -153,15 +168,7 @@ template.innerHTML = `
     .copied-text {
         color: var(--accent, #FFD447);
     }
-
-    .summary-market-stats { 
-        display: grid; 
-        grid-template-columns: repeat(3, 1fr); 
-        gap: 16px 24px; 
-        text-align: right;
-        flex-basis: 100%; /* Заставляет этот блок всегда быть на новой строке */
-        order: 3; /* Порядок отображения: 3-й */
-    }
+    
     .stat-item { display: flex; flex-direction: column; }
     .stat-item b { font-size: 0.9rem; color: #888; font-weight: 500; margin-bottom: 4px; text-transform: uppercase; }
     .stat-item span { font-size: 1.2rem; font-weight: 600; color: #fff; }
@@ -173,9 +180,7 @@ template.innerHTML = `
         position: relative;
         width: 120px;
         height: 120px;
-        margin-left: auto;
         flex-shrink: 0;
-        order: 2; /* Порядок отображения: 2-й */
     }
     .score-svg {
         width: 100%;
@@ -275,29 +280,25 @@ template.innerHTML = `
     }
 
     /* ФИНАЛЬНЫЕ МЕДИА-ЗАПРОСЫ */
-    @media (max-width: 950px) {
-        .summary-market-stats { 
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
-    @media (max-width: 768px) {
+    @media (max-width: 800px) {
         .summary-block {
-            flex-direction: column;
-            align-items: center;
+            grid-template-columns: 1fr; /* Одна колонка для всего */
+            justify-items: center; /* Центрируем все элементы */
+            gap: 20px;
         }
         .summary-token-info {
-             order: 1;
-             flex-direction: column;
-             text-align: center;
+            grid-column: 1 / -1;
+            flex-direction: column;
+            text-align: center;
         }
         .score-container {
-             order: 2;
-             margin: 20px 0 0 0;
+            grid-column: 1 / -1;
+            margin-left: 0;
         }
         .summary-market-stats {
-            order: 3;
-            width: 100%;
+            grid-template-columns: repeat(2, 1fr);
             text-align: left;
+            width: 100%;
         }
     }
   </style>
@@ -471,24 +472,7 @@ class DFNPatrol extends HTMLElement {
             </div>
         </div>
     ` : '';
-
-    const marketStatsHTML = `
-        <div class="summary-market-stats">
-            <div class="stat-item"><b>Price</b><span>${price}</span></div>
-            <div class="stat-item"><b>24h Change</b><span class="${priceChangeColor}">${market?.priceChange?.h24?.toFixed(2) || '0.00'}%</span></div>
-            <div class="stat-item"><b>24h Volume</b><span>$${formatNum(market?.volume24h)}</span></div>
-            <div class="stat-item"><b>Market Cap</b><span>$${formatNum(market?.marketCap)}</span></div>
-            <div class="stat-item"><b>Liquidity</b><span>$${formatNum(market?.liquidity)}</span></div>
-            <div class="stat-item">
-                <b>24h TXNs</b>
-                <span class="buys-sells">
-                    <span class="text-ok">${market?.txns24h?.buys || 0}</span> / <span class="text-bad">${market?.txns24h?.sells || 0}</span>
-                </span>
-            </div>
-        </div>
-    `;
-
-    const priceChange = market?.priceChange || {};
+    
     const trendIndicatorHTML = `
       <div class="trend-indicator">
         <div class="trend-item"><b>5 MIN</b><div class="${priceChange.m5 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.m5?.toFixed(2) ?? '0.00'}%</div></div>
@@ -532,10 +516,9 @@ class DFNPatrol extends HTMLElement {
             <button id="start-sim-btn">Run Simulation</button>
         </div>` : '';
 
-
     const newContent = `
-        <div class="summary-header">
-            <div class="summary-token-info">
+        <div class="summary-block">
+             <div class="summary-token-info">
                 ${tokenInfo.logoUrl ? `<img src="${sanitizeUrl(tokenInfo.logoUrl)}" alt="${sanitizeHTML(tokenInfo.symbol)} logo" class="token-logo">` : `<div class="token-logo"></div>`}
                 <div class="token-name-symbol">
                     <h2>${sanitizeHTML(tokenInfo.name)}</h2>
@@ -543,10 +526,22 @@ class DFNPatrol extends HTMLElement {
                     ${addressHTML}
                     ${shareButtonHTML}
                 </div>
-            </div>
+             </div>
             ${scoreHTML}
+            <div class="summary-market-stats">
+                <div class="stat-item"><b>Price</b><span>${price}</span></div>
+                <div class="stat-item"><b>24h Change</b><span class="${priceChangeColor}">${market?.priceChange?.h24?.toFixed(2) || '0.00'}%</span></div>
+                <div class="stat-item"><b>24h Volume</b><span>$${formatNum(market?.volume24h)}</span></div>
+                <div class="stat-item"><b>Market Cap</b><span>$${formatNum(market?.marketCap)}</span></div>
+                <div class="stat-item"><b>Liquidity</b><span>$${formatNum(market?.liquidity)}</span></div>
+                <div class="stat-item">
+                    <b>24h TXNs</b>
+                    <span class="buys-sells">
+                        <span class="text-ok">${market?.txns24h?.buys || 0}</span> / <span class="text-bad">${market?.txns24h?.sells || 0}</span>
+                    </span>
+                </div>
+            </div>
         </div>
-        ${marketStatsHTML}
         ${trendIndicatorHTML}
         <div class="report-grid">
             ${socialsHTML}
@@ -579,7 +574,7 @@ class DFNPatrol extends HTMLElement {
         </div>
     `;
     
-    this.container.innerHTML = `<div class="report-fade-in"><div class="summary-block">${newContent}</div></div>`;
+    this.container.innerHTML = `<div class="report-fade-in">${newContent}</div>`;
 
     this.shadowRoot.querySelector('.address-container')?.addEventListener('click', () => this.handleAddressCopy());
     this.shadowRoot.querySelector('#share-button')?.addEventListener('click', () => this.handleShareCopy());
