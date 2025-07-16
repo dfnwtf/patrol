@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.3.5 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.3.6 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -62,11 +62,10 @@ template.innerHTML = `
     a { color: var(--accent, #FFD447); text-decoration: none; font-weight: 500; }
     a:hover { text-decoration: underline; }
 
-    /* --- НОВЫЕ СТИЛИ НА CSS GRID --- */
     .summary-block {
       display: grid;
-      grid-template-columns: 1fr auto; /* Левая колонка растягивается, правая - по контенту */
-      grid-template-rows: auto auto; /* Две строки */
+      grid-template-columns: 1fr auto; 
+      grid-template-rows: auto auto; 
       gap: 16px 24px;
       padding: 24px;
       background: #191919;
@@ -82,18 +81,17 @@ template.innerHTML = `
         min-width: 0; 
     }
     .score-container {
-        grid-column: 2 / 3; /* Размещаем во второй колонке */
-        grid-row: 1 / 2; /* Размещаем в первой строке */
+        grid-column: 2 / 3;
+        grid-row: 1 / 2;
     }
     .summary-market-stats { 
-        grid-column: 1 / -1; /* Растягиваем на все колонки */
-        grid-row: 2 / 3; /* Размещаем во второй строке */
+        grid-column: 1 / -1;
+        grid-row: 2 / 3;
         display: grid; 
         grid-template-columns: repeat(3, 1fr); 
         gap: 16px 24px; 
         text-align: right;
     }
-    /* --- КОНЕЦ НОВЫХ СТИЛЕЙ --- */
 
     .token-logo { 
         width: 48px; 
@@ -104,7 +102,6 @@ template.innerHTML = `
         flex-shrink: 0; 
     }
     .token-name-symbol {
-        min-width: 0;
         overflow: hidden;
     }
     .token-name-symbol h2 {
@@ -279,12 +276,10 @@ template.innerHTML = `
       to   { opacity: 1; }
     }
 
-    /* ФИНАЛЬНЫЕ МЕДИА-ЗАПРОСЫ */
     @media (max-width: 800px) {
         .summary-block {
-            grid-template-columns: 1fr; /* Одна колонка для всего */
-            justify-items: center; /* Центрируем все элементы */
-            gap: 20px;
+            grid-template-columns: 1fr;
+            justify-items: center;
         }
         .summary-token-info {
             grid-column: 1 / -1;
@@ -293,6 +288,7 @@ template.innerHTML = `
         }
         .score-container {
             grid-column: 1 / -1;
+            grid-row: 2 / 3;
             margin-left: 0;
         }
         .summary-market-stats {
@@ -450,7 +446,11 @@ class DFNPatrol extends HTMLElement {
 
     const { tokenInfo, security, distribution, market, socials, liquidityDrain } = this.report;
     const formatNum = (num) => num ? Number(num).toLocaleString('en-US', {maximumFractionDigits: 0}) : 'N/A';
-    const priceChangeColor = market?.priceChange?.h24 >= 0 ? 'text-ok' : 'text-bad';
+    
+    // ИСПРАВЛЕНИЕ: Безопасное получение priceChange
+    const priceChange = market?.priceChange || {};
+
+    const priceChangeColor = priceChange.h24 >= 0 ? 'text-ok' : 'text-bad';
     const price = !market?.priceUsd ? 'N/A' : (Number(market.priceUsd) < 0.000001 ? `$${Number(market.priceUsd).toExponential(2)}` : `$${Number(market.priceUsd).toLocaleString('en-US', {maximumFractionDigits: 8})}`);
     
     let truncatedAddress = '';
@@ -472,7 +472,23 @@ class DFNPatrol extends HTMLElement {
             </div>
         </div>
     ` : '';
-    
+
+    const marketStatsHTML = `
+        <div class="summary-market-stats">
+            <div class="stat-item"><b>Price</b><span>${price}</span></div>
+            <div class="stat-item"><b>24h Change</b><span class="${priceChangeColor}">${priceChange.h24?.toFixed(2) || '0.00'}%</span></div>
+            <div class="stat-item"><b>24h Volume</b><span>$${formatNum(market?.volume24h)}</span></div>
+            <div class="stat-item"><b>Market Cap</b><span>$${formatNum(market?.marketCap)}</span></div>
+            <div class="stat-item"><b>Liquidity</b><span>$${formatNum(market?.liquidity)}</span></div>
+            <div class="stat-item">
+                <b>24h TXNs</b>
+                <span class="buys-sells">
+                    <span class="text-ok">${market?.txns24h?.buys || 0}</span> / <span class="text-bad">${market?.txns24h?.sells || 0}</span>
+                </span>
+            </div>
+        </div>
+    `;
+
     const trendIndicatorHTML = `
       <div class="trend-indicator">
         <div class="trend-item"><b>5 MIN</b><div class="${priceChange.m5 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.m5?.toFixed(2) ?? '0.00'}%</div></div>
@@ -516,9 +532,10 @@ class DFNPatrol extends HTMLElement {
             <button id="start-sim-btn">Run Simulation</button>
         </div>` : '';
 
+
     const newContent = `
         <div class="summary-block">
-             <div class="summary-token-info">
+            <div class="summary-token-info">
                 ${tokenInfo.logoUrl ? `<img src="${sanitizeUrl(tokenInfo.logoUrl)}" alt="${sanitizeHTML(tokenInfo.symbol)} logo" class="token-logo">` : `<div class="token-logo"></div>`}
                 <div class="token-name-symbol">
                     <h2>${sanitizeHTML(tokenInfo.name)}</h2>
@@ -526,21 +543,9 @@ class DFNPatrol extends HTMLElement {
                     ${addressHTML}
                     ${shareButtonHTML}
                 </div>
-             </div>
-            ${scoreHTML}
-            <div class="summary-market-stats">
-                <div class="stat-item"><b>Price</b><span>${price}</span></div>
-                <div class="stat-item"><b>24h Change</b><span class="${priceChangeColor}">${market?.priceChange?.h24?.toFixed(2) || '0.00'}%</span></div>
-                <div class="stat-item"><b>24h Volume</b><span>$${formatNum(market?.volume24h)}</span></div>
-                <div class="stat-item"><b>Market Cap</b><span>$${formatNum(market?.marketCap)}</span></div>
-                <div class="stat-item"><b>Liquidity</b><span>$${formatNum(market?.liquidity)}</span></div>
-                <div class="stat-item">
-                    <b>24h TXNs</b>
-                    <span class="buys-sells">
-                        <span class="text-ok">${market?.txns24h?.buys || 0}</span> / <span class="text-bad">${market?.txns24h?.sells || 0}</span>
-                    </span>
-                </div>
             </div>
+            ${scoreHTML}
+            ${marketStatsHTML}
         </div>
         ${trendIndicatorHTML}
         <div class="report-grid">
