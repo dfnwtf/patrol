@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.4.1 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.4.2 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -396,6 +396,11 @@ class DFNPatrol extends HTMLElement {
     }
 
     const { tokenInfo, security, distribution, market, socials, liquidityDrain } = this.report;
+    
+    const displayName = tokenInfo.name && tokenInfo.name.length > 10 
+        ? `${tokenInfo.name.substring(0, 10)}...` 
+        : tokenInfo.name;
+
     const formatNum = (num) => num ? Number(num).toLocaleString('en-US', {maximumFractionDigits: 0}) : 'N/A';
     const priceChangeColor = market?.priceChange?.h24 >= 0 ? 'text-ok' : 'text-bad';
     const price = !market?.priceUsd ? 'N/A' : (Number(market.priceUsd) < 0.000001 ? `$${Number(market.priceUsd).toExponential(2)}` : `$${Number(market.priceUsd).toLocaleString('en-US', {maximumFractionDigits: 8})}`);
@@ -486,7 +491,7 @@ class DFNPatrol extends HTMLElement {
              <div class="summary-token-info">
                 ${tokenInfo.logoUrl ? `<img src="${sanitizeUrl(tokenInfo.logoUrl)}" alt="${sanitizeHTML(tokenInfo.symbol)} logo" class="token-logo">` : `<div class="token-logo"></div>`}
                 <div class="token-name-symbol">
-                    <h2>${sanitizeHTML(tokenInfo.name)}</h2>
+                    <h2>${sanitizeHTML(displayName)}</h2>
                     <span>${sanitizeHTML(tokenInfo.symbol)}</span>
                     ${addressHTML}
                     ${shareButtonHTML}
