@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.3.2 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.3.3 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -62,10 +62,10 @@ template.innerHTML = `
     a { color: var(--accent, #FFD447); text-decoration: none; font-weight: 500; }
     a:hover { text-decoration: underline; }
 
-    /* ИЗМЕНЕННАЯ СТРУКТУРА И СТИЛИ */
+    /* НОВАЯ, УПРОЩЕННАЯ СТРУКТУРА */
     .summary-block {
       display: flex;
-      flex-direction: column; /* Теперь основной блок всегда в колонку */
+      flex-direction: column;
       gap: 24px;
       padding: 24px;
       background: #191919;
@@ -73,16 +73,17 @@ template.innerHTML = `
       border: 1px solid #282828;
       margin-bottom: 24px;
     }
-    .summary-header {
+    .summary-header { /* Новый контейнер для информации и оценки */
       display: flex;
       gap: 24px;
       align-items: center;
+      flex-wrap: wrap; /* Позволяет переноситься, если нужно */
     }
     .summary-token-info {
         display: flex;
         align-items: center;
         gap: 16px;
-        flex-grow: 1;
+        flex: 1 1 300px; /* Позволяет расти и сжиматься с базовой шириной 300px */
         min-width: 0; 
     }
     .token-logo { 
@@ -94,6 +95,7 @@ template.innerHTML = `
         flex-shrink: 0; 
     }
     .token-name-symbol {
+        min-width: 0;
         overflow: hidden;
     }
     .token-name-symbol h2 {
@@ -170,6 +172,7 @@ template.innerHTML = `
         position: relative;
         width: 120px;
         height: 120px;
+        margin-left: auto;
         flex-shrink: 0;
     }
     .score-svg {
@@ -269,23 +272,24 @@ template.innerHTML = `
       to   { opacity: 1; }
     }
 
-    /* ОКОНЧАТЕЛЬНОЕ ИСПРАВЛЕНИЕ АДАПТИВНОСТИ */
+    /* ИСПРАВЛЕННЫЕ МЕДИА-ЗАПРОСЫ */
     @media (max-width: 950px) {
         .summary-market-stats { 
             grid-template-columns: repeat(2, 1fr);
         }
     }
-    @media (max-width: 768px) {
+    @media (max-width: 680px) {
         .summary-header {
-            flex-wrap: wrap;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+        }
+        .summary-token-info {
+            flex-direction: column;
+            text-align: center;
         }
         .score-container {
             margin-left: 0;
-            margin-right: 0;
-        }
-        .summary-market-stats { 
-            text-align: left;
+            margin-top: 16px;
         }
     }
   </style>
@@ -520,7 +524,7 @@ class DFNPatrol extends HTMLElement {
             <button id="start-sim-btn">Run Simulation</button>
         </div>` : '';
 
-
+    // ИЗМЕНЕННАЯ СТРУКТУРА HTML
     const newContent = `
         <div class="summary-header">
             <div class="summary-token-info">
@@ -534,19 +538,7 @@ class DFNPatrol extends HTMLElement {
             </div>
             ${scoreHTML}
         </div>
-        <div class="summary-market-stats">
-            <div class="stat-item"><b>Price</b><span>${price}</span></div>
-            <div class="stat-item"><b>24h Change</b><span class="${priceChangeColor}">${market?.priceChange?.h24?.toFixed(2) || '0.00'}%</span></div>
-            <div class="stat-item"><b>24h Volume</b><span>$${formatNum(market?.volume24h)}</span></div>
-            <div class="stat-item"><b>Market Cap</b><span>$${formatNum(market?.marketCap)}</span></div>
-            <div class="stat-item"><b>Liquidity</b><span>$${formatNum(market?.liquidity)}</span></div>
-            <div class="stat-item">
-                <b>24h TXNs</b>
-                <span class="buys-sells">
-                    <span class="text-ok">${market?.txns24h?.buys || 0}</span> / <span class="text-bad">${market?.txns24h?.sells || 0}</span>
-                </span>
-            </div>
-        </div>
+        ${marketStatsHTML}
         ${trendIndicatorHTML}
         <div class="report-grid">
             ${socialsHTML}
@@ -579,7 +571,6 @@ class DFNPatrol extends HTMLElement {
         </div>
     `;
     
-    // Заменяем содержимое всего блока отчета
     this.container.innerHTML = `<div class="report-fade-in"><div class="summary-block">${newContent}</div></div>`;
 
     this.shadowRoot.querySelector('.address-container')?.addEventListener('click', () => this.handleAddressCopy());
