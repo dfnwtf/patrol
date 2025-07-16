@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.3.8 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.3.9 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -62,10 +62,11 @@ template.innerHTML = `
     a { color: var(--accent, #FFD447); text-decoration: none; font-weight: 500; }
     a:hover { text-decoration: underline; }
 
-    /* --- ОКОНЧАТЕЛЬНАЯ ВЕРСТКА ВЕРХНЕГО БЛОКА --- */
+    /* --- ОКОНЧАТЕЛЬНАЯ ВЕРСТКА НА CSS GRID --- */
     .summary-block {
-      display: flex;
-      flex-direction: column; 
+      display: grid;
+      /* Две колонки: первая растягивается, вторая по контенту */
+      grid-template-columns: 1fr auto; 
       gap: 24px;
       padding: 24px;
       background: #191919;
@@ -73,18 +74,23 @@ template.innerHTML = `
       border: 1px solid #282828;
       margin-bottom: 24px;
     }
-    .summary-header {
-      display: flex;
-      gap: 24px;
-      align-items: center;
-    }
     .summary-token-info {
         display: flex;
         align-items: center;
         gap: 16px;
-        flex-grow: 1; 
-        min-width: 0;
+        min-width: 0; 
     }
+    .score-container {
+      justify-self: end; /* Прижимаем к правому краю колонки */
+    }
+    .summary-market-stats { 
+        grid-column: 1 / -1; /* Растягиваем на все колонки, создавая новую строку */
+        display: grid; 
+        grid-template-columns: repeat(3, 1fr); 
+        gap: 16px 24px; 
+        text-align: right;
+    }
+
     .token-logo { 
         width: 48px; 
         height: 48px; 
@@ -158,8 +164,7 @@ template.innerHTML = `
     .copied-text {
         color: var(--accent, #FFD447);
     }
-
-    .summary-market-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 24px; text-align: right; }
+    
     .stat-item { display: flex; flex-direction: column; }
     .stat-item b { font-size: 0.9rem; color: #888; font-weight: 500; margin-bottom: 4px; text-transform: uppercase; }
     .stat-item span { font-size: 1.2rem; font-weight: 600; color: #fff; }
@@ -270,25 +275,31 @@ template.innerHTML = `
       to   { opacity: 1; }
     }
 
-    /* МЕДИА-ЗАПРОСЫ */
-    @media (max-width: 950px) {
-        .summary-market-stats { 
-            grid-template-columns: repeat(2, 1fr);
-            text-align: left;
-        }
-    }
-    @media (max-width: 768px) {
-        .summary-header {
-            flex-direction: column; /* На мобильных header становится колонкой */
-            align-items: center;
+    @media (max-width: 800px) {
+        .summary-block {
+            grid-template-columns: 1fr; /* Переключаемся на одну колонку */
+            justify-items: center; /* Центрируем все по горизонтали */
         }
         .summary-token-info {
-             flex-direction: column;
-             text-align: center;
+            grid-column: 1 / -1;
+            flex-direction: column;
+            text-align: center;
         }
         .score-container {
-            margin-left: 0; /* Убираем авто-отступ, т.к. центрирует родитель */
-            margin-top: 20px;
+            grid-column: 1 / -1;
+            grid-row: 2 / 3; /* Явно указываем вторую строку */
+            justify-self: center; /* Дополнительно центрируем */
+        }
+        .summary-market-stats {
+            grid-row: 3 / 4; /* Явно указываем третью строку */
+            grid-template-columns: repeat(2, 1fr);
+            text-align: left;
+            width: 100%;
+        }
+    }
+    @media (max-width: 480px) {
+        .summary-market-stats {
+            grid-template-columns: 1fr; /* На самых маленьких экранах - одна колонка для статов */
         }
     }
   </style>
@@ -525,7 +536,7 @@ class DFNPatrol extends HTMLElement {
 
 
     const newContent = `
-        <div class="summary-header">
+        <div class="summary-block">
             <div class="summary-token-info">
                 ${tokenInfo.logoUrl ? `<img src="${sanitizeUrl(tokenInfo.logoUrl)}" alt="${sanitizeHTML(tokenInfo.symbol)} logo" class="token-logo">` : `<div class="token-logo"></div>`}
                 <div class="token-name-symbol">
@@ -536,11 +547,42 @@ class DFNPatrol extends HTMLElement {
                 </div>
             </div>
             ${scoreHTML}
+            ${marketStatsHTML}
         </div>
-        ${marketStatsHTML}
+        ${trendIndicatorHTML}
+        <div class="report-grid">
+            ${socialsHTML}
+            <div>
+              <h3>🛡️ Security Flags</h3>
+              <ul>
+                ${security.launchpad ? `<li class="ok">Launched on a trusted platform: ${sanitizeHTML(security.launchpad)}.</li>` : ''}
+                ${security.hackerFound ? `<li class="bad">${sanitizeHTML(security.hackerFound)}</li>` : ''}
+                
+                ${'holderConcentration' in security ? `<li class="${security.holderConcentration > 25 ? 'bad' : (security.holderConcentration > 10 ? 'warn' : 'ok')}">Top 10 holders own ${security.holderConcentration.toFixed(2)}%.</li>` : ''}
+                ${security.isCto ? `<li class="ok">Community Takeover</li>` : ''}
+                
+                ${security.lpStatus ? `<li class="${security.lpStatus === 'Burned' || security.lpStatus === 'Locked/Burned' ? 'ok' : 'bad'}">Liquidity is ${security.lpStatus}.</li>` : '<li>Liquidity status is Unknown.</li>'}
+                ${'isMutable' in security ? `<li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>` : ''}
+                ${'freezeAuthorityEnabled' in security ? `<li class="${!security.freezeAuthorityEnabled ? 'ok' : 'bad'}">${!security.freezeAuthorityEnabled ? 'Freeze authority is disabled.' : 'Freeze authority is enabled.'}</li>` : ''}
+                ${'mintRenounced' in security ? `<li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? 'Mint authority is renounced.' : 'Dev can mint more tokens.'}</li>` : ''}
+                ${'transferTax' in security ? `<li class="warn">Token has a transfer tax: ${security.transferTax}%.</li>` : ('noTransferTax' in security ? '<li class="ok">No transfer tax.</li>' : '')}
+              </ul>
+            </div>
+            <div>
+              <h3>💰 Top 10 Holders</h3>
+              <ul>
+                  ${distribution.topHolders && distribution.topHolders.length > 0
+                      ? distribution.topHolders.map(h => `<li><a href="https://solscan.io/account/${h.address}" target="_blank" rel="noopener">${h.address.slice(0,6)}...${h.address.slice(-4)}</a>&nbsp;(${h.percent}%)</li>`).join('') 
+                      : '<li>No significant individual holders found.</li>'}
+              </ul>
+              ${programmaticAccountsHTML}
+            </div>
+            ${cascadeSimulatorHTML}
+        </div>
     `;
     
-    this.container.innerHTML = `<div class="report-fade-in"><div class="summary-block">${newContent}</div></div>`;
+    // Вставляем все содержимое в report-container
+    this.container.innerHTML = `<div class="report-fade-in">${newContent}</div>`;
 
     this.shadowRoot.querySelector('.address-container')?.addEventListener('click', () => this.handleAddressCopy());
     this.shadowRoot.querySelector('#share-button')?.addEventListener('click', () => this.handleShareCopy());
