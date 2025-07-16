@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.2.1 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.2.2 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -78,9 +78,22 @@ template.innerHTML = `
         align-items: center;
         gap: 16px;
         flex-grow: 1;
+        min-width: 0; /* Важное свойство для правильной работы flex и обрезки текста */
     }
-    .token-logo { width: 48px; height: 48px; border-radius: 50%; background: #222; object-fit: cover; }
-    .token-name-symbol h2 { font-size: 1.8rem; margin: 0; line-height: 1.1; color: #fff; }
+    .token-logo { width: 48px; height: 48px; border-radius: 50%; background: #222; object-fit: cover; flex-shrink: 0; }
+    .token-name-symbol {
+        min-width: 0; /* Позволяет этому блоку сжиматься */
+    }
+    .token-name-symbol h2 {
+        font-size: 1.8rem;
+        margin: 0;
+        line-height: 1.1;
+        color: #fff;
+        /* --- НОВЫЕ СТРОКИ ДЛЯ ОБРЕЗКИ ТЕКСТА --- */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
     .token-name-symbol span { font-size: 1rem; color: #999; margin-top: 4px; display: block; }
 
     .address-container { 
@@ -147,6 +160,7 @@ template.innerHTML = `
         width: 120px;
         height: 120px;
         margin-left: auto;
+        flex-shrink: 0; /* Запрещаем контейнеру сжиматься */
     }
     .score-svg {
         width: 100%;
@@ -183,7 +197,7 @@ template.innerHTML = `
         color: #fff;
     }
     .score-label {
-        font-size: 0.6rem;
+        font-size: 0.6rem; /* Запомнил ваше значение */
         color: #888;
         text-transform: uppercase;
         margin-top: -4px;
@@ -246,7 +260,7 @@ template.innerHTML = `
     }
 
     @media (min-width: 901px) { .token-logo { width: 96px !important; height: 96px !important; } }
-    @media (max-width: 900px) { .summary-market-stats { order: 3; width: 100%; text-align: left; } .summary-token-info { order: 1; } .score-container { order: 2; margin-left: 0; margin-top: 20px; } }
+    @media (max-width: 900px) { .summary-market-stats { order: 3; width: 100%; text-align: left; } .summary-token-info { order: 1; flex-basis: 100%; } .score-container { order: 2; margin-left: 0; margin-top: 20px; } }
     @media (max-width: 600px) { .summary-market-stats { grid-template-columns: repeat(2, 1fr); } .trend-indicator { grid-template-columns: repeat(2, 1fr); } }
   </style>
   <div id="report-container">
