@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.4.2 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.4.3 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -398,7 +398,7 @@ class DFNPatrol extends HTMLElement {
     const { tokenInfo, security, distribution, market, socials, liquidityDrain } = this.report;
     
     const displayName = tokenInfo.name && tokenInfo.name.length > 10 
-        ? `${tokenInfo.name.substring(0, 10)}...` 
+        ? `${tokenInfo.name.substring(0, 7)}...` 
         : tokenInfo.name;
 
     const formatNum = (num) => num ? Number(num).toLocaleString('en-US', {maximumFractionDigits: 0}) : 'N/A';
