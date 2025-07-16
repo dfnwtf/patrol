@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.3.1 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.3.2 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -62,15 +62,20 @@ template.innerHTML = `
     a { color: var(--accent, #FFD447); text-decoration: none; font-weight: 500; }
     a:hover { text-decoration: underline; }
 
+    /* ИЗМЕНЕННАЯ СТРУКТУРА И СТИЛИ */
     .summary-block {
       display: flex;
-      flex-wrap: wrap;
-      gap: 16px 32px;
+      flex-direction: column; /* Теперь основной блок всегда в колонку */
+      gap: 24px;
       padding: 24px;
       background: #191919;
       border-radius: 8px;
       border: 1px solid #282828;
       margin-bottom: 24px;
+    }
+    .summary-header {
+      display: flex;
+      gap: 24px;
       align-items: center;
     }
     .summary-token-info {
@@ -78,7 +83,7 @@ template.innerHTML = `
         align-items: center;
         gap: 16px;
         flex-grow: 1;
-        min-width: 0;
+        min-width: 0; 
     }
     .token-logo { 
         width: 48px; 
@@ -89,7 +94,6 @@ template.innerHTML = `
         flex-shrink: 0; 
     }
     .token-name-symbol {
-        min-width: 0;
         overflow: hidden;
     }
     .token-name-symbol h2 {
@@ -166,7 +170,6 @@ template.innerHTML = `
         position: relative;
         width: 120px;
         height: 120px;
-        margin-left: auto;
         flex-shrink: 0;
     }
     .score-svg {
@@ -266,35 +269,24 @@ template.innerHTML = `
       to   { opacity: 1; }
     }
 
-    /* --- ОКОНЧАТЕЛЬНОЕ ИСПРАВЛЕНИЕ АДАПТИВНОСТИ --- */
-    @media (max-width: 850px) {
-      .summary-token-info {
-        min-width: 280px;
-      }
-      .summary-market-stats {
-        flex-basis: 100%;
-        text-align: left;
-        grid-template-columns: repeat(2, 1fr);
-      }
+    /* ОКОНЧАТЕЛЬНОЕ ИСПРАВЛЕНИЕ АДАПТИВНОСТИ */
+    @media (max-width: 950px) {
+        .summary-market-stats { 
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
-    
-    @media (max-width: 680px) {
-      .summary-block {
-        flex-direction: column;
-        align-items: center;
-      }
-      .summary-token-info {
-        text-align: center;
-        flex-direction: column;
-        align-items: center;
-      }
-       .score-container {
-        margin-left: 0;
-        margin-top: 20px;
-      }
-      .summary-market-stats {
-        text-align: center;
-      }
+    @media (max-width: 768px) {
+        .summary-header {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .score-container {
+            margin-left: 0;
+            margin-right: 0;
+        }
+        .summary-market-stats { 
+            text-align: left;
+        }
     }
   </style>
   <div id="report-container">
@@ -530,8 +522,8 @@ class DFNPatrol extends HTMLElement {
 
 
     const newContent = `
-        <div class="summary-block">
-             <div class="summary-token-info">
+        <div class="summary-header">
+            <div class="summary-token-info">
                 ${tokenInfo.logoUrl ? `<img src="${sanitizeUrl(tokenInfo.logoUrl)}" alt="${sanitizeHTML(tokenInfo.symbol)} logo" class="token-logo">` : `<div class="token-logo"></div>`}
                 <div class="token-name-symbol">
                     <h2>${sanitizeHTML(tokenInfo.name)}</h2>
@@ -539,9 +531,21 @@ class DFNPatrol extends HTMLElement {
                     ${addressHTML}
                     ${shareButtonHTML}
                 </div>
-             </div>
+            </div>
             ${scoreHTML}
-            ${marketStatsHTML}
+        </div>
+        <div class="summary-market-stats">
+            <div class="stat-item"><b>Price</b><span>${price}</span></div>
+            <div class="stat-item"><b>24h Change</b><span class="${priceChangeColor}">${market?.priceChange?.h24?.toFixed(2) || '0.00'}%</span></div>
+            <div class="stat-item"><b>24h Volume</b><span>$${formatNum(market?.volume24h)}</span></div>
+            <div class="stat-item"><b>Market Cap</b><span>$${formatNum(market?.marketCap)}</span></div>
+            <div class="stat-item"><b>Liquidity</b><span>$${formatNum(market?.liquidity)}</span></div>
+            <div class="stat-item">
+                <b>24h TXNs</b>
+                <span class="buys-sells">
+                    <span class="text-ok">${market?.txns24h?.buys || 0}</span> / <span class="text-bad">${market?.txns24h?.sells || 0}</span>
+                </span>
+            </div>
         </div>
         ${trendIndicatorHTML}
         <div class="report-grid">
@@ -575,7 +579,8 @@ class DFNPatrol extends HTMLElement {
         </div>
     `;
     
-    this.container.innerHTML = `<div class="report-fade-in">${newContent}</div>`;
+    // Заменяем содержимое всего блока отчета
+    this.container.innerHTML = `<div class="report-fade-in"><div class="summary-block">${newContent}</div></div>`;
 
     this.shadowRoot.querySelector('.address-container')?.addEventListener('click', () => this.handleAddressCopy());
     this.shadowRoot.querySelector('#share-button')?.addEventListener('click', () => this.handleShareCopy());
