@@ -1,4 +1,3 @@
-
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -26,11 +25,13 @@ class DFNPatrol extends HTMLElement {
   }
 
   setSnapshot(data) {
+    console.log("[Component] setSnapshot called", data);
     this.state.snapshot = data;
     this.render();
   }
 
   setAlert(data) {
+    console.log("[Component] setAlert called", data);
     this.state.alerts.unshift(data);
     if (this.state.alerts.length > 5) this.state.alerts.pop();
     this.render();
@@ -94,4 +95,6 @@ class DFNPatrol extends HTMLElement {
   }
 }
 
-customElements.define("dfn-patrol", DFNPatrol);
+if (!customElements.get("dfn-patrol")) {
+  customElements.define("dfn-patrol", DFNPatrol);
+}
