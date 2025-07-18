@@ -1,5 +1,5 @@
 
-<p align="center">
+<p align="center"> 
   <img src="https://dfn.wtf/DFN_logo_IDK_center.png" alt="DFN Logo" width="150"/>
 </p>
 
@@ -23,62 +23,109 @@
 
 ### ✨ About The Project
 
-**Nonsense Patrol** is a comprehensive token analysis service developed by the Department of Financial Nonsense. Our mission is to bring clarity to a chaotic ecosystem by providing traders and investors with the tools they need to perform quick and effective due diligence on Solana tokens.
+**Nonsense Patrol** is a comprehensive token analysis service developed by the **Department of Financial Nonsense**.  
+Our mission is to bring clarity and transparency to the chaotic and often unpredictable ecosystem of digital assets.  
+We provide traders, investors, and project developers with powerful tools for quick and effective due diligence on Solana tokens.
+
+The scanner collects and analyzes dozens of parameters in real‑time — from smart‑contract characteristics to market data and holder activity — to generate a single, easy‑to‑understand security rating: the **Trust Score**.  
+Our goal is to help users make informed decisions and avoid potential risks.
+
+---
+
+### 🛡️ Key Analysis Features
+
+Nonsense Patrol evaluates tokens across several key vectors to determine its Trust Score:
+
+* **Smart Contract Security** – Checks for critical contract‑level risks: mint authority renounced, freeze authority, mutable metadata, etc.  
+* **Liquidity Health** – Detects whether the liquidity pool (LP) is burned, locked, or left unlocked (major red flag).  
+* **Holder Distribution** – Reveals the real ownership structure by filtering exchange and protocol wallets before calculating whale concentration.  
+* **Threat Intelligence** – Scans the creator and top holders against a database of known scammers and exploiters.  
+* **Price Impact Simulation** – Estimates potential market‑cap collapse if the largest holders decide to sell.
 
 ---
 
 ### 🚀 Showcase Your Trust Score
 
-You can display your DFN Trust Score directly on your website using our official widget. The badge has a transparent background and is available in two themes to ensure it looks great on any site.
+Confident in your token’s security? Display your DFN Trust Score on your site with our official widget.  
+It ships with a transparent background and two color themes so it looks sharp on any design.
 
-### How to Add the Widget
+---
 
-Installation is a two‑step process:
+### 🛠️ How to Add the Widget
 
-#### **Step 1: Add the Widget Script**
+We ship a modern **Web Component** for quick, secure integration. Two easy steps:
 
-Place the following `<script>` tag just before the closing `</body>` tag in your HTML file:
+#### Step 1 — Add the Widget Script
+
+Insert this just before `</body>` (only once per page):
 
 ```html
 <script src="https://dfn.wtf/badge.js" defer></script>
 ```
 
-#### **Step 2: Place the Widget Element**
+#### Step 2 — Place the Widget Element
 
-Paste this custom HTML element where you want the badge to appear. Use the `theme` attribute to match your site's background.
-
-*For **dark** backgrounds (light text):*
+Add the custom element where you want the badge to appear.  
+Choose `theme="dark"` for dark backgrounds (light text) or `theme="light"` for light backgrounds (dark text).
 
 ```html
+<!-- Dark theme -->
 <dfn-trust-badge token="YOUR_TOKEN_ADDRESS_HERE" theme="dark"></dfn-trust-badge>
-```
 
-*For **light** backgrounds (dark text):*
-
-```html
+<!-- Light theme -->
 <dfn-trust-badge token="YOUR_TOKEN_ADDRESS_HERE" theme="light"></dfn-trust-badge>
 ```
 
-> Replace `YOUR_TOKEN_ADDRESS_HERE` with your project's Solana token address.
+> Replace `YOUR_TOKEN_ADDRESS_HERE` with your project’s SPL token address.
 
----
-
-### ⚙️ Customization Options
+#### Customization Options
 
 | Attribute | Required | Description | Options |
 |-----------|----------|-------------|---------|
-| `token`   | ✅       | The Solana address of the token to analyze. | *Any valid SPL address* |
-| `theme`   | ❌       | Sets the badge text color scheme. | `dark` *(default)* / `light` |
+| `token`   | ✅       | Solana address of the token to analyze. | any SPL address |
+| `theme`   | ❌       | Color scheme of the badge. | `dark` (default) / `light` |
 
 ---
 
 ### 🔧 Troubleshooting & Content Security Policy (CSP)
 
-If the badge doesn't appear, it's likely blocked by your site's **Content Security Policy (CSP)**.
+If the widget doesn’t render, your site’s **CSP** may be blocking it.
 
-**Fix:** Add `https://dfn.wtf` to both `script-src` and `connect-src` directives.
+**Fix:** add `https://dfn.wtf` to both `script-src` and `connect-src` directives.
 
-_Examples for meta‑tags, NGINX, Apache, and Express/Helmet are identical to the full documentation._
+##### CSP Configuration Examples
+
+<details>
+<summary>Static site meta‑tag</summary>
+
+```html
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://dfn.wtf; connect-src 'self' https://dfn.wtf;">
+```
+</details>
+
+<details>
+<summary>NGINX</summary>
+
+```nginx
+add_header Content-Security-Policy "script-src 'self' https://dfn.wtf; connect-src 'self' https://dfn.wtf;";
+```
+</details>
+
+<details>
+<summary>Apache (.htaccess)</summary>
+
+```apache
+Header set Content-Security-Policy "script-src 'self' https://dfn.wtf; connect-src 'self' https://dfn.wtf;"
+```
+</details>
+
+_Note: If you already have a CSP, merge these domains with your existing directives._
+
+---
+
+### 📜 License
+
+Distributed under the MIT License. See [`LICENSE`](LICENSE) for full text.
 
 ---
 
