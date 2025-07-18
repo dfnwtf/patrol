@@ -45,7 +45,7 @@ Nonsense Patrol evaluates tokens across several key vectors to determine its Tru
 Are you a project developer and confident in your token's security? You can display your DFN Trust Score directly on your website using our official widget. It's a simple way to build community trust and show that you're committed to transparency.
 
 **Widget Demo:**  
-![DFN Trust Score Badge Example](https://i.imgur.com/83pL8G3.png)
+![DFN Trust Score Badge Example](https://dfn.wtf/badge_demo.png)
 
 ### How to Add the Widget to Your Site
 
