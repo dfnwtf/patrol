@@ -14,7 +14,7 @@
   <a href="https://github.com/dfnwtf/patrol">
     <img src="https://img.shields.io/badge/platform-Solana-blueviolet.svg" alt="Platform">
   </a>
-  <a href="LICENSE">
+  <a href="https://opensource.org/license/mit">
     <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
   </a>
 </p>
@@ -125,7 +125,7 @@ _Note: If you already have a CSP, merge these domains with your existing directi
 
 ### 📜 License
 
-Distributed under the MIT License. See [`LICENSE`](LICENSE) for full text.
+Distributed under the MIT License. See <a href="https://opensource.org/license/mit">LICENSE</a> for full text.
 
 ---
 
