@@ -1,54 +1,58 @@
 <p align="center">
-  <img src="https://dfn.wtf/DFN_logo_IDK_center.png" alt="DFN Logo" width="150"/>
+  <img src="https://dfn.wtf/DFN_logo_IDK_center.png" alt="Логотип DFN" width="150"/>
 </p>
 
 <h1 align="center">DFN Nonsense Patrol</h1>
 
 <p align="center">
-  <strong>A free, instant security scanner and risk analysis tool for Solana tokens.</strong>
+  <strong>Бесплатный сканер безопасности и анализа рисков для токенов на Solana.</strong>
   <br />
   <br />
     <a href="https://dfn.wtf/patrol">
-    <img src="https://img.shields.io/badge/service-online-success.svg" alt="Service Status">
+    <img src="https://img.shields.io/badge/service-online-success.svg" alt="Статус сервиса">
   </a>
   <a href="https://github.com/dfnwtf/patrol">
-    <img src="https://img.shields.io/badge/platform-Solana-blueviolet.svg" alt="Platform">
+    <img src="https://img.shields.io/badge/platform-Solana-blueviolet.svg" alt="Платформа">
   </a>
   <a href="LICENSE">
-    <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
+    <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="Лицензия">
   </a>
 </p>
 
----
+***
 
-### ✨ What is Nonsense Patrol?
+### ✨ О проекте
 
-**Nonsense Patrol** is a comprehensive token analysis service developed by the Department of Financial Nonsense. Our mission is to bring clarity to a chaotic ecosystem by providing traders and investors with the tools they need to perform quick and effective due diligence on Solana tokens.
+**Nonsense Patrol** — это комплексный сервис для анализа токенов, разработанный Department of Financial Nonsense. Наша миссия — внести ясность в хаотичную экосистему, предоставляя трейдерам и инвесторам инструменты для быстрой и эффективной проверки токенов на Solana.
 
-The scanner combines on-chain data, market statistics, and security checks to generate a single, easy-to-understand **Trust Score**, helping users identify potential risks before they invest.
+Сканер объединяет данные из блокчейна, рыночную статистику и проверки безопасности для генерации единой и понятной оценки — **Trust Score**, помогая пользователям выявлять потенциальные риски перед инвестированием.
 
-### 🛡️ Key Analysis Features
+***
 
-Nonsense Patrol evaluates tokens across several key vectors to determine its Trust Score:
+### 🛡️ Ключевые особенности анализа
 
-* **Smart Contract Security**: Checks for critical contract-level risks, such as whether the mint authority has been renounced, if a freeze authority exists, or if the token's metadata is mutable.
-* **Liquidity Health**: Determines if the token's liquidity pool (LP) is burned, locked, or remains unlocked (a major red flag).
-* **Holder Distribution**: Analyzes the concentration of top holders (whales) after filtering out exchange and protocol-owned wallets to reveal the true ownership structure.
-* **Threat Intelligence**: Scans the token creator's wallet and top holder wallets against a database of known hackers and scammers.
-* **Price Impact Simulation**: Simulates the potential market cap collapse if the largest holders were to sell their tokens, giving insight into the token's stability.
+Nonsense Patrol оценивает токены по нескольким ключевым векторам для определения Trust Score:
 
----
+* **Безопасность смарт-контракта**: Проверяет критические риски на уровне контракта, такие как отозванные права на минт, наличие прав на заморозку (freeze authority) или изменяемость метаданных токена.
+* **Состояние ликвидности**: Определяет, сожжена ли ликвидность токена (LP), заблокирована или остается разблокированной (главный красный флаг).
+* **Анализ холдеров**: Анализирует концентрацию токенов у крупнейших держателей (китов), отфильтровывая кошельки бирж и протоколов, чтобы показать реальную структуру владения.
+* **Проверка на угрозы**: Сравнивает кошелек создателя токена и кошельки топ-холдеров с базой данных известных хакеров и мошенников.
+* **Симуляция падения цены**: Моделирует потенциальное падение рыночной капитализации, если крупнейшие держатели продадут свои токены, что дает представление о стабильности токена.
 
-### 🚀 Showcase Your Trust Score
+***
 
-Are you a project developer and confident in your token's security? You can display your DFN Trust Score directly on your website using our official widget. It's a simple way to build community trust and show that you're committed to transparency.
+### 🚀 Покажите ваш Trust Score
 
-**Widget Demo:**
-![DFN Trust Score Badge Example](https://i.imgur.com/83pL8G3.png)
+Вы являетесь разработчиком проекта и уверены в его безопасности? Вы можете отобразить ваш Trust Score от DFN прямо на своем сайте с помощью нашего официального виджета. Это простой способ укрепить доверие сообщества и показать вашу приверженность прозрачности.
 
-#### How to Add the Widget to Your Site
+**Демонстрация виджета:**
+![Пример виджета DFN Trust Score](https://i.imgur.com/83pL8G3.png)
 
-It's incredibly simple. All you need to do is copy the HTML snippet below and paste it where you want the badge to appear on your webpage.
+***
+
+### Как добавить виджет на ваш сайт
+
+Это невероятно просто. Все, что вам нужно сделать, — это скопировать приведенный ниже HTML-код и вставить его в нужное место на вашей веб-странице.
 
 ```html
 <iframe
