@@ -1,46 +1,45 @@
-# DFN Nonsense Patrol
+<p align="center">
+  <img src="https://dfn.wtf/DFN_logo_IDK_center.png" alt="DFN Logo" width="150"/>
+</p>
 
-🎛 A lightweight realtime crypto monitor panel for meme coins.
-Includes:
+<h1 align="center">Nonsense Patrol — Trust Score Widget</h1>
 
-- 🧱 `<dfn-patrol>` Web Component (UI)
-- 🧠 `patrol.js` WebSocket client for live alerts
-- 🦆 Built by the Department of Financial Nonsense
-
----
-
-## 🔧 Usage
-
-Add both scripts to your site:
-
-```html
-<script type="module" src="https://cdn.jsdelivr.net/gh/dfnwtf/patrol@v1.1.9/dist/component.js"></script>
-<script type="module" defer src="https://cdn.jsdelivr.net/gh/dfnwtf/patrol@v1.1.9/dist/patrol.js"></script>
-```
-
-Embed the panel:
-
-```html
-<dfn-patrol embed="YOUR_MINT_HERE"
-            data-layout="full"
-            data-tabs="overview,security,clusters"
-            data-theme="dark"
-            data-allow-pick>
-</dfn-patrol>
-```
+<p align="center">
+  <strong>Display your Solana project's trust and security with a dynamic Trust Score widget from the Department of Financial Nonsense.</strong>
+  <br />
+  <br />
+  <a href="#">
+    <img src="https://img.shields.io/badge/version-1.0.0-blue.svg" alt="Version">
+  </a>
+  <a href="#">
+    <img src="https://img.shields.io/badge/status-active-success.svg" alt="Status">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
+  </a>
+</p>
 
 ---
 
-## 📡 WebSocket Server
+### ✨ About The Project
 
-This client expects a WebSocket server that sends alerts like:
+The **Trust Score Widget** is a simple and stylish way for any Solana project to integrate a real-time security badge from **Nonsense Patrol** directly onto their website. The widget displays an automated security score, helping you build and maintain your community's trust.
 
-```json
-{
-  "type": "alert",
-  "event": "Whale sold",
-  "amount": "10.2 SOL"
-}
-```
+It's designed for maximum simplicity. No programming knowledge is required. Just copy, paste, and show the world that your project has been vetted by DFN!
 
-Use Cloudflare Workers or your own backend.
+### Demo
+
+Here’s what the widget will look like on your site:
+
+![DFN Trust Score Badge Example](https://i.imgur.com/83pL8G3.png)
+
+### 🚀 How to Add the Widget to Your Site
+
+It's incredibly simple. All you need to do is copy the HTML snippet below and paste it where you want the badge to appear on your webpage.
+
+```html
+<iframe
+  src="[https://dfn.wtf/badge?token=YOUR_TOKEN_ADDRESS_HERE](https://dfn.wtf/badge?token=YOUR_TOKEN_ADDRESS_HERE)"
+  style="width: 240px; height: 80px; border: none; overflow: hidden;"
+  title="DFN.WTF Trust Score"
+></iframe>
