@@ -1,4 +1,4 @@
-console.log("[DFN Components] v1.3.1 initialized");
+console.log("[DFN Components] v1.3.2 initialized");
 
 class DFNPatrol extends HTMLElement {
   constructor() {
