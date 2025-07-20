@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v6.0.0 initialized - Hype Analysis Integration");
+console.log("[DFN Components] v6.0.1 initialized - Hype Analysis Integration");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -210,8 +210,8 @@ template.innerHTML = `
     details[open] > summary { list-style-type: '▾ '; }
     .programmatic-list { padding: 12px 0 4px 24px; list-style-type: square; font-size: 0.85em; }
     .programmatic-list li { margin-bottom: 8px; }
-
-    /* --- НОВЫЕ СТИЛИ ДЛЯ БЛОКА АНАЛИЗА ХАЙПА --- */
+    
+    /* --- СТИЛИ ДЛЯ HYPE ANALYSIS --- */
     .hype-analysis-block { grid-column: 1 / -1; }
     .hype-verdict { text-align: center; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
     .hype-verdict-title { font-size: 0.9rem; color: #aaa; text-transform: uppercase; margin: 0 0 8px; font-weight: 600; }
@@ -227,7 +227,6 @@ template.innerHTML = `
     .hype-widget-label { font-size: 0.8rem; font-weight: 600; color: #888; text-transform: uppercase; margin-bottom: 8px; }
     .hype-widget-value { font-size: 1.4rem; font-weight: 700; color: #fff; }
     .hype-widget-value .buys-sells { font-size: 1.1rem; }
-    /* --- КОНЕЦ НОВЫХ СТИЛЕЙ --- */
     
     #cascade-dump-simulator { text-align: center; background: #191919; padding: 24px; border-radius: 8px; border: 1px solid #282828;}
     #start-sim-btn {
@@ -278,8 +277,8 @@ class DFNPatrol extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.shadowRoot.appendChild(template.content.cloneNode(true));
     this.container = this.shadowRoot.querySelector('#report-container');
-    this.copyIconSVG = `<svg class="copy-icon" xmlns="http://www.w.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
-    this.checkIconSVG = `<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9eff9e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+    this.copyIconSVG = `<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+    this.checkIconSVG = `<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="#9eff9e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
   }
   
   setReport(report) {
@@ -308,14 +307,24 @@ class DFNPatrol extends HTMLElement {
         else circle.style.stroke = '#ff6b7b';
         
         let i = 0;
-        const interval = setInterval(() => {
-            i++;
-            const currentScore = Math.round((i / 100) * score);
-            percentageText.textContent = `${currentScore}%`;
-            if (currentScore >= score) {
-                clearInterval(interval);
+        const targetScore = score;
+        const initialScore = parseInt(percentageText.textContent) || 0;
+        const duration = 1000;
+        const startTime = performance.now();
+
+        const animate = (currentTime) => {
+            const elapsedTime = currentTime - startTime;
+            const progress = Math.min(elapsedTime / duration, 1);
+            const currentAnimatedScore = Math.round(initialScore + (targetScore - initialScore) * progress);
+            percentageText.textContent = `${currentAnimatedScore}%`;
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                percentageText.textContent = `${targetScore}%`;
             }
-        }, 10);
+        };
+        requestAnimationFrame(animate);
 
     }, 100);
   }
@@ -421,8 +430,8 @@ class DFNPatrol extends HTMLElement {
        this.container.innerHTML = `<div class="error">${sanitizeHTML(this.report.error)}</div>`;
        return;
     }
-
-    const { tokenInfo, security, distribution, market, socials, liquidityDrain } = this.report;
+    // ДОБАВЛЕНО: Извлекаем hype из отчета
+    const { tokenInfo, security, distribution, market, socials, liquidityDrain, hype } = this.report;
     
     const displayName = tokenInfo.name && tokenInfo.name.length > 10 
         ? `${tokenInfo.name.substring(0, 7)}...` 
@@ -494,6 +503,63 @@ class DFNPatrol extends HTMLElement {
         </div>
     ` : '';
     
+    // --- ДОБАВЛЕНО: ЛОГИКА ГЕНЕРАЦИИ HTML ДЛЯ АНАЛИЗА ХАЙПА ---
+    let hypeAnalysisHTML = '';
+    if (hype && Object.keys(hype).length > 0) {
+        
+        let verdict = { text: 'N/A', class: '' };
+        const sentiment = hype.sentiment;
+        const volume = hype.socialVolume;
+
+        if (sentiment) {
+            if (sentiment.bearish_score > 60) {
+                verdict = { text: 'Toxic Sentiment', class: 'verdict-toxic-sentiment' };
+            } else if (volume > 1000 && sentiment.bullish_score > 80) {
+                verdict = { text: 'Irrational Optimism', class: 'verdict-irrational-optimism' };
+            } else if (volume > 500) {
+                verdict = { text: 'Rising Attention', class: 'verdict-rising-attention' };
+            } else {
+                 verdict = { text: 'Low Profile', class: 'verdict-low-profile' };
+            }
+        }
+        
+        const formatBigNum = (num) => {
+            if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
+            if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`;
+            return num || '0';
+        };
+
+        hypeAnalysisHTML = `
+            <div class="hype-analysis-block">
+                <h3>🌪️ Hype & Resonance Analysis</h3>
+                <div class="hype-verdict ${verdict.class}">
+                    <div class="hype-verdict-title">Overall Hype Index</div>
+                    <div class="hype-verdict-text">${verdict.text}</div>
+                </div>
+                <div class="hype-grid">
+                    <div class="hype-widget">
+                        <div class="hype-widget-label">Social Volume (24h)</div>
+                        <div class="hype-widget-value">${formatBigNum(hype.socialVolume)}</div>
+                    </div>
+                    <div class="hype-widget">
+                        <div class="hype-widget-label">Sentiment</div>
+                        <div class="hype-widget-value buys-sells">
+                           <span class="text-ok">${hype.sentiment?.bullish_score || 0}%</span> / <span class="text-bad">${hype.sentiment?.bearish_score || 0}%</span>
+                        </div>
+                    </div>
+                    <div class="hype-widget">
+                        <div class="hype-widget-label">Spam Score</div>
+                        <div class="hype-widget-value">${hype.spamScore || 0} / 5</div>
+                    </div>
+                    <div class="hype-widget">
+                        <div class="hype-widget-label">Galaxy Score™</div>
+                        <div class="hype-widget-value">${hype.galaxyScore || 'N/A'}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     const programmaticAccountsHTML = distribution.allLpAddresses && distribution.allLpAddresses.length > 0 ?
       `<details class="programmatic-accounts-details"><summary>Pools, CEX, etc.: ${distribution.allLpAddresses.length}</summary><ul class="programmatic-list">${distribution.allLpAddresses.map(addr => `<li><a href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${addr.slice(0, 10)}...${addr.slice(-4)}</a></li>`).join('')}</ul></details>` : '';
 
@@ -530,6 +596,7 @@ class DFNPatrol extends HTMLElement {
         ${trendIndicatorHTML}
         <div class="report-grid">
             ${socialsHTML}
+            ${hypeAnalysisHTML} 
             <div>
               <h3>🛡️ Security Flags</h3>
               <ul>
