@@ -1,4 +1,4 @@
-console.log("[DFN Components] v1.3.2 initialized");
+console.log("[DFN Components] v1.3.3 initialized");
 
 class DFNPatrol extends HTMLElement {
   constructor() {
@@ -181,7 +181,10 @@ class DFNPatrol extends HTMLElement {
 }
 
 
-  showToast(msg) {
+
+if (!customElements.get("dfn-patrol")) {
+  customElements.define("dfn-patrol", DFNPatrol);
+showToast(msg) {
     const container = this.shadowRoot.querySelector("#toastContainer");
     if (!container) return;
     const el = document.createElement("div");
@@ -190,8 +193,4 @@ class DFNPatrol extends HTMLElement {
     container.appendChild(el);
     setTimeout(() => el.remove(), 8000);
   }
-
-
-if (!customElements.get("dfn-patrol")) {
-  customElements.define("dfn-patrol", DFNPatrol);
 }
