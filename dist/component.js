@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v6.0.3 initialized - Final Detailed Hype Render");
+console.log("[DFN Components] v6.0.4 initialized - Final Hype Features");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -32,7 +32,7 @@ template.innerHTML = `
       border-radius: 12px;
       border: 1px solid #333;
     }
-    h3 {
+    h3, h4 {
       margin: 24px 0 16px;
       font-size: 1.1rem;
       font-weight: 600;
@@ -44,6 +44,13 @@ template.innerHTML = `
       margin-top: 0;
       padding-top: 0;
       border-top: none;
+    }
+    h4 {
+        font-size: 1rem;
+        color: #ccc;
+        border-top: none;
+        padding-top: 0;
+        margin-top: 0;
     }
     ul { list-style: none; padding-left: 0; font-size: 0.95rem; margin-top: 8px; }
     li { margin-bottom: 10px; line-height: 1.5; display: flex; align-items: center; word-break: break-word; color: #aaa; }
@@ -211,7 +218,6 @@ template.innerHTML = `
     .programmatic-list { padding: 12px 0 4px 24px; list-style-type: square; font-size: 0.85em; }
     .programmatic-list li { margin-bottom: 8px; }
     
-    /* --- СТИЛИ ДЛЯ HYPE ANALYSIS --- */
     .hype-analysis-block { grid-column: 1 / -1; }
     .hype-verdict { text-align: center; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
     .hype-verdict-title { font-size: 0.9rem; color: #aaa; text-transform: uppercase; margin: 0 0 8px; font-weight: 600; }
@@ -225,6 +231,7 @@ template.innerHTML = `
     .hype-widget { background-color: #111; padding: 16px; border-radius: 6px; border: 1px solid #222; }
     .hype-widget-label { font-size: 0.8rem; font-weight: 600; color: #888; text-transform: uppercase; margin-bottom: 8px; }
     .hype-widget-value { font-size: 1.4rem; font-weight: 700; color: #fff; }
+    
     .sentiment-breakdown { display: flex; justify-content: space-around; align-items: center; font-size: 1.1rem; }
     .sentiment-item { display: flex; flex-direction: column; align-items: center; }
     .sentiment-item span:first-child { font-size: 0.8rem; }
@@ -232,6 +239,21 @@ template.innerHTML = `
     .sentiment-neutral { color: #aaa; }
     .sentiment-negative { color: #ff6b7b; }
 
+    .network-breakdown { font-size: 0.9em; color: #aaa; text-align: left; padding: 0 10px; }
+    .network-breakdown div:not(:last-child) { margin-bottom: 4px; }
+    .network-breakdown strong { color: #fff; }
+
+    .recent-posts-container { margin-top: 20px; }
+    .post-card { background-color: #111; border: 1px solid #222; border-radius: 6px; padding: 14px; margin-bottom: 12px; font-size: 0.9em; text-align: left; }
+    .post-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .post-header img { width: 32px; height: 32px; border-radius: 50%; }
+    .post-author-info { display: flex; flex-direction: column; }
+    .post-author-info a { color: #eee; font-weight: bold; }
+    .post-author-info span { color: #888; font-size: 0.85em; }
+    .post-body { color: #ccc; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; }
+    .post-body a { color: #58a6ff; }
+    .post-footer { margin-top: 12px; font-size: 0.85em; color: #888; }
+    
     #cascade-dump-simulator { text-align: center; background: #191919; padding: 24px; border-radius: 8px; border: 1px solid #282828;}
     #start-sim-btn {
         background-color: var(--accent); color: #000; border: none; padding: 10px 20px; margin-top: 16px;
@@ -310,8 +332,6 @@ class DFNPatrol extends HTMLElement {
         else if (score >= 40) circle.style.stroke = '#ffd447';
         else circle.style.stroke = '#ff6b7b';
         
-        let i = 0;
-        const targetScore = score;
         const initialScoreText = percentageText.textContent;
         const initialScore = parseInt(initialScoreText.replace('%','')) || 0;
         const duration = 1000;
@@ -319,15 +339,14 @@ class DFNPatrol extends HTMLElement {
 
         const animate = (currentTime) => {
             const elapsedTime = currentTime - startTime;
-            const progress = Math.min(elapsedTime / duration, 1);
-            const currentAnimatedScore = Math.round(initialScore + (targetScore - initialScore) * progress);
-            percentageText.textContent = `${currentAnimatedScore}%`;
-
-            if (progress < 1) {
-                requestAnimationFrame(animate);
-            } else {
-                percentageText.textContent = `${targetScore}%`;
+            if (elapsedTime > duration) {
+                percentageText.textContent = `${score}%`;
+                return;
             }
+            const progress = elapsedTime / duration;
+            const currentAnimatedScore = Math.round(initialScore + (score - initialScore) * progress);
+            percentageText.textContent = `${currentAnimatedScore}%`;
+            requestAnimationFrame(animate);
         };
         requestAnimationFrame(animate);
 
@@ -508,15 +527,14 @@ class DFNPatrol extends HTMLElement {
         </div>
     ` : '';
     
-    // --- ОБНОВЛЕННАЯ ЛОГИКА ГЕНЕРАЦИИ HTML ДЛЯ АНАЛИЗА ХАЙПА ---
     let hypeAnalysisHTML = '';
-    if (hype && hype.id) { // Проверяем наличие ID, чтобы убедиться, что данные есть
+    if (hype && hype.id) {
         
         let verdict = { text: 'N/A', class: '' };
         const sentiment = hype.sentiment;
         const volume = hype.socialVolume;
 
-        if (sentiment) {
+        if (sentiment && typeof sentiment.total !== 'undefined') {
             const positivePercent = sentiment.total > 0 ? (sentiment.positive / sentiment.total) * 100 : 0;
             const negativePercent = sentiment.total > 0 ? (sentiment.negative / sentiment.total) * 100 : 0;
 
@@ -539,23 +557,44 @@ class DFNPatrol extends HTMLElement {
         };
         
         const getSentimentPercent = (value, total) => {
-            if (!total) return '0%';
+            if (total === null || typeof total === 'undefined' || total === 0) return '0%';
             return `${Math.round((value / total) * 100)}%`;
         };
+        
+        const networkBreakdownHTML = hype.networkBreakdown ? Object.entries(hype.networkBreakdown).map(([key, value]) => `<div>${key.charAt(0).toUpperCase() + key.slice(1)}: <strong>${formatBigNum(value)}</strong></div>`).join('') : '';
+        
+        const recentPostsHTML = hype.recentPosts && hype.recentPosts.length > 0 ? `
+            <div class="recent-posts-container">
+                <h4>Top Social Posts</h4>
+                ${hype.recentPosts.map(post => `
+                    <div class="post-card">
+                        <div class="post-header">
+                            <img src="${sanitizeUrl(post.profile_image)}" alt="author profile">
+                            <div class="post-author-info">
+                                <a href="${sanitizeUrl(post.url)}" target="_blank" rel="noopener">${sanitizeHTML(post.display_name)}</a>
+                                <span>@${sanitizeHTML(post.user_name)}</span>
+                            </div>
+                        </div>
+                        <div class="post-body">${sanitizeHTML(post.body).replace(/#\w+/g, '<strong>$&</strong>').replace(/@\w+/g, '<strong>$&</strong>')}</div>
+                        <div class="post-footer">${new Date(post.time * 1000).toLocaleString()} • Interactions: ${formatBigNum(post.interactions)}</div>
+                    </div>
+                `).join('')}
+            </div>
+        ` : '';
 
         hypeAnalysisHTML = `
             <div class="hype-analysis-block">
                 <h3>🌪️ Hype & Resonance Analysis</h3>
-                <div class="hype-verdict ${verdict.class}">
+                <div class="hype-verdict ${verdict.class}" title="Our summary verdict on the token's current social sentiment and activity level.">
                     <div class="hype-verdict-title">Overall Hype Index</div>
                     <div class="hype-verdict-text">${verdict.text}</div>
                 </div>
                 <div class="hype-grid">
-                    <div class="hype-widget">
+                    <div class="hype-widget" title="The total number of likes, comments, replies, and shares on posts about this token in the last 24 hours.">
                         <div class="hype-widget-label">Social Interactions (24h)</div>
                         <div class="hype-widget-value">${formatBigNum(hype.socialVolume)}</div>
                     </div>
-                    <div class="hype-widget">
+                    <div class="hype-widget" title="The percentage of positive, neutral, and negative interactions about this token.">
                         <div class="hype-widget-label">Sentiment Breakdown</div>
                         <div class="hype-widget-value sentiment-breakdown">
                            <div class="sentiment-item sentiment-positive"><span>Pos</span>${getSentimentPercent(hype.sentiment.positive, hype.sentiment.total)}</div>
@@ -563,15 +602,24 @@ class DFNPatrol extends HTMLElement {
                            <div class="sentiment-item sentiment-negative"><span>Neg</span>${getSentimentPercent(hype.sentiment.negative, hype.sentiment.total)}</div>
                         </div>
                     </div>
-                    <div class="hype-widget">
+                    <div class="hype-widget" title="The number of unique social media authors who created posts about this token in the last 24 hours.">
                         <div class="hype-widget-label">Contributors (24h)</div>
                         <div class="hype-widget-value">${formatBigNum(hype.contributors)}</div>
                     </div>
-                    <div class="hype-widget">
-                        <div class="hype-widget-label">Galaxy Score™</div>
-                        <div class="hype-widget-value">${hype.galaxyScore || 'N/A'}</div>
+                    <div class="hype-widget" title="A combined score (1-100) that analyzes price, social volume, and sentiment to gauge the 'sanity' of the current hype.">
+                        <div class="hype-widget-label">Momentum Score</div>
+                        <div class="hype-widget-value">${hype.momentumScore || 'N/A'}</div>
+                    </div>
+                    <div class="hype-widget" title="Breakdown of interactions by social network.">
+                        <div class="hype-widget-label">Network Breakdown</div>
+                        <div class="hype-widget-value network-breakdown">${networkBreakdownHTML}</div>
+                    </div>
+                    <div class="hype-widget" title="Total number of social media posts about this token in the last 24 hours.">
+                        <div class="hype-widget-label">Posts (24h)</div>
+                        <div class="hype-widget-value">${formatBigNum(hype.posts)}</div>
                     </div>
                 </div>
+                ${recentPostsHTML}
             </div>
         `;
     }
