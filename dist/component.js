@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v6.2.0 initialized - Final Detailed Hype Render");
+console.log("[DFN Components] v6.0.3 initialized - Final Detailed Hype Render");
 
 function sanitizeHTML(str) {
     if (!str) return '';
