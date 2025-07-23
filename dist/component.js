@@ -1,3 +1,4 @@
+// component.js
 console.log("[DFN Components] v1.4.0 initialized");
 
 class DFNPatrol extends HTMLElement {
@@ -146,7 +147,12 @@ class DFNPatrol extends HTMLElement {
 
       <div>
         <h3>📡 Monitoring Token:</h3>
-        <div class="section">${embed}</div>
+        <div class="section">
+          ${snapshot && snapshot.tokenInfo ? `
+            <strong>${snapshot.tokenInfo.name} (${snapshot.tokenInfo.symbol})</strong><br/>
+            ${embed}
+          ` : embed}
+        </div>
 
         <h3>💰 Top Holders</h3>
         <div class="section">
@@ -158,7 +164,12 @@ class DFNPatrol extends HTMLElement {
         <h3>🌊 Liquidity</h3>
         <div class="section">
           ${snapshot && snapshot.liquidity
-            ? `Pool: ${snapshot.liquidity.pool}<br/>Volume: ${snapshot.liquidity.volume}<br/>Price: ${snapshot.liquidity.price}`
+            ? `
+              Pool: ${snapshot.liquidity.pool}<br/>
+              Price: ${snapshot.liquidity.price}<br/>
+              Volume (24h): ${snapshot.liquidity.volume}<br/>
+              TVL (Liquidity): ${snapshot.liquidity.tvl}
+            `
             : '<div class="placeholder">No liquidity info yet.</div>'}
         </div>
 
@@ -190,8 +201,6 @@ class DFNPatrol extends HTMLElement {
   }
 
 }
-
-
 
 if (!customElements.get("dfn-patrol")) {
   customElements.define("dfn-patrol", DFNPatrol);
