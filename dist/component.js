@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v6.0.8 initialized - Final Hype Layout with Tooltips");
+console.log("[DFN Components] v6.0.9 initialized - Final Hype Layout with Tooltips");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -683,8 +683,11 @@ class DFNPatrol extends HTMLElement {
                 ${'holderConcentration' in security ? `<li class="${security.holderConcentration > 25 ? 'bad' : (security.holderConcentration > 10 ? 'warn' : 'ok')}">Top 10 holders own ${security.holderConcentration.toFixed(2)}%.</li>` : ''}
                 ${security.isCto ? `<li class="ok">Community Takeover</li>` : ''}
                 
+                // ИЗМЕНЕНИЕ: Добавляем флаги для верификации и рекламы
+                ${security.isSponsored ? `<li class="warn">This token is a sponsored placement on DexScreener.</li>` : ''}
+                ${security.isDexVerified ? `<li class="ok">Token info on DexScreener is verified by the team.</li>` : ''}
                 ${!security.isDexVerified && !security.launchpad ? `<li class="warn">Token info on DexScreener has not been updated by the team.</li>` : ''}
-                
+
                 ${security.lpStatus ? `<li class="${security.lpStatus === 'Burned' || security.lpStatus === 'Locked/Burned' ? 'ok' : 'bad'}">Liquidity is ${security.lpStatus}.</li>` : '<li>Liquidity status is Unknown.</li>'}
                 ${'isMutable' in security ? `<li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>` : ''}
                 ${'freezeAuthorityEnabled' in security ? `<li class="${!security.freezeAuthorityEnabled ? 'ok' : 'bad'}">${!security.freezeAuthorityEnabled ? 'Freeze authority is disabled.' : 'Freeze authority is enabled.'}</li>` : ''}
