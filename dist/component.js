@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v6.0.7 initialized - Final Hype Layout with Tooltips");
+console.log("[DFN Components] v6.0.8 initialized - Final Hype Layout with Tooltips");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -683,7 +683,6 @@ class DFNPatrol extends HTMLElement {
                 ${'holderConcentration' in security ? `<li class="${security.holderConcentration > 25 ? 'bad' : (security.holderConcentration > 10 ? 'warn' : 'ok')}">Top 10 holders own ${security.holderConcentration.toFixed(2)}%.</li>` : ''}
                 ${security.isCto ? `<li class="ok">Community Takeover</li>` : ''}
                 
-                // ИЗМЕНЕНИЕ: Добавляем новый флаг для НЕВЕРИФИЦИРОВАННЫХ токенов
                 ${!security.isDexVerified && !security.launchpad ? `<li class="warn">Token info on DexScreener has not been updated by the team.</li>` : ''}
                 
                 ${security.lpStatus ? `<li class="${security.lpStatus === 'Burned' || security.lpStatus === 'Locked/Burned' ? 'ok' : 'bad'}">Liquidity is ${security.lpStatus}.</li>` : '<li>Liquidity status is Unknown.</li>'}
