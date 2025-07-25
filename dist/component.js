@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v2.0.1 initialized");
+console.log("[DFN Components] v2.0.2 initialized");
 
 class DFNPatrol extends HTMLElement {
   constructor() {
@@ -48,7 +48,7 @@ class DFNPatrol extends HTMLElement {
         h3 { margin: 0 0 10px; font-size: 18px; color: #f5d742; }
         .section { margin-bottom: 16px; }
         ul { list-style: none; padding-left: 0; font-size: 14px; }
-        li { margin-bottom: 4px; }
+        li { margin-bottom: 4px; overflow-wrap: break-word; }
         .placeholder { font-style: italic; color: #777; }
         li a { color: #ffd447; text-decoration: none; font-family: monospace; font-size: 0.8rem; margin-left: 8px; }
         li a:hover { text-decoration: underline; }
@@ -71,7 +71,9 @@ class DFNPatrol extends HTMLElement {
         </div>
         <h3>🌊 Liquidity Pool Status</h3>
         <div class="section">
-          ${snapshot && snapshot.liquidity ? `Pool: ${snapshot.liquidity.pool}<br/>Status: ${snapshot.liquidity.status}` : '<div class="placeholder">No liquidity info yet.</div>'}
+          ${snapshot && snapshot.liquidity 
+            ? `Pool Address: ${snapshot.liquidity.pool}<br/>Status: ${snapshot.liquidity.status}` 
+            : '<div class="placeholder">Searching for LP info...</div>'}
         </div>
         <h3>🧬 Clusters</h3>
         <div class="section">
@@ -89,6 +91,7 @@ class DFNPatrol extends HTMLElement {
 
   showToast(msg) {
     const container = this.shadowRoot.querySelector("#toastContainer");
+    if (!container) return;
     const el = document.createElement("div");
     el.className = "dfn-toast";
     el.textContent = msg;
