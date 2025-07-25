@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v6.1.2 initialized - Final Hype Layout with Tooltips");
+console.log("[DFN Components] v6.1.3 initialized - Final Hype Layout with Tooltips");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -101,7 +101,7 @@ template.innerHTML = `
         cursor: pointer; 
         padding: 4px 8px; 
         border-radius: 4px; 
-        transition: background-color 0.2s; 
+        transition: background-color: 0.2s; 
         width: fit-content;
     }
     .address-container:hover { background-color: #252525; }
@@ -121,7 +121,7 @@ template.innerHTML = `
         cursor: pointer;
         padding: 4px 8px;
         border-radius: 4px;
-        transition: background-color 0.2s;
+        transition: background-color: 0.2s;
         width: fit-content;
     }
     .share-button:hover {
@@ -682,10 +682,11 @@ class DFNPatrol extends HTMLElement {
                 
                 ${'holderConcentration' in security ? `<li class="${security.holderConcentration > 25 ? 'bad' : (security.holderConcentration > 10 ? 'warn' : 'ok')}">Top 10 holders own ${security.holderConcentration.toFixed(2)}%.</li>` : ''}
                 
-                ${security.isCto ? `<li class="ok">Community Takeover</li>` : ''}
+                // --- ИЗМЕНЕНИЕ: Новая логика отображения ---
                 ${security.hasActiveAd ? `<li class="warn">Token has an active ad campaign on DexScreener.</li>` : ''}
-                ${security.isDexVerified ? `<li class="ok">Token info on DexScreener is verified by the team.</li>` : ''}
-                ${!security.isDexVerified && !security.launchpad ? `<li class="warn">Token info on DexScreener has not been updated by the team.</li>` : ''}
+                ${security.isCto ? `<li class="ok">Community Takeover</li>` : ''}
+                ${security.isDexVerified ? `<li class="ok">DEX Paid</li>` : ''}
+                ${!security.isDexVerified && !security.launchpad ? `<li class="bad">DEX Not Paid</li>` : ''}
 
                 ${security.lpStatus ? `<li class="${security.lpStatus === 'Burned' || security.lpStatus === 'Locked/Burned' ? 'ok' : 'bad'}">Liquidity is ${security.lpStatus}.</li>` : '<li>Liquidity status is Unknown.</li>'}
                 ${'isMutable' in security ? `<li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>` : ''}
