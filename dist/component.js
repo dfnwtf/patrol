@@ -1,7 +1,4 @@
 // component.js
-console.log("[DFN Components] v3.0.2 initialized (Stable)");
-
-// component.js
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -18,16 +15,20 @@ class DFNPatrol extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>
         :host { display: block; font-family: sans-serif; background: #111; color: #eee; padding: 16px; border-radius: 12px; }
-        h3 { margin: 20px 0 10px; font-size: 18px; color: #f5d742; border-top: 1px solid #333; padding-top: 16px; }
-        h2 { font-size: 22px; text-align: center; }
+        h2 { font-size: 22px; text-align: center; margin-bottom: 24px; }
+        h3 { margin: 20px 0 10px; font-size: 18px; color: #f5d742; border-top: 1px solid #333; padding-top: 20px; }
         ul { list-style: none; padding-left: 0; font-size: 14px; }
-        li { margin-bottom: 6px; }
+        li { margin-bottom: 8px; line-height: 1.4; }
         .placeholder { text-align: center; padding: 40px; font-size: 1.1em; color: #888; }
         .error { color: #ff6b7b; text-align: center; }
         .ok { color: #9eff9e; }
         .bad { color: #ff6b7b; }
         .warn { color: #ffd447; }
-        .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; }
+        .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 32px; }
+        .report-grid div:first-child { grid-column: 1 / -1; } /* Токен инфо на всю ширину */
+        p { margin-bottom: 8px; }
+        a { color: #ffd447; text-decoration: none; }
+        a:hover { text-decoration: underline; }
         @media(max-width: 600px) { .report-grid { grid-template-columns: 1fr; } }
       </style>
     `;
@@ -43,47 +44,51 @@ class DFNPatrol extends HTMLElement {
     
     const { tokenInfo, security, distribution, project } = this.report;
     
+    const tokenHTML = `
+      <div>
+        <h2>Report: ${tokenInfo.name} (${tokenInfo.symbol})</h2>
+      </div>
+    `;
+
     const securityHTML = `
       <div>
-        <h3>🛡️ Security</h3>
+        <h3>🛡️ Security Flags</h3>
         <ul>
-          <li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? '✅ Mint authority renounced.' : '🔴 Dev can mint more tokens.'}</li>
+          <li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? '✅ Mint authority is renounced.' : '🔴 Dev can mint more tokens.'}</li>
           <li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? '✅ Metadata is immutable.' : '🔴 Dev can change token info.'}</li>
+          <li class="${security.lpIsLocked ? 'ok' : 'warn'}">${security.lpIsLocked ? '✅ Liquidity appears to be locked or burned.' : '🔴 Liquidity is held in a regular wallet (High Risk).'}</li>
         </ul>
       </div>
     `;
     
     const distributionHTML = `
       <div>
-        <h3>💰 Distribution</h3>
-        <p>LP Address: ${distribution.lpAddress || 'Not Found'}</p>
-        <p class="${distribution.freshWallets > 1 ? 'bad' : 'ok'}">Fresh wallets in top 5: ${distribution.freshWallets || 0}</p>
-        <h4>Top 5 Holders:</h4>
+        <h3>💰 Distribution & LP</h3>
+        <p><b>LP Address:</b> ${distribution.lpAddress || 'Not Found'}</p>
+        <p class="${distribution.freshWallets > 1 ? 'bad' : 'ok'}"><b>Fresh wallets in top 5:</b> ${distribution.freshWallets || 0}</p>
+        <b>Top 5 Holders:</b>
         <ul>${distribution.topHolders?.map(h => `<li>${h.address.slice(0,6)}... (${(h.uiAmountString / 1e9 * 100).toFixed(2)}%)</li>`).join('') || '<li>N/A</li>'}</ul>
       </div>
     `;
 
     const projectHTML = `
       <div>
-          <h3>ℹ️ Project Info</h3>
-          <p class="${project.copycatCount > 5 ? 'bad' : 'warn'}">Similar token names found: ${project.copycatCount}</p>
-          <p>Website: ${project.links.website ? `<a href="${project.links.website}" target="_blank">Link</a>` : 'N/A'}</p>
-          <p>Twitter: ${project.links.twitter ? `<a href="${project.links.twitter}" target="_blank">Link</a>` : 'N/A'}</p>
+          <h3>ℹ️ Project & Socials</h3>
+          <p class="${project.copycatCount > 5 ? 'bad' : 'warn'}"><b>Similar token names found:</b> ${project.copycatCount}</p>
+          <p><b>Website:</b> ${project.links.website ? `<a href="${project.links.website}" target="_blank">Visit</a>` : 'Not Provided'}</p>
+          <p><b>Twitter:</b> ${project.links.twitter ? `<a href="${project.links.twitter}" target="_blank">Visit</a>` : 'Not Provided'}</p>
       </div>
     `;
 
     this.shadowRoot.innerHTML += `
-      <h2>Report: ${tokenInfo.name} (${tokenInfo.symbol})</h2>
       <div class="report-grid">
+        ${tokenHTML}
         ${securityHTML}
         ${distributionHTML}
         ${projectHTML}
       </div>
     `;
   }
-}
-if (!customElements.get("dfn-patrol")) {
-  customElements.define("dfn-patrol", DFNPatrol);
 }
 if (!customElements.get("dfn-patrol")) {
   customElements.define("dfn-patrol", DFNPatrol);
