@@ -15,7 +15,7 @@ class DFNPatrol extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>
         :host { display: block; font-family: sans-serif; background: #111; color: #eee; padding: 16px; border-radius: 12px; }
-        h2 { font-size: 22px; text-align: center; margin-bottom: 24px; }
+        h2 { font-size: 22px; text-align: center; margin-bottom: 24px; word-break: break-all; }
         h3 { margin: 20px 0 10px; font-size: 18px; color: #f5d742; border-top: 1px solid #333; padding-top: 20px; }
         ul { list-style: none; padding-left: 0; font-size: 14px; }
         li { margin-bottom: 8px; line-height: 1.4; }
@@ -25,7 +25,8 @@ class DFNPatrol extends HTMLElement {
         .bad { color: #ff6b7b; }
         .warn { color: #ffd447; }
         .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 32px; }
-        .report-grid div:first-child { grid-column: 1 / -1; } /* Токен инфо на всю ширину */
+        .report-grid > div { background: #1a1a1a; padding: 16px; border-radius: 8px; }
+        .full-width { grid-column: 1 / -1; }
         p { margin-bottom: 8px; }
         a { color: #ffd447; text-decoration: none; }
         a:hover { text-decoration: underline; }
@@ -44,11 +45,7 @@ class DFNPatrol extends HTMLElement {
     
     const { tokenInfo, security, distribution, project } = this.report;
     
-    const tokenHTML = `
-      <div>
-        <h2>Report: ${tokenInfo.name} (${tokenInfo.symbol})</h2>
-      </div>
-    `;
+    const tokenHTML = `<div class="full-width"><h2>Report: ${tokenInfo.name} (${tokenInfo.symbol})</h2></div>`;
 
     const securityHTML = `
       <div>
@@ -56,14 +53,14 @@ class DFNPatrol extends HTMLElement {
         <ul>
           <li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? '✅ Mint authority is renounced.' : '🔴 Dev can mint more tokens.'}</li>
           <li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? '✅ Metadata is immutable.' : '🔴 Dev can change token info.'}</li>
-          <li class="${security.lpIsLocked ? 'ok' : 'warn'}">${security.lpIsLocked ? '✅ Liquidity appears to be locked or burned.' : '🔴 Liquidity is held in a regular wallet (High Risk).'}</li>
+          <li class="${security.lpIsLocked ? 'ok' : 'bad'}">${distribution.lpAddress ? (security.lpIsLocked ? '✅ Liquidity appears safe.' : '🔴 Unlocked Liquidity Risk!') : '⚪ Liquidity pool not found.'}</li>
         </ul>
       </div>
     `;
     
     const distributionHTML = `
       <div>
-        <h3>💰 Distribution & LP</h3>
+        <h3>💰 Distribution</h3>
         <p><b>LP Address:</b> ${distribution.lpAddress || 'Not Found'}</p>
         <p class="${distribution.freshWallets > 1 ? 'bad' : 'ok'}"><b>Fresh wallets in top 5:</b> ${distribution.freshWallets || 0}</p>
         <b>Top 5 Holders:</b>
@@ -74,8 +71,8 @@ class DFNPatrol extends HTMLElement {
     const projectHTML = `
       <div>
           <h3>ℹ️ Project & Socials</h3>
-          <p class="${project.copycatCount > 5 ? 'bad' : 'warn'}"><b>Similar token names found:</b> ${project.copycatCount}</p>
-          <p><b>Website:</b> ${project.links.website ? `<a href="${project.links.website}" target="_blank">Visit</a>` : 'Not Provided'}</p>
+          <p class="${project.copycatCount > 5 ? 'bad' : (project.copycatCount > 0 ? 'warn' : 'ok')}"><b>Similar token names found:</b> ${project.copycatCount}</p>
+          <p><b>Website:</b> ${project.links.external_url ? `<a href="${project.links.external_url}" target="_blank">Visit</a>` : 'Not Provided'}</p>
           <p><b>Twitter:</b> ${project.links.twitter ? `<a href="${project.links.twitter}" target="_blank">Visit</a>` : 'Not Provided'}</p>
       </div>
     `;
