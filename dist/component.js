@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] beta-v1.0 initialized");
+console.log("[DFN Components] beta-v1.1 initialized");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -294,6 +294,17 @@ template.innerHTML = `
     @media (min-width: 901px) { .token-logo { width: 96px !important; height: 96px !important; } }
     @media (max-width: 900px) { .summary-market-stats { order: 3; width: 100%; text-align: left; } .summary-token-info { order: 1; } .score-container { order: 2; margin-left: 0; margin-top: 20px; } }
     @media (max-width: 600px) { .summary-market-stats { grid-template-columns: repeat(2, 1fr); } .trend-indicator { grid-template-columns: repeat(2, 1fr); } .hype-grid { grid-template-columns: repeat(2, 1fr); } }
+    
+    .disclaimer {
+    font-size: 0.8em;
+    color: #888;
+    text-align: center;
+    margin-top: 32px;
+    padding: 0 16px;
+    border-top: 1px solid #282828;
+    padding-top: 24px;
+}
+    
   </style>
   <div id="report-container">
     <div class="placeholder">Generating token health report...</div>
@@ -655,6 +666,7 @@ class DFNPatrol extends HTMLElement {
             <button id="start-sim-btn">Run Simulation</button>
         </div>` : '';
 
+    const disclaimerHTML = `<div class="disclaimer">Disclaimer: This report is generated automatically for informational purposes only and does not constitute financial advice. The data is provided 'as is' without warranties of any kind. Always conduct your own research (DYOR) before making any investment decisions. The Department of Financial Nonsense is not liable for any financial losses.</div>`;
 
     const newContent = `
         <div class="summary-block">
@@ -704,6 +716,7 @@ class DFNPatrol extends HTMLElement {
             </div>
             ${cascadeSimulatorHTML}
         </div>
+        ${disclaimerHTML}
     `;
     
     this.container.innerHTML = `<div class="report-fade-in">${newContent}</div>`;
