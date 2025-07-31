@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v3.0.7 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.0.8 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -67,7 +67,7 @@ class DFNPatrol extends HTMLElement {
     const distributionHTML = `
       <div>
         <h3>💰 Distribution</h3>
-        <p><b>LP Address:</b> ${distribution.lpAddress || 'Not Found'}</p>
+        <p><b>LP Address:</b> ${distribution.lpAddress ? `${distribution.lpAddress.slice(0, 4)}...${distribution.lpAddress.slice(-4)}` : 'Not Found'}</p>
         <p class="${distribution.freshWallets > 1 ? 'bad' : 'ok'}"><b>Fresh wallets in top 5:</b> ${distribution.freshWallets || 0}</p>
         <b>Top 5 Holders:</b>
         <ul>${distribution.topHolders?.map(h => `<li>${h.address.slice(0,6)}... (${(h.uiAmountString / 1e9 * 100).toFixed(2)}%)</li>`).join('') || '<li>N/A</li>'}</ul>
@@ -77,9 +77,9 @@ class DFNPatrol extends HTMLElement {
     const projectHTML = `
       <div>
           <h3>ℹ️ Project & Socials</h3>
-          <p class="${project.copycatCount > 5 ? 'bad' : (project.copycatCount > 0 ? 'warn' : 'ok')}"><b>Similar token names found:</b> ${project.copycatCount}</p>
-          <p><b>Website:</b> ${project.links.website ? `<a href="${project.links.website}" target="_blank">Visit</a>` : 'Not Provided'}</p>
-          <p><b>Twitter:</b> ${project.links.twitter ? `<a href="${project.links.twitter}" target="_blank">Visit</a>` : 'Not Provided'}</p>
+          <p class="${project.copycatCount > 5 ? 'bad' : (project.copycatCount > 0 ? 'warn' : 'ok')}"><b>Similar token names found:</b> ${project.copycatCount || 0}</p>
+          <p><b>Website:</b> ${project.links.website ? `<a href="${project.links.website}" target="_blank" rel="noopener nofollow">Visit</a>` : 'Not Provided'}</p>
+          <p><b>Twitter:</b> ${project.links.twitter ? `<a href="${project.links.twitter}" target="_blank" rel="noopener nofollow">Visit</a>` : 'Not Provided'}</p>
       </div>
     `;
 
