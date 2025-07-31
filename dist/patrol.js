@@ -1,5 +1,5 @@
 // patrol.js
-console.log("[DFN Patrol] v3.0.7 initialized (Report Mode)");
+console.log("[DFN Patrol] v3.0.8 initialized (Report Mode)");
 let ws;
 function connectToWebSocket(token) {
   if (!token) return;
@@ -13,6 +13,13 @@ function connectToWebSocket(token) {
         panel.setReport(data.data);
       });
     }
+  });
+  ws.addEventListener("error", (e) => {
+      console.error("WebSocket Error:", e);
+      const panel = document.querySelector("dfn-patrol");
+      if (panel) {
+          panel.setReport({ error: "Connection to analysis server failed." });
+      }
   });
 }
 document.querySelector("#token-search")?.addEventListener("submit", (e) => {
