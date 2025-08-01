@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v3.0.9 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.1.0 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -71,7 +71,7 @@ class DFNPatrol extends HTMLElement {
         <h3>💰 Distribution</h3>
         ${distribution.lpAddress ? `<p><b>LP Address:</b> ${distribution.lpAddress.slice(0, 4)}...${distribution.lpAddress.slice(-4)}</p>` : ''}
         <b>Top 5 Holders:</b>
-        <ul>${distribution.topHolders && distribution.topHolders.length > 0 ? distribution.topHolders.map(h => `<li>${h.owner.slice(0,6)}... (${(h.percent * 100).toFixed(2)}%)</li>`).join('') : '<li>N/A</li>'}</ul>
+        <ul>${distribution.topHolders && distribution.topHolders.length > 0 ? distribution.topHolders.map(h => `<li>${h.address.slice(0,6)}... (${(parseFloat(h.uiAmountString.replace(/,/g, '')) / 10000000).toFixed(2)}%)</li>`).join('') : '<li>N/A</li>'}</ul>
       </div>
     `;
 
