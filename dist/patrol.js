@@ -1,21 +1,18 @@
 // patrol.js
-console.log("[DFN Patrol] v3.1.2 initialized (Report Mode)");
+console.log("[DFN Patrol] v3.0.9 initialized (Report Mode)");
 let ws;
 
 function connectToWebSocket(token) {
   if (!token) return;
 
-  // Если WebSocket уже открыт или подключается, закрываем его перед созданием нового.
-  if (ws && ws.readyState < 2) { // readyState < 2 означает CONNECTING или OPEN
+  if (ws && ws.readyState < 2) { 
       ws.close();
   }
 
   const scanButton = document.querySelector('#token-search button[type="submit"]');
-
-  // Используйте ваш реальный домен
+  
   ws = new WebSocket(`wss://dfn.wtf/api/?embed=${token}`);
 
-  // Функция для возвращения кнопки в исходное состояние
   const cleanup = () => {
       if (scanButton) {
           scanButton.disabled = false;
@@ -39,10 +36,10 @@ function connectToWebSocket(token) {
       if (panel) {
           panel.setReport({ error: "Connection to analysis server failed." });
       }
-      cleanup(); // Возвращаем кнопку в исходное состояние при ошибке
+      cleanup();
   });
 
-  ws.addEventListener("close", cleanup); // Возвращаем кнопку, когда соединение закрывается
+  ws.addEventListener("close", cleanup);
 }
 
 document.querySelector("#token-search")?.addEventListener("submit", (e) => {
@@ -70,14 +67,11 @@ document.querySelector("#token-search")?.addEventListener("submit", (e) => {
   connectToWebSocket(token);
 });
 
-// --- ЛОГИКА ДЛЯ НАЧАЛЬНОЙ ЗАГРУЗКИ СТРАНИЦЫ ---
-// Этот код выполняется один раз, когда страница полностью загружена.
 document.addEventListener('DOMContentLoaded', () => {
     const initialPanel = document.querySelector("dfn-patrol");
     if (initialPanel) {
         const initialToken = initialPanel.getAttribute("embed");
         if (initialToken) {
-            // Показываем, что идет загрузка для встроенного токена
             const scanButton = document.querySelector('#token-search button[type="submit"]');
             if(scanButton) {
                 scanButton.disabled = true;
