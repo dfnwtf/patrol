@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v3.1.4 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.1.4 initialized");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -50,7 +50,7 @@ class DFNPatrol extends HTMLElement {
        return;
     }
     
-    const { tokenInfo, security, distribution, project, market } = this.report;
+    const { tokenInfo, security, distribution, market } = this.report;
     
     const tokenHTML = `<div class="full-width"><h2>Report: ${tokenInfo.name} (${tokenInfo.symbol})</h2></div>`;
 
@@ -59,7 +59,6 @@ class DFNPatrol extends HTMLElement {
         <h3>🛡️ Security Flags</h3>
         <ul>
           ${'isMutable' in security ? `<li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>` : ''}
-          ${'mintRenounced' in security ? `<li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? 'Mint authority is renounced.' : 'Dev can mint more tokens.'}</li>` : ''}
           ${'isNewPool' in security ? `<li class="${!security.isNewPool ? 'ok' : 'warn'}">${!security.isNewPool ? 'Pool exists > 24h.' : 'Pool created < 24h ago.'}</li>` : ''}
           ${'hasSufficientLiquidity' in security ? `<li class="${security.hasSufficientLiquidity ? 'ok' : 'bad'}">${security.hasSufficientLiquidity ? 'Liquidity > $10,000' : 'Liquidity < $10,000'}</li>` : ''}
         </ul>
