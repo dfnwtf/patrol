@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v3.1.5 initialized");
+console.log("[DFN Components] v3.0.9 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -61,6 +61,7 @@ class DFNPatrol extends HTMLElement {
           ${'isMutable' in security ? `<li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>` : ''}
           ${'isNewPool' in security ? `<li class="${!security.isNewPool ? 'ok' : 'warn'}">${!security.isNewPool ? 'Pool exists > 24h.' : 'Pool created < 24h ago.'}</li>` : ''}
           ${'hasSufficientLiquidity' in security ? `<li class="${security.hasSufficientLiquidity ? 'ok' : 'bad'}">${security.hasSufficientLiquidity ? 'Liquidity > $10,000' : 'Liquidity < $10,000'}</li>` : ''}
+          ${'holderConcentration' in security ? `<li class="${security.holderConcentration < 25 ? 'ok' : 'warn'}">Top 10 holders own ${security.holderConcentration.toFixed(2)}%.</li>` : ''}
         </ul>
       </div>
     `;
@@ -69,8 +70,8 @@ class DFNPatrol extends HTMLElement {
       <div>
         <h3>💰 Distribution</h3>
         ${distribution.lpAddress ? `<p><b>LP Address:</b> ${distribution.lpAddress.slice(0, 4)}...${distribution.lpAddress.slice(-4)}</p>` : ''}
-        <b>Top 5 Holders:</b>
-        <ul>${distribution.topHolders && distribution.topHolders.length > 0 ? distribution.topHolders.map(h => `<li>${h.address.slice(0,6)}... (${(parseFloat(h.uiAmountString.replace(/,/g, '')) / 10000000).toFixed(2)}%)</li>`).join('') : '<li>N/A</li>'}</ul>
+        <b>Top 10 Holders:</b>
+        <ul>${distribution.topHolders && distribution.topHolders.length > 0 ? distribution.topHolders.map(h => `<li>${h.address.slice(0,6)}... (${h.percent}%)</li>`).join('') : '<li>N/A</li>'}</ul>
       </div>
     `;
 
