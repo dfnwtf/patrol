@@ -1,12 +1,12 @@
 // component.js
-console.log("[DFN Components] v3.2.5 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.2.7 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
   }
   connectedCallback() { this.render(); }
-
+  
   setReport(report) {
     this.report = report;
     this.render();
@@ -35,13 +35,14 @@ class DFNPatrol extends HTMLElement {
         p { margin-bottom: 8px; }
         a { color: #ffd447; text-decoration: none; }
         a:hover { text-decoration: underline; }
-        .market-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; }
+        .market-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px 16px; }
         .market-list li { margin-bottom: 0; }
         .market-list b { color: #aaa; }
         .note { font-size: 0.85em; color: #888; margin-left: 4px; }
+        .tx-arrow { margin-right: 6px; }
       </style>
     `;
-
+    
     if (!this.report) {
       this.shadowRoot.innerHTML += `<div class="placeholder">Generating token health report...</div>`;
       return;
@@ -50,17 +51,17 @@ class DFNPatrol extends HTMLElement {
        this.shadowRoot.innerHTML += `<div class="error">${this.report.error}</div>`;
        return;
     }
-
+    
     const { tokenInfo, security, distribution, project, market } = this.report;
-
+    
     const tokenHTML = `<div class="full-width"><h2>Report: ${tokenInfo.name} (${tokenInfo.symbol})</h2></div>`;
-
-    const mintRenouncedHTML = 'mintRenounced' in security
-        ? `<li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? 'Mint authority is renounced.' : 'Dev can mint more tokens <span class="note">(ignore for pump.fun/meteora)</span>.'}</li>`
+    
+    const mintRenouncedHTML = 'mintRenounced' in security 
+        ? `<li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? 'Mint authority is renounced.' : 'Dev can mint more tokens <span class="note">(ignore for pump.fun/meteora)</span>.'}</li>` 
         : '';
-
-    const freezeAuthorityHTML = security.freezeAuthorityEnabled
-        ? `<li class="bad">Freeze authority is enabled <span class="note">(ignore for pump.fun/meteora)</span>.</li>`
+        
+    const freezeAuthorityHTML = security.freezeAuthorityEnabled 
+        ? `<li class="bad">Freeze authority is enabled <span class="note">(ignore for pump.fun/meteora)</span>.</li>` 
         : '';
 
     const securityHTML = `
@@ -77,7 +78,7 @@ class DFNPatrol extends HTMLElement {
         </ul>
       </div>
     `;
-
+    
     const distributionHTML = `
       <div>
         <h3>💰 Distribution</h3>
@@ -89,9 +90,22 @@ class DFNPatrol extends HTMLElement {
 
     let marketHTML = '';
     if (market && market.priceUsd) {
-        const formatNum = (num) => num ? Number(num).toLocaleString('en-US', {maximumFractionDigits: 2}) : 'N/A';
+        const formatNum = (num) => num ? Number(num).toLocaleString('en-US', {maximumFractionDigits: 0}) : 'N/A';
         const priceChangeColor = market.priceChange24h >= 0 ? 'ok' : 'bad';
         const price = Number(market.priceUsd) < 0.000001 ? Number(market.priceUsd).toExponential(2) : Number(market.priceUsd).toLocaleString('en-US', {maximumFractionDigits: 8});
+        
+        let txnsHTML = '';
+        if (market.txns24h) {
+            const buys = market.txns24h.buys;
+            const sells = market.txns24h.sells;
+            let arrow = '';
+            if (buys > sells) {
+                arrow = `<span class="tx-arrow ok">⬆️</span>`;
+            } else if (sells > buys) {
+                arrow = `<span class="tx-arrow bad">⬇️</span>`;
+            }
+            txnsHTML = `<li>${arrow}<b>24h Txs:</b> ${formatNum(buys)} Buys / ${formatNum(sells)} Sells</li>`;
+        }
 
         marketHTML = `
             <div class="full-width">
@@ -100,16 +114,14 @@ class DFNPatrol extends HTMLElement {
                     <li><b>Price:</b> $${price}</li>
                     <li><b>Market Cap:</b> $${formatNum(market.marketCap)}</li>
                     <li><b>Liquidity:</b> $${formatNum(market.liquidity)}</li>
-                    <li>
-                        <b>24h Volume:</b> $${formatNum(market.volume24h)}<br>
-                        <b>24h Change:</b> <span class="${priceChangeColor}">${market.priceChange24h?.toFixed(2) || 'N/A'}%</span>
-                    </li>
-                    ${market.txns24h ? `<li><b>24h Txs:</b> ${formatNum(market.txns24h.buys)} Buys / ${formatNum(market.txns24h.sells)} Sells</li>` : ''}
+                    <li><b>24h Volume:</b> $${formatNum(market.volume24h)}</li>
+                    <li><b>24h Change:</b> <span class="${priceChangeColor}">${market.priceChange24h?.toFixed(2) || 'N/A'}%</span></li>
+                    ${txnsHTML}
                 </ul>
             </div>
         `;
     }
-
+    
     let projectHTML = '';
     if (project && project.links && Object.keys(project.links).length > 0) {
         const createLink = (key, url) => {
@@ -117,14 +129,12 @@ class DFNPatrol extends HTMLElement {
             const title = key.charAt(0).toUpperCase() + key.slice(1);
             return `<li><b>${title}:</b> <a href="${url}" target="_blank" rel="noopener nofollow">Visit</a></li>`;
         };
-
         const linksHTML = [
             createLink('website', project.links.website),
             createLink('twitter', project.links.twitter),
             createLink('telegram', project.links.telegram),
             createLink('discord', project.links.discord)
         ].join('');
-
         if (linksHTML.trim() !== '') {
             projectHTML = `
               <div>
