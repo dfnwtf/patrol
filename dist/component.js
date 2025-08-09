@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v3.2.8 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.2.9 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -37,15 +37,11 @@ class DFNPatrol extends HTMLElement {
         a:hover { text-decoration: underline; }
         .market-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px 16px; }
         .market-list li { margin-bottom: 0; }
-        .market-list li.ok::before, .market-list li.bad::before {
-            content: '🔴'; /* Используем тот же значок, что и в Security Flags */
-            margin-right: 6px;
-        }
-        .market-list li.ok::before {
-            content: '✅';
-        }
         .market-list b { color: #aaa; }
         .note { font-size: 0.85em; color: #888; margin-left: 4px; }
+        /* Добавляем классы для цветного текста */
+        .text-ok { color: #9eff9e; }
+        .text-bad { color: #ff6b7b; }
       </style>
     `;
     
@@ -106,11 +102,11 @@ class DFNPatrol extends HTMLElement {
             const sells = market.txns24h.sells;
             let txClass = '';
             if (buys > sells) {
-                txClass = 'ok';
+                txClass = 'text-ok'; // Зеленый класс для текста
             } else if (sells > buys) {
-                txClass = 'bad';
+                txClass = 'text-bad'; // Красный класс для текста
             }
-            txnsHTML = `<li class="${txClass}"><b>24h Txs:</b> ${formatNum(buys)} Buys / ${formatNum(sells)} Sells</li>`;
+            txnsHTML = `<li><b>24h Txs:</b> <span class="${txClass}">${formatNum(buys)} Buys / ${formatNum(sells)} Sells</span></li>`;
         }
 
         marketHTML = `
