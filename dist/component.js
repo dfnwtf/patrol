@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] beta-v1.1 initialized");
+console.log("[DFN Components] beta-v1.2 initialized");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -666,6 +666,23 @@ class DFNPatrol extends HTMLElement {
             <button id="start-sim-btn">Run Simulation</button>
         </div>` : '';
 
+    
+// --- Wallet Clusters (new) ---
+let clustersHTML = '';
+try {
+    const clusters = (this.report && this.report.clusters) ? this.report.clusters : null;
+    const items = clusters && Array.isArray(clusters.items) ? clusters.items : [];
+    if (items.length > 0) {
+        const list = items.map(c => {
+            const addrs = Array.isArray(c.addresses) ? c.addresses.slice(0, 10) : [];
+            const links = addrs.map(a => a && a.addr ? `<a href="https://solscan.io/account/${a.addr}" target="_blank" rel="noopener">${a.addr.slice(0,6)}...${a.addr.slice(-4)}</a>` : '').join(' • ');
+            const label = (c.label || 'unknown').replace(/_/g, ' ');
+            return `<li><strong>${sanitizeHTML(c.id || '')}</strong> — ${sanitizeHTML(label)} <span style="color:#888">(${c.size||0} addrs, weight ${Math.round((Number(c.weight||0))*100)}%)</span><br>${links || '—'}</li>`;
+        }).join('');
+        clustersHTML = `<div class="full-width"><h3>🧩 Wallet Clusters</h3><ul>${list}</ul></div>`;
+    }
+} catch(e) { console.warn('Clusters render error:', e); }
+
     const disclaimerHTML = `<div class="disclaimer">Disclaimer: This report is generated automatically for informational purposes only and does not constitute financial advice. The data is provided 'as is' without warranties of any kind. Always conduct your own research (DYOR) before making any investment decisions. The Department of Financial Nonsense is not liable for any financial losses.</div>`;
 
     const newContent = `
@@ -714,6 +731,7 @@ class DFNPatrol extends HTMLElement {
               </ul>
               ${programmaticAccountsHTML}
             </div>
+            ${clustersHTML}
             ${cascadeSimulatorHTML}
         </div>
         ${disclaimerHTML}
