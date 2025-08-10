@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v3.3.0 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.2.3 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -69,6 +69,7 @@ class DFNPatrol extends HTMLElement {
       <div>
         <h3>🛡️ Security Flags</h3>
         <ul>
+          ${'isHoneypot' in security ? `<li class="${security.isHoneypot ? 'bad' : 'ok'}">${security.isHoneypot ? 'Honeypot Risk! Sell simulation failed.' : 'Token is sellable.'}</li>` : ''}
           ${'isMutable' in security ? `<li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>` : ''}
           ${freezeAuthorityHTML}
           ${mintRenouncedHTML}
@@ -92,7 +93,6 @@ class DFNPatrol extends HTMLElement {
     let marketHTML = '';
     if (market && market.priceUsd) {
         const formatNum = (num) => num ? Number(num).toLocaleString('en-US', {maximumFractionDigits: 0}) : 'N/A';
-        // ИЗМЕНЕНИЕ ЗДЕСЬ: используем 'text-ok' и 'text-bad'
         const priceChangeColor = market.priceChange24h >= 0 ? 'text-ok' : 'text-bad';
         const price = Number(market.priceUsd) < 0.000001 ? Number(market.priceUsd).toExponential(2) : Number(market.priceUsd).toLocaleString('en-US', {maximumFractionDigits: 8});
         
