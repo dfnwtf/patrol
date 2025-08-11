@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v3.3.1 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.3.2 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -69,7 +69,6 @@ class DFNPatrol extends HTMLElement {
       <div>
         <h3>🛡️ Security Flags</h3>
         <ul>
-          ${'isHoneypot' in security ? `<li class="${security.isHoneypot ? 'bad' : 'ok'}">${security.isHoneypot ? 'Honeypot Risk! Sell simulation failed.' : 'Token is sellable.'}</li>` : ''}
           ${'isMutable' in security ? `<li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>` : ''}
           ${freezeAuthorityHTML}
           ${mintRenouncedHTML}
