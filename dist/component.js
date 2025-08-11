@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v3.3.4 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.3.5 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -41,32 +41,75 @@ class DFNPatrol extends HTMLElement {
         .note { font-size: 0.85em; color: #888; margin-left: 4px; }
         .text-ok { color: #9eff9e; }
         .text-bad { color: #ff6b7b; }
+        .pump-fun-notice { background: #2a2a2a; border-left: 3px solid #ffd447; padding: 10px; margin: 10px 0; border-radius: 4px; font-style: italic; }
       </style>
+      <div id="report-container"></div>
     `;
     
+    const container = this.shadowRoot.getElementById('report-container');
+
     if (!this.report) {
-      this.shadowRoot.innerHTML += `<div class="placeholder">Generating token health report...</div>`;
+      container.innerHTML = `<div class="placeholder">Generating token health report...</div>`;
       return;
     }
     if (this.report.error) {
-       this.shadowRoot.innerHTML += `<div class="error">${this.report.error}</div>`;
+       container.innerHTML = `<div class="error">${this.report.error}</div>`;
        return;
     }
+
+    if (this.report.source === 'pump.fun') {
+        this.renderPumpFunReport(container);
+    } else {
+        this.renderDexReport(container);
+    }
+  }
+
+  renderPumpFunReport(container) {
+    const { tokenInfo, project, pumpFun, security } = this.report;
+    const formatNum = (num) => num ? Number(num).toLocaleString('en-US', {maximumFractionDigits: 0}) : 'N/A';
+
+    const tokenHTML = `<div class="full-width"><h2>Report: ${tokenInfo.name} (${tokenInfo.symbol})</h2></div>`;
     
-    const { tokenInfo, security, distribution, project, market } = this.report;
+    const pumpFunHTML = `
+      <div>
+        <h3>🚀 pump.fun Analysis</h3>
+        <div class="pump-fun-notice">This token is currently on a bonding curve.</div>
+        <ul class="market-list">
+            <li><b>Market Cap:</b> $${formatNum(pumpFun.marketCap)}</li>
+            <li><b>Progress to Raydium:</b> ${pumpFun.progressPercentage.toFixed(2)}%</li>
+            <li><b>Creator:</b> <a href="https://solscan.io/account/${pumpFun.creator}" target="_blank" rel="noopener">${pumpFun.creator ? pumpFun.creator.slice(0, 4) + '...' + pumpFun.creator.slice(-4) : 'N/A'}</a></li>
+        </ul>
+      </div>
+    `;
+    
+    const securityHTML = `
+      <div>
+        <h3>🛡️ Security Flags</h3>
+        <ul>
+          <li class="ok">Liquidity Pool Locked - 100%</li>
+          <li class="ok">Freeze authority is disabled.</li>
+          <li class="ok">Mint authority is renounced.</li>
+          <li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>
+        </ul>
+      </div>
+    `;
+
+    container.innerHTML = `<div class="report-grid">${tokenHTML}${pumpFunHTML}${securityHTML}</div>`;
+  }
+
+  renderDexReport(container) {
+    const { tokenInfo, security, distribution, market } = this.report;
     
     const tokenHTML = `<div class="full-width"><h2>Report: ${tokenInfo.name} (${tokenInfo.symbol})</h2></div>`;
     
-    // Убрали старую логику с ignore, так как теперь она управляется из воркера
     const mintRenouncedHTML = 'mintRenounced' in security 
         ? `<li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? 'Mint authority is renounced.' : 'Dev can mint more tokens.'}</li>` 
         : '';
         
-    const freezeAuthorityHTML = 'freezeAuthorityEnabled' in security && security.freezeAuthorityEnabled 
-        ? `<li class="bad">Freeze authority is enabled.</li>` 
-        : 'freezeAuthorityEnabled' in security ? `<li class="ok">Freeze authority is disabled.</li>` : '';
-        
-    // --- НОВАЯ ЛОГИКА ---
+    const freezeAuthorityHTML = 'freezeAuthorityEnabled' in security 
+        ? (security.freezeAuthorityEnabled ? `<li class="bad">Freeze authority is enabled.</li>` : `<li class="ok">Freeze authority is disabled.</li>`)
+        : '';
+
     const lpLockedHTML = 'isLpLocked' in security && security.isLpLocked
         ? `<li class="ok">Liquidity Pool Locked - 100%</li>`
         : '';
@@ -90,9 +133,9 @@ class DFNPatrol extends HTMLElement {
     const distributionHTML = `
       <div>
         <h3>💰 Distribution</h3>
-        ${distribution.lpAddress ? `<p><b>LP Address:</b> ${distribution.lpAddress.slice(0, 4)}...${distribution.lpAddress.slice(-4)}</p>` : ''}
+        ${distribution.lpAddress ? `<p><b>LP Address:</b> <a href="https://solscan.io/account/${distribution.lpAddress}" target="_blank">${distribution.lpAddress.slice(0, 4)}...${distribution.lpAddress.slice(-4)}</a></p>` : ''}
         <b>Top 10 Holders:</b>
-        <ul>${distribution.topHolders && distribution.topHolders.length > 0 ? distribution.topHolders.map(h => `<li>${h.address.slice(0,6)}... (${h.percent}%)</li>`).join('') : '<li>N/A</li>'}</ul>
+        <ul>${distribution.topHolders && distribution.topHolders.length > 0 ? distribution.topHolders.map(h => `<li><a href="https://solscan.io/account/${h.address}" target="_blank">${h.address.slice(0,6)}...</a> (${h.percent}%)</li>`).join('') : '<li>N/A</li>'}</ul>
       </div>
     `;
 
@@ -125,20 +168,7 @@ class DFNPatrol extends HTMLElement {
             </div>`;
     }
     
-    let projectHTML = '';
-    if (project && project.links && Object.keys(project.links).length > 0) {
-        const createLink = (key, url) => {
-            if (!url) return '';
-            const title = key.charAt(0).toUpperCase() + key.slice(1);
-            return `<li><b>${title}:</b> <a href="${url}" target="_blank" rel="noopener nofollow">Visit</a></li>`;
-        };
-        const linksHTML = [ createLink('website', project.links.website), createLink('twitter', project.links.twitter), createLink('telegram', project.links.telegram), createLink('discord', project.links.discord) ].join('');
-        if (linksHTML.trim() !== '') {
-            projectHTML = `<div><h3>ℹ️ Project & Socials</h3><ul>${linksHTML}</ul></div>`;
-        }
-    }
-
-    this.shadowRoot.innerHTML += `<div class="report-grid">${tokenHTML}${marketHTML}${securityHTML}${distributionHTML}${projectHTML}</div>`;
+    container.innerHTML = `<div class="report-grid">${tokenHTML}${marketHTML}${securityHTML}${distributionHTML}</div>`;
   }
 }
 if (!customElements.get("dfn-patrol")) {
