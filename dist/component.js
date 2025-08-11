@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] beta-v1.3 initialized");
+console.log("[DFN Components] beta-v1.4 initialized");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -304,17 +304,66 @@ template.innerHTML = `
     border-top: 1px solid #282828;
     padding-top: 24px;
 }
-    /* --- clusters --- */
+   /* --- clusters (improved) --- */
 .clusters-block { margin-top: 16px; }
-.clusters-list { list-style: none; padding-left: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
-.cluster-item { border: 1px solid #2a2a2a; border-radius: 10px; padding: 10px 12px; background: #121212; }
-.cluster-head { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; color: #ddd; margin-bottom: 6px; }
-.cluster-confidence { padding: 2px 8px; border-radius: 999px; border: 1px solid #333; font-size: 0.8rem; opacity: 0.9; }
-.cluster-reasons code { background: #1a1a1a; border: 1px solid #2d2d2d; border-radius: 6px; padding: 2px 6px; margin-left: 6px; font-size: 0.75rem; }
-.cluster-addrs { list-style: none; padding-left: 0; display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
-.cluster-addrs li a { color: #9fd3ff; text-decoration: none; border-bottom: 1px dotted #2a6fa8; }
-.cluster-addrs li a:hover { text-decoration: underline; }
-.mini-disclaimer { margin-top: 8px; font-size: 0.75rem; color: #888; }
+.clusters-list { list-style: none; padding-left: 0; margin: 0; display: grid; gap: 12px; }
+.cluster-item { border: 1px solid #2a2a2a; border-radius: 12px; background: #121212; }
+
+.cluster-item details { border-radius: 12px; overflow: hidden; }
+.cluster-item summary {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  list-style: none;
+}
+.cluster-item summary::-webkit-details-marker { display: none; }
+
+.cluster-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.cluster-index {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 999px;
+  background: #1a1a1a; border: 1px solid #2d2d2d; font-weight: 700; font-size: 0.9rem;
+}
+.cluster-meta { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cluster-count { font-size: 0.85rem; color: #bbb; }
+
+.cluster-confidence {
+  white-space: nowrap; /* не ломаемся по буквам */
+  font-variant-numeric: tabular-nums;
+  padding: 2px 10px; border-radius: 999px; border: 1px solid #333; font-size: 0.85rem; color: #ddd;
+}
+
+/* чипы причин */
+.cluster-reasons { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.cluster-chip {
+  background: #1a1a1a; border: 1px solid #2d2d2d; border-radius: 999px;
+  padding: 3px 8px; font-size: 0.75rem; color: #ccc; white-space: nowrap;
+}
+
+/* контент */
+.cluster-body { padding: 8px 14px 12px; border-top: 1px solid #202020; }
+.cluster-addrs {
+  list-style: none; padding-left: 0; margin: 0;
+  display: grid; gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+}
+.cluster-addrs a {
+  display: block; text-decoration: none; color: #9fd3ff;
+  border-bottom: 1px dotted #2a6fa8; overflow: hidden; text-overflow: ellipsis;
+}
+.cluster-addrs a:hover { text-decoration: underline; }
+
+/* мобильная адаптация */
+@media (max-width: 640px) {
+  .cluster-item summary { grid-template-columns: 1fr; gap: 8px; }
+  .cluster-reasons { justify-content: flex-start; }
+  .cluster-addrs { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+  .cluster-confidence { font-size: 0.8rem; padding: 2px 8px; }
+}
+
 
   </style>
   <div id="report-container">
@@ -664,32 +713,46 @@ class DFNPatrol extends HTMLElement {
 
 // --- NEW: Clusters (beta) ---
 const clusters = (this.report && Array.isArray(this.report.clusters)) ? this.report.clusters : [];
+
 const clustersHTML = `
   <div class="clusters-block">
     <h3>🧩 Clusters (beta)</h3>
     ${clusters.length ? `
       <ul class="clusters-list">
-        ${clusters.map((c, idx) => `
-          <li class="cluster-item">
-            <div class="cluster-head">
-              <strong>#${idx+1}</strong>
-              <span class="cluster-confidence">Confidence: ${c.confidence}%</span>
-              ${c.reasons ? `<span class="cluster-reasons">
-                ${Object.keys(c.reasons).map(k => `<code>${k}</code>`).slice(0,3).join(' ')}
-              </span>` : ''}
-            </div>
-            <ul class="cluster-addrs">
-              ${c.addresses.map(a => `
-                <li><a href="https://solscan.io/account/${a}" target="_blank" rel="noopener">${a.slice(0,6)}...${a.slice(-4)}</a></li>
-              `).join('')}
-            </ul>
-          </li>
-        `).join('')}
+        ${clusters.map((c, idx) => {
+          const reasons = (c.reasons ? Object.keys(c.reasons) : []).slice(0, 4);
+          return `
+            <li class="cluster-item">
+              <details>
+                <summary>
+                  <div class="cluster-title">
+                    <span class="cluster-index">${idx+1}</span>
+                    <div class="cluster-meta">
+                      <span class="cluster-count">${c.addresses.length} addr</span>
+                      <span class="cluster-confidence">Conf. ${c.confidence}%</span>
+                    </div>
+                  </div>
+                  <div class="cluster-reasons">
+                    ${reasons.map(r => `<span class="cluster-chip">${r.replace(/-/g,' ')}</span>`).join('')}
+                  </div>
+                </summary>
+                <div class="cluster-body">
+                  <ul class="cluster-addrs">
+                    ${c.addresses.map(a => `
+                      <li><a href="https://solscan.io/account/${a}" target="_blank" rel="noopener">${a}</a></li>
+                    `).join('')}
+                  </ul>
+                </div>
+              </details>
+            </li>
+          `;
+        }).join('')}
       </ul>
     ` : `<div class="placeholder">No significant clusters detected.</div>`}
     <div class="mini-disclaimer">Heuristic grouping only — treat as hints, not proof.</div>
   </div>
 `;
+
 
       
     const cascadeSimulatorHTML = liquidityDrain && liquidityDrain.length > 0 && market.marketCap > 0 ? `
