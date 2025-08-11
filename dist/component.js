@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v3.3.6 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.3.7 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -38,7 +38,6 @@ class DFNPatrol extends HTMLElement {
         .market-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px 16px; }
         .market-list li { margin-bottom: 0; }
         .market-list b { color: #aaa; }
-        .note { font-size: 0.85em; color: #888; margin-left: 4px; }
         .text-ok { color: #9eff9e; }
         .text-bad { color: #ff6b7b; }
       </style>
@@ -53,22 +52,25 @@ class DFNPatrol extends HTMLElement {
        return;
     }
     
-    const { tokenInfo, security, distribution, project, market } = this.report;
+    const { tokenInfo, security, distribution, market } = this.report;
     
     const tokenHTML = `<div class="full-width"><h2>Report: ${tokenInfo.name} (${tokenInfo.symbol})</h2></div>`;
     
+    const lpLockedHTML = security.isLpLocked ? `<li class="ok">Liquidity Pool Locked - 100%</li>` : '';
+
     const mintRenouncedHTML = 'mintRenounced' in security 
-        ? `<li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? 'Mint authority is renounced.' : 'Dev can mint more tokens <span class="note">(ignore for pump.fun/meteora)</span>.'}</li>` 
+        ? `<li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? 'Mint authority is renounced.' : 'Dev can mint more tokens.'}</li>` 
         : '';
         
-    const freezeAuthorityHTML = security.freezeAuthorityEnabled 
-        ? `<li class="bad">Freeze authority is enabled <span class="note">(ignore for pump.fun/meteora)</span>.</li>` 
+    const freezeAuthorityHTML = 'freezeAuthorityEnabled' in security 
+        ? (security.freezeAuthorityEnabled ? `<li class="bad">Freeze authority is enabled.</li>` : `<li class="ok">Freeze authority is disabled.</li>`)
         : '';
 
     const securityHTML = `
       <div>
         <h3>🛡️ Security Flags</h3>
         <ul>
+          ${lpLockedHTML}
           ${'isMutable' in security ? `<li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>` : ''}
           ${freezeAuthorityHTML}
           ${mintRenouncedHTML}
@@ -83,9 +85,13 @@ class DFNPatrol extends HTMLElement {
     const distributionHTML = `
       <div>
         <h3>💰 Distribution</h3>
-        ${distribution.lpAddress ? `<p><b>LP Address:</b> ${distribution.lpAddress.slice(0, 4)}...${distribution.lpAddress.slice(-4)}</p>` : ''}
+        ${distribution.lpAddress ? `<p><b>LP Address:</b> <a href="https://solscan.io/account/${distribution.lpAddress}" target="_blank" rel="noopener">${distribution.lpAddress.slice(0, 4)}...${distribution.lpAddress.slice(-4)}</a></p>` : ''}
         <b>Top 10 Holders:</b>
-        <ul>${distribution.topHolders && distribution.topHolders.length > 0 ? distribution.topHolders.map(h => `<li>${h.address.slice(0,6)}... (${h.percent}%)</li>`).join('') : '<li>N/A</li>'}</ul>
+        <ul>
+            ${distribution.topHolders && distribution.topHolders.length > 0 
+                ? distribution.topHolders.map(h => `<li><a href="https://solscan.io/account/${h.address}" target="_blank" rel="noopener">${h.address.slice(0,6)}...</a> (${h.percent}%)</li>`).join('') 
+                : '<li>N/A</li>'}
+        </ul>
       </div>
     `;
 
@@ -100,11 +106,7 @@ class DFNPatrol extends HTMLElement {
             const buys = market.txns24h.buys;
             const sells = market.txns24h.sells;
             let txClass = '';
-            if (buys > sells) {
-                txClass = 'text-ok';
-            } else if (sells > buys) {
-                txClass = 'text-bad';
-            }
+            if (buys > sells) txClass = 'text-ok'; else if (sells > buys) txClass = 'text-bad';
             txnsHTML = `<li><b>24h Txs:</b> <span class="${txClass}">${formatNum(buys)} Buys / ${formatNum(sells)} Sells</span></li>`;
         }
 
@@ -119,33 +121,7 @@ class DFNPatrol extends HTMLElement {
                     <li><b>24h Change:</b> <span class="${priceChangeColor}">${market.priceChange24h?.toFixed(2) || 'N/A'}%</span></li>
                     ${txnsHTML}
                 </ul>
-            </div>
-        `;
-    }
-    
-    let projectHTML = '';
-    if (project && project.links && Object.keys(project.links).length > 0) {
-        const createLink = (key, url) => {
-            if (!url) return '';
-            const title = key.charAt(0).toUpperCase() + key.slice(1);
-            return `<li><b>${title}:</b> <a href="${url}" target="_blank" rel="noopener nofollow">Visit</a></li>`;
-        };
-        const linksHTML = [
-            createLink('website', project.links.website),
-            createLink('twitter', project.links.twitter),
-            createLink('telegram', project.links.telegram),
-            createLink('discord', project.links.discord)
-        ].join('');
-        if (linksHTML.trim() !== '') {
-            projectHTML = `
-              <div>
-                <h3>ℹ️ Project & Socials</h3>
-                <ul>
-                  ${linksHTML}
-                </ul>
-              </div>
-            `;
-        }
+            </div>`;
     }
 
     this.shadowRoot.innerHTML += `
@@ -154,7 +130,6 @@ class DFNPatrol extends HTMLElement {
         ${marketHTML}
         ${securityHTML}
         ${distributionHTML}
-        ${projectHTML}
       </div>
     `;
   }
