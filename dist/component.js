@@ -1,4 +1,5 @@
 console.log("[DFN Components] beta-v1.8 initialized");
+
 /* ---------------- helpers ---------------- */
 function sanitizeHTML(str) {
   if (!str) return "";
@@ -10,7 +11,7 @@ function sanitizeUrl(url) {
   try {
     const u = new URL(url);
     if (u.protocol === "http:" || u.protocol === "https:" || u.protocol === "tg:") return u.href;
-  } catch (e) {}
+  } catch {}
   return "#";
 }
 function fmtNum(n, digits = 0) {
@@ -23,10 +24,6 @@ function fmtPrice(n) {
   if (v === 0) return "$0";
   if (v < 0.000001) return `$${v.toExponential(2)}`;
   return `$${v.toLocaleString("en-US", { maximumFractionDigits: 8 })}`;
-}
-function msToDays(ms) {
-  if (!ms || ms <= 0) return 0;
-  return Math.max(0, Math.floor((Date.now() - ms) / 86400000));
 }
 function verdictFromScore(score) {
   if (score >= 90) return { text: "Prime", tone: "ok" };
@@ -49,6 +46,14 @@ function sparkPath(values, w = 120, h = 38, pad = 3) {
   });
   return d;
 }
+// Синтетическая мини-кривая для одного процента (направление и масштаб)
+function sparkFromDelta(delta) {
+  const d = Number(delta || 0);
+  const base = 0;
+  const mid = d * 0.55;
+  const end = d;
+  return sparkPath([base, mid, end]);
+}
 
 /* ---------------- template ---------------- */
 const template = document.createElement("template");
@@ -62,8 +67,7 @@ template.innerHTML = `
       font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,Inter,Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji";
       position:relative; overflow:hidden;
     }
-
-    /* Синее свечение (аура) */
+    /* blue glow aura */
     :host::before{
       content:""; position:absolute; inset:0; pointer-events:none; border-radius:18px;
       background:
@@ -71,8 +75,7 @@ template.innerHTML = `
         radial-gradient(900px 480px at -10% 20%, rgba(80,120,255,0.10), transparent 50%);
       mix-blend-mode:screen; filter:saturate(1.2);
     }
-
-    /* Fade-in */
+    /* fade-in */
     @keyframes fadeIn { from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none} }
     .fade-in { animation: fadeIn .55s ease forwards; }
 
@@ -83,26 +86,29 @@ template.innerHTML = `
     .muted{ color:var(--muted); }
 
     .hero{
-      position:relative; display:grid; grid-template-columns:1fr auto; gap:18px; align-items:center;
+      position:relative; display:grid; grid-template-columns:1fr auto; gap:18px; align-items:stretch;
       background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
       border:1px solid var(--line); border-radius:14px; padding:16px; overflow:hidden;
     }
     .hero::after{ content:""; position:absolute; inset:0; pointer-events:none; border-radius:14px;
       background: radial-gradient(500px 160px at 60% -20%, rgba(255,212,71,0.15), transparent 40%); }
 
-    .token{ display:flex; align-items:center; gap:14px; min-width:0; }
-    .logo{ width:64px; height:64px; border-radius:12px; background:#1a1b20; border:1px solid #24262e; object-fit:cover; }
-    .meta{ min-width:0; }
+    .token{ display:flex; align-items:stretch; gap:14px; min-width:0; }
+    .logo{
+      width:96px; min-height:96px; height:auto;
+      border-radius:14px; background:#1a1b20; border:1px solid #24262e; object-fit:cover; align-self:stretch;
+    }
+    .meta{ min-width:0; display:flex; flex-direction:column; justify-content:space-between; }
     .symbol{ color:#c7c9cf; font-size:.92rem; margin-top:2px; }
     .row-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
     .pill{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:9px; border:1px solid var(--line); background:#15171c; color:#ccd0da; font-size:.85rem; cursor:pointer; }
     .pill:hover{ background:#191c22; }
 
-    .score{ position:relative; width:132px; height:132px; }
+    .score{ position:relative; width:132px; height:132px; justify-self:end; }
     .score svg{ width:100%; height:100%; transform:rotate(-90deg); }
     .ring-bg{ stroke:#1f2229; stroke-width:12; fill:none; }
     .ring-fg{ stroke:#ff6b7b; stroke-width:12; fill:none; stroke-linecap:round; transition:stroke-dashoffset 900ms ease, stroke .35s; }
-    .score-txt{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+    .score-txt{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
     .score-num{ font-size:1.9rem; font-weight:900; }
     .score-cap{ font-size:.68rem; color:#aeb1bb; text-transform:uppercase; margin-top:-2px; }
     .verdict{ margin-top:6px; font-weight:800; font-size:.9rem; }
@@ -111,7 +117,8 @@ template.innerHTML = `
     .kpis{ display:grid; gap:10px; grid-template-columns:repeat(6, minmax(120px,1fr)); margin-top:14px; }
     .kpi{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
     .kpi b{ display:block; color:#aeb1bb; font-size:.72rem; text-transform:uppercase; letter-spacing:.3px; }
-    .kpi span{ display:block; margin-top:6px; font-weight:800; font-size:1.06rem; }
+    .kpi span{ display:block; margin-top:6px; font-weight:800; font-size:1.06rem; white-space:nowrap; }
+    .kpi .inline{ display:inline-flex; gap:6px; align-items:baseline; white-space:nowrap; }
     .kpi .ok{ color:var(--ok) } .kpi .bad{ color:var(--bad) }
 
     .risk{ margin-top:14px; display:flex; flex-wrap:wrap; gap:8px; }
@@ -162,10 +169,14 @@ template.innerHTML = `
 
     .disc{ margin-top:18px; font-size:.84rem; color:#9aa0ab; text-align:center; border-top:1px solid var(--line); padding-top:14px; }
 
+    /* responsive */
     @media (max-width:960px){ .kpis{ grid-template-columns:repeat(3, minmax(120px,1fr)); } }
     @media (max-width:640px){
-      .hero{ grid-template-columns:1fr; }
-      .score{ justify-self:end; }
+      .hero{ grid-template-columns:1fr; place-items:center; text-align:center; }
+      .token{ flex-direction:column; align-items:center; }
+      .meta{ align-items:center; }
+      .row-actions{ justify-content:center; }
+      .score{ justify-self:center; margin-top:10px; }
       .kpis{ grid-template-columns:repeat(2, minmax(120px,1fr)); }
       .trend{ grid-template-columns:repeat(2,1fr); }
     }
@@ -254,7 +265,9 @@ class DFNPatrol extends HTMLElement {
         logLine(`Analyzing <b>${s.group}</b>${ownPct?` (own ${ownPct.toFixed(2)}%)`:``}…`);
         await wait(600);
         setBar(s.marketCapAfterSale);
-        logLine(`→ Price impact <b style="color:var(--bad)">-${s.marketCapDropPercentage}%</b>. New MC: <b>${fmt$(s.marketCapAfterSale)}</b>`);
+        logLine(`→ Price impact <b style="color:var(--bad)">-${s.marketCapDropPercentage}%</b>. New MC: <b>${fmt$(
+          s.marketCapAfterSale
+        )}</b>`);
         await wait(900);
       }
       logLine("<b>SIMULATION END</b>");
@@ -273,9 +286,8 @@ class DFNPatrol extends HTMLElement {
       return;
     }
 
-    const { tokenInfo, security, distribution, market, socials, liquidityDrain, hype, clusterSummary } = report;
+    const { tokenInfo, security, distribution, market, liquidityDrain, hype, clusterSummary } = report;
 
-    /* hero */
     const name = tokenInfo?.name || "Token";
     const nameShort = name.length > 22 ? name.slice(0,19) + "…" : name;
     const symbol = tokenInfo?.symbol || "";
@@ -286,15 +298,16 @@ class DFNPatrol extends HTMLElement {
     const score = typeof report.trustScore === "number" ? report.trustScore : 0;
     const verdict = verdictFromScore(score);
 
-    /* sparkline (одна 4-точечная микро-серия для всех карточек) */
+    // per-horizon micro paths
     const pc = market?.priceChange || {};
-    const series = [pc.m5, pc.h1, pc.h6, pc.h24];
-    const spAll = sparkPath(series);
+    const p5  = sparkFromDelta(pc.m5);
+    const p1h = sparkFromDelta(pc.h1);
+    const p6h = sparkFromDelta(pc.h6);
+    const p24 = sparkFromDelta(pc.h24);
 
-    /* KPI */
     const txns = market?.txns24h || {};
 
-    /* risk chips */
+    // risk chips
     const chips = [];
     if (security?.launchpad) chips.push({ t:`Launchpad: ${security.launchpad}`, cls:"ok" });
     if (security?.hackerFound) chips.push({ t:`${security.hackerFound}`, cls:"bad" });
@@ -310,14 +323,11 @@ class DFNPatrol extends HTMLElement {
     if ("mintRenounced" in security) chips.push({ t: security.mintRenounced? "Mint renounced" : "Mint active", cls: security.mintRenounced? "ok":"bad" });
     if ("transferTax" in security) chips.push({ t:`Tax ${security.transferTax}%`, cls:"warn" }); else if ("noTransferTax" in security) chips.push({ t:"No transfer tax", cls:"ok" });
 
-    /* supply bar */
     const hcPct = Number(security?.holderConcentration || 0);
     const top10Width = Math.max(0, Math.min(100, hcPct));
 
-    /* clusters */
     const clusters = Array.isArray(report.clusters) ? report.clusters : [];
 
-    /* socials (сворачиваем адреса пулов/программатик) */
     const poolsDetails = (Array.isArray(distribution?.allLpAddresses) && distribution.allLpAddresses.length) ? `
       <details class="fade-in" style="margin-top:12px;">
         <summary class="pill" style="background:#15171c;">Pools / CEX / Programmatic — ${distribution.allLpAddresses.length}</summary>
@@ -326,7 +336,6 @@ class DFNPatrol extends HTMLElement {
         </ul>
       </details>` : "";
 
-    /* socials/hype (опционально) — упрощённо без постов, чтобы код был компактным */
     const hypeHTML = (hype && hype.id) ? (() => {
       const tot = hype?.sentiment?.total || 0;
       const p = tot ? Math.round((hype.sentiment.positive/tot)*100) : 0;
@@ -351,14 +360,15 @@ class DFNPatrol extends HTMLElement {
       </section>`;
     })() : "";
 
-    /* HTML */
     const html = `
       <div class="hero fade-in">
         <div class="token">
           ${tokenInfo?.logoUrl ? `<img src="${sanitizeUrl(tokenInfo.logoUrl)}" alt="logo" class="logo">` : `<div class="logo"></div>`}
           <div class="meta">
-            <h2>${sanitizeHTML(nameShort)}</h2>
-            <div class="symbol">${sanitizeHTML(symbol)}</div>
+            <div>
+              <h2>${sanitizeHTML(nameShort)}</h2>
+              <div class="symbol">${sanitizeHTML(symbol)}</div>
+            </div>
             <div class="row-actions">
               ${addr ? `<button class="pill mono" id="copy-addr">${addrShort}</button>` : ""}
               <button class="pill mono" id="copy-link">Share</button>
@@ -384,7 +394,9 @@ class DFNPatrol extends HTMLElement {
         <div class="kpi"><b>24h Volume</b><span>$${fmtNum(market?.volume24h)}</span></div>
         <div class="kpi"><b>Market Cap</b><span>$${fmtNum(market?.marketCap)}</span></div>
         <div class="kpi"><b>Liquidity</b><span>$${fmtNum(market?.liquidity)}</span></div>
-        <div class="kpi"><b>24h TXNs</b><span><span class="ok">${txns.buys||0}</span> / <span class="bad">${txns.sells||0}</span></span></div>
+        <div class="kpi"><b>24h TXNs</b>
+          <span class="inline"><span class="ok">${txns.buys||0}</span>/<span class="bad">${txns.sells||0}</span></span>
+        </div>
       </div>
 
       <div class="risk fade-in">
@@ -395,12 +407,26 @@ class DFNPatrol extends HTMLElement {
       <section class="fade-in">
         <h3>📈 Micro Trend</h3>
         <div class="trend">
-          ${[["5 MIN",pc.m5],["1 HOUR",pc.h1],["6 HOURS",pc.h6],["24 HOURS",pc.h24]].map(([t,v])=>`
-            <div class="tcard">
-              <div class="tcap">${t}</div>
-              <div class="tval ${(Number(v)||0)>=0?"ok":"bad"}">${(Number(v)||0).toFixed(2)}%</div>
-              <svg class="spark" viewBox="0 0 120 38" preserveAspectRatio="none"><path d="${spAll}"/></svg>
-            </div>`).join("")}
+          <div class="tcard">
+            <div class="tcap">5 MIN</div>
+            <div class="tval ${(Number(pc.m5)||0)>=0?"ok":"bad"}">${(Number(pc.m5)||0).toFixed(2)}%</div>
+            <svg class="spark" viewBox="0 0 120 38" preserveAspectRatio="none"><path d="${p5}"/></svg>
+          </div>
+          <div class="tcard">
+            <div class="tcap">1 HOUR</div>
+            <div class="tval ${(Number(pc.h1)||0)>=0?"ok":"bad"}">${(Number(pc.h1)||0).toFixed(2)}%</div>
+            <svg class="spark" viewBox="0 0 120 38" preserveAspectRatio="none"><path d="${p1h}"/></svg>
+          </div>
+          <div class="tcard">
+            <div class="tcap">6 HOURS</div>
+            <div class="tval ${(Number(pc.h6)||0)>=0?"ok":"bad"}">${(Number(pc.h6)||0).toFixed(2)}%</div>
+            <svg class="spark" viewBox="0 0 120 38" preserveAspectRatio="none"><path d="${p6h}"/></svg>
+          </div>
+          <div class="tcard">
+            <div class="tcap">24 HOURS</div>
+            <div class="tval ${(Number(pc.h24)||0)>=0?"ok":"bad"}">${(Number(pc.h24)||0).toFixed(2)}%</div>
+            <svg class="spark" viewBox="0 0 120 38" preserveAspectRatio="none"><path d="${p24}"/></svg>
+          </div>
         </div>
       </section>
 
@@ -426,7 +452,7 @@ class DFNPatrol extends HTMLElement {
                 const pct = (typeof c.supplyPct !== "undefined") ? Number(c.supplyPct).toFixed(2) : "0.00";
                 const reasons = (c.reasons ? Object.keys(c.reasons) : []).slice(0,4).map(r=>`<span class="badge">${r.replace(/-/g," ")}</span>`).join("");
                 return `
-                  <details class="cl" ${i===0 ? "open" : ""}>
+                  <details class="cl">
                     <summary>
                       <div class="cl-left">
                         <span class="cl-idx">${i+1}</span>
