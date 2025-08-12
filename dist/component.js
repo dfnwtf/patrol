@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v3.3.7 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.3.8 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -110,6 +110,7 @@ class DFNPatrol extends HTMLElement {
             txnsHTML = `<li><b>24h Txs:</b> <span class="${txClass}">${formatNum(buys)} Buys / ${formatNum(sells)} Sells</span></li>`;
         }
 
+        // V-- ИЗМЕНЁННЫЙ БЛОК --V
         marketHTML = `
             <div class="full-width">
                 <h3>📈 Market Data</h3>
@@ -117,11 +118,13 @@ class DFNPatrol extends HTMLElement {
                     <li><b>Price:</b> $${price}</li>
                     <li><b>Market Cap:</b> $${formatNum(market.marketCap)}</li>
                     <li><b>Liquidity:</b> $${formatNum(market.liquidity)}</li>
+                    ${distribution.holderCount ? `<li><b>Holders:</b> ${formatNum(distribution.holderCount)}</li>` : ''}
                     <li><b>24h Volume:</b> $${formatNum(market.volume24h)}</li>
                     <li><b>24h Change:</b> <span class="${priceChangeColor}">${market.priceChange24h?.toFixed(2) || 'N/A'}%</span></li>
                     ${txnsHTML}
                 </ul>
             </div>`;
+        // ^-- КОНЕЦ ИЗМЕНЁННОГО БЛОКА --^
     }
 
     this.shadowRoot.innerHTML += `
