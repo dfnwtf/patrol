@@ -1,4 +1,4 @@
-console.log("[DFN Components] beta-v2.1 initialized");
+console.log("[DFN Components] beta-v2.2 initialized");
 
 /* ---------------- helpers ---------------- */
 function sanitizeHTML(str) {
@@ -144,10 +144,13 @@ template.innerHTML = `
       background: radial-gradient(500px 160px at 60% -20%, rgba(255,212,71,0.15), transparent 40%); }
 
     .token{ display:flex; align-items:stretch; gap:14px; min-width:0; }
-    .logo{
-      width:96px; min-height:96px; height:auto;
-      border-radius:14px; background:#1a1b20; border:1px solid #24262e; object-fit:cover; align-self:stretch;
-    }
+   .logo{
+  width:96px; min-height:96px; height:auto;
+  border-radius:14px; background:#1a1b20; border:1px solid #24262e;
+  object-fit:cover;
+  align-self:center;              /* было: align-self:stretch — из-за этого на мобиле уводило влево */
+}
+
     .meta{ min-width:0; display:flex; flex-direction:column; justify-content:space-between; }
     .symbol{ color:#c7c9cf; font-size:.92rem; margin-top:2px; }
     .row-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
@@ -211,8 +214,22 @@ template.innerHTML = `
     .kcube{ background:var(--panel-2); border:1px solid var(--line); border-radius:12px; padding:14px; text-align:center; }
 
     .sim{ display:flex; flex-direction:column; gap:12px; }
-    .simbar{ height:30px; background:#1e2026; border:1px solid #2a2d36; border-radius:10px; overflow:hidden; position:relative; }
-    .simbar > div{ position:absolute; inset:0; width:100%; display:flex; align-items:center; justify-content:flex-end; padding-right:10px; font-weight:800; color:#001; background:linear-gradient(90deg, #9eff9e, #34d399); transition: width 1s cubic-bezier(.25,1,.5,1); }
+    .simbar{
+  position:relative; height:30px;
+  background:#1e2026; border:1px solid #2a2d36; border-radius:10px; overflow:hidden;
+}
+.sim-fill{
+  position:absolute; left:0; top:0; bottom:0; width:100%;
+  background:linear-gradient(90deg, #9eff9e, #34d399);
+  transition: width 1s cubic-bezier(.25,1,.5,1);
+}
+.sim-label{
+  position:absolute; top:50%; transform:translateY(-50%);
+  font-weight:800; white-space:nowrap; pointer-events:none;
+  padding:2px 6px; border-radius:6px;
+  color:#0b0c0f; background:rgba(255,255,255,0.85);  /* читаемо на малой ширине */
+}
+
     .simlog{ min-height:90px; background:#121319; border:1px dashed #2a2d36; border-radius:10px; padding:10px; font-family:ui-monospace,monospace; color:#bfc3cc; }
     .sbtn{ align-self:flex-start; padding:10px 14px; border-radius:10px; border:1px solid var(--line); background:#20232b; color:#e9ecf4; font-weight:800; cursor:pointer; }
     .sbtn:hover{ background:#242833; }
@@ -222,16 +239,16 @@ template.innerHTML = `
     /* responsive */
     @media (max-width:960px){ .kpis{ grid-template-columns:repeat(3, minmax(120px,1fr)); } }
     @media (max-width:640px){
-      .hero{ grid-template-columns:1fr; place-items:center; text-align:center; padding:14px; }
-      .token{ flex-direction:column; align-items:center; }
-      .meta{ align-items:center; }
-      .row-actions{ justify-content:center; }
-      .score{ justify-self:center; margin-top:10px; }
-      .logo{ width:120px; min-height:120px; } /* крупнее на телефоне */
-      .kpis{ grid-template-columns:repeat(2, minmax(120px,1fr)); }
-      .trend{ grid-template-columns:repeat(2,1fr); }
-      .kpi span{ font-size:1rem; } /* чуть компактнее, чтобы не ломалось */
-    }
+  .hero{ grid-template-columns:1fr; place-items:center; text-align:center; padding:14px; }
+  .token{ flex-direction:column; align-items:center; width:100%; }
+  .meta{ align-items:center; }
+  .row-actions{ justify-content:center; }
+  .score{ justify-self:center; margin-top:10px; }
+  .logo{ width:120px; min-height:120px; margin:0 auto; align-self:center; } /* принудительно по центру */
+  .kpis{ grid-template-columns:repeat(2, minmax(120px,1fr)); }
+  .trend{ grid-template-columns:repeat(2,1fr); }
+  .kpi span{ font-size:1rem; }
+}
   </style>
 
   <div id="root" style="text-align:center; padding:40px; color:var(--muted);">
@@ -282,8 +299,11 @@ class DFNPatrol extends HTMLElement {
   }
 
   runSimulation(){
-    const log = this.shadowRoot.querySelector(".simlog");
-    const bar = this.shadowRoot.querySelector(".simbar > div");
+    const log     = this.shadowRoot.querySelector(".simlog");
+const barWrap = this.shadowRoot.querySelector(".simbar");
+const bar     = this.shadowRoot.querySelector(".sim-fill");
+const label   = this.shadowRoot.querySelector(".sim-label");
+
     if (!log || !bar) return;
 
     const data = this.report?.liquidityDrain || [];
@@ -293,10 +313,20 @@ class DFNPatrol extends HTMLElement {
     const wait = (ms)=> new Promise(r=>setTimeout(r, ms));
 
     const setBar = (mc)=>{
-      const w = mc0 ? Math.max(0, (mc / mc0) * 100) : 0;
-      bar.style.width = w + "%";
-      bar.textContent = fmt$(mc);
-    };
+  const ratio = mc0 ? Math.max(0, mc / mc0) : 0;
+  bar.style.width = (ratio * 100) + "%";
+  label.textContent = `$${fmtNum(mc)}`;
+
+  // Позиционируем подпись так, чтобы она не «вылезала» за границы
+  const wrapW = barWrap.clientWidth;
+  const labW  = label.offsetWidth;
+  const fillW = Math.round(wrapW * ratio);
+
+  // пытаемся держать подпись внутри зелёной части; если она слишком узкая — прижимаем к левому внутреннему отступу
+  const left = Math.max(8, Math.min(fillW - labW - 8, wrapW - labW - 8));
+  label.style.left = left + "px";
+};
+
     const logLine = (html)=>{
       const d = document.createElement("div");
       d.innerHTML = html;
@@ -546,11 +576,15 @@ else if ("noTransferTax" in security) chips.push({ t:"No transfer tax", cls:"ok"
         ${Array.isArray(liquidityDrain) && liquidityDrain.length && market?.marketCap ? `
         <section class="section">
           <h3>💥 Dump Simulation</h3>
-          <div class="sim">
-            <div class="simbar"><div>$${fmtNum(market.marketCap)}</div></div>
-            <div class="simlog">Press the button to simulate scenarios.</div>
-            <button class="sbtn" id="sim-btn">Run Simulation</button>
-          </div>
+         <div class="sim">
+  <div class="simbar">
+    <div class="sim-fill" style="width:100%"></div>
+    <div class="sim-label">$${fmtNum(market.marketCap)}</div>
+  </div>
+  <div class="simlog">Press the button to simulate scenarios.</div>
+  <button class="sbtn" id="sim-btn">Run Simulation</button>
+</div>
+
         </section>` : ""}
 
         <div class="disc">Disclaimer: Automated report for informational purposes only. Always DYOR.</div>
