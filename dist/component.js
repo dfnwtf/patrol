@@ -1,4 +1,4 @@
-console.log("[DFN Components] beta-v2.3 initialized");
+console.log("[DFN Components] beta-v2.4 initialized");
 
 /* ---------------- helpers ---------------- */
 function sanitizeHTML(str) {
@@ -126,7 +126,7 @@ template.innerHTML = `
 
     /* fade-ins */
     @keyframes fadeInSlow { from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none} }
-    .fade-placeholder { animation: fadeInSlow 1.2s ease forwards; } /* заставка — ещё медленнее */
+    .fade-placeholder { animation: fadeInSlow 1.2s ease forwards; } /* заставка — медленнее */
     .fade-report { animation: fadeInSlow 0.9s ease forwards; }      /* сам отчёт — плавно */
 
     h2{ margin:0; font-size:clamp(1.4rem,1.2rem + 1vw,2rem); letter-spacing:.2px; }
@@ -144,12 +144,12 @@ template.innerHTML = `
       background: radial-gradient(500px 160px at 60% -20%, rgba(255,212,71,0.15), transparent 40%); }
 
     .token{ display:flex; align-items:stretch; gap:14px; min-width:0; }
-   .logo{
-  width:96px; min-height:96px; height:auto;
-  border-radius:14px; background:#1a1b20; border:1px solid #24262e;
-  object-fit:cover;
-  align-self:center;              /* было: align-self:stretch — из-за этого на мобиле уводило влево */
-}
+    .logo{
+      width:96px; min-height:96px; height:auto;
+      border-radius:14px; background:#1a1b20; border:1px solid #24262e;
+      object-fit:cover;
+      align-self:center;
+    }
 
     .meta{ min-width:0; display:flex; flex-direction:column; justify-content:space-between; }
     .symbol{ color:#c7c9cf; font-size:.92rem; margin-top:2px; }
@@ -214,39 +214,38 @@ template.innerHTML = `
     .kcube{ background:var(--panel-2); border:1px solid var(--line); border-radius:12px; padding:14px; text-align:center; }
 
     /* Dump Simulation — bar + floating cap */
-.sim{ display:flex; flex-direction:column; gap:12px; }
+    .sim{ display:flex; flex-direction:column; gap:12px; }
 
-.simbar{
-  position:relative; height:14px;
-  background:#1e2026; border:1px solid #2a2d36; border-radius:10px;
-  overflow:hidden;
-}
-.sim-fill{
-  position:absolute; left:0; top:0; bottom:0; width:100%;
-  background:linear-gradient(90deg, #9eff9e, #34d399);
-  transition: width 800ms cubic-bezier(.25,1,.5,1);
-}
+    .simbar{
+      position:relative; height:14px;
+      background:#1e2026; border:1px solid #2a2d36; border-radius:10px;
+      overflow:hidden;
+    }
+    .sim-fill{
+      position:absolute; left:0; top:0; bottom:0; width:100%;
+      background:linear-gradient(90deg, #9eff9e, #34d399);
+      transition: width 800ms cubic-bezier(.25,1,.5,1);
+    }
 
-/* подпись с ценником — всегда в видимой зоне, центр по "носикам" */
-.sim-cap{
-  position:absolute; bottom:100%; transform:translateX(-50%); /* центр по X */
-  left:0; margin-bottom:8px;
-  white-space:nowrap; font-weight:800; font-size:.92rem;
-  color:#e9ecf4; background:#0f1218; border:1px solid #2a2d36; border-radius:8px;
-  padding:4px 8px; pointer-events:none;
-  box-shadow:0 2px 12px rgba(0,0,0,.35);
-}
-.sim-cap::after{
-  content:""; position:absolute; left:50%; transform:translateX(-50%);
-  top:100%; width:0; height:0; border:6px solid transparent;
-  border-top-color:#2a2d36;  /* каёмка */
-}
-.sim-cap::before{
-  content:""; position:absolute; left:50%; transform:translateX(-50%);
-  top:calc(100% - 1px); width:0; height:0; border:5px solid transparent;
-  border-top-color:#0f1218;   /* заливка "носика" */
-}
-
+    /* подпись с ценником — всегда в видимой зоне, центр по "носикам" */
+    .sim-cap{
+      position:absolute; bottom:100%; transform:translateX(-50%); /* центр по X */
+      left:0; margin-bottom:8px;
+      white-space:nowrap; font-weight:800; font-size:.92rem;
+      color:#e9ecf4; background:#0f1218; border:1px solid #2a2d36; border-radius:8px;
+      padding:4px 8px; pointer-events:none;
+      box-shadow:0 2px 12px rgba(0,0,0,.35);
+    }
+    .sim-cap::after{
+      content:""; position:absolute; left:50%; transform:translateX(-50%);
+      top:100%; width:0; height:0; border:6px solid transparent;
+      border-top-color:#2a2d36;  /* каёмка */
+    }
+    .sim-cap::before{
+      content:""; position:absolute; left:50%; transform:translateX(-50%);
+      top:calc(100% - 1px); width:0; height:0; border:5px solid transparent;
+      border-top-color:#0f1218;   /* заливка "носика" */
+    }
 
     .simlog{ min-height:90px; background:#121319; border:1px dashed #2a2d36; border-radius:10px; padding:10px; font-family:ui-monospace,monospace; color:#bfc3cc; }
     .sbtn{ align-self:flex-start; padding:10px 14px; border-radius:10px; border:1px solid var(--line); background:#20232b; color:#e9ecf4; font-weight:800; cursor:pointer; }
@@ -257,16 +256,16 @@ template.innerHTML = `
     /* responsive */
     @media (max-width:960px){ .kpis{ grid-template-columns:repeat(3, minmax(120px,1fr)); } }
     @media (max-width:640px){
-  .hero{ grid-template-columns:1fr; place-items:center; text-align:center; padding:14px; }
-  .token{ flex-direction:column; align-items:center; width:100%; }
-  .meta{ align-items:center; }
-  .row-actions{ justify-content:center; }
-  .score{ justify-self:center; margin-top:10px; }
-  .logo{ width:120px; min-height:120px; margin:0 auto; align-self:center; } /* принудительно по центру */
-  .kpis{ grid-template-columns:repeat(2, minmax(120px,1fr)); }
-  .trend{ grid-template-columns:repeat(2,1fr); }
-  .kpi span{ font-size:1rem; }
-}
+      .hero{ grid-template-columns:1fr; place-items:center; text-align:center; padding:14px; }
+      .token{ flex-direction:column; align-items:center; width:100%; }
+      .meta{ align-items:center; }
+      .row-actions{ justify-content:center; }
+      .score{ justify-self:center; margin-top:10px; }
+      .logo{ width:120px; min-height:120px; margin:0 auto; align-self:center; } /* принудительно по центру */
+      .kpis{ grid-template-columns:repeat(2, minmax(120px,1fr)); }
+      .trend{ grid-template-columns:repeat(2,1fr); }
+      .kpi span{ font-size:1rem; }
+    }
   </style>
 
   <div id="root" style="text-align:center; padding:40px; color:var(--muted);">
@@ -316,81 +315,106 @@ class DFNPatrol extends HTMLElement {
     });
   }
 
+  /* ---------- Dump Simulation ---------- */
   runSimulation(){
-  const log     = this.shadowRoot.querySelector(".simlog");
-  const barWrap = this.shadowRoot.querySelector(".simbar");
-  const bar     = this.shadowRoot.querySelector(".sim-fill");
-  const cap     = this.shadowRoot.querySelector(".sim-cap");
-  if (!log || !bar || !cap || !barWrap) return;
+    const log     = this.shadowRoot.querySelector(".simlog");
+    const barWrap = this.shadowRoot.querySelector(".simbar");
+    const bar     = this.shadowRoot.querySelector(".sim-fill");
+    const cap     = this.shadowRoot.querySelector(".sim-cap");
+    if (!log || !bar || !cap || !barWrap) return;
 
-  const data = this.report?.liquidityDrain || [];
-  const mc0  = Number(this.report?.market?.marketCap || 0);
-  const th   = this.report?.distribution?.topHolders || [];
-  const fmt$ = (n)=> `$${fmtNum(n)}`;
-  const wait = (ms)=> new Promise(r=>setTimeout(r, ms));
+    const data = this.report?.liquidityDrain || [];
+    const mc0  = Number(this.report?.market?.marketCap || 0);
+    const th   = this.report?.distribution?.topHolders || [];
+    const fmt$ = (n)=> `$${fmtNum(n)}`;
+    const wait = (ms)=> new Promise(r=>setTimeout(r, ms));
 
-  let lastMC = mc0;
+    let lastMC = mc0;
 
-  // выставляем ширину полосы и позицию "капсулы" над текущей точкой
-  const setBar = (mc)=>{
-    lastMC = Number(mc) || 0;
-    const wrapW = barWrap.clientWidth || 1;
-    const ratio = mc0 ? Math.max(0, Math.min(1, lastMC / mc0)) : 0;
-    bar.style.width = (ratio * 100) + "%";
+    // выставляем ширину полосы и позицию «капсулы» над текущей точкой
+    const setBar = (mc)=>{
+      lastMC = Number(mc) || 0;
+      const wrapW = barWrap.clientWidth || 1;
+      const ratio = mc0 ? Math.max(0, Math.min(1, lastMC / mc0)) : 0;
+      bar.style.width = (ratio * 100) + "%";
 
-    // позиция по X в пикселях в пределах контейнера
-    const x = wrapW * ratio;
+      const x = wrapW * ratio;               // позиция точки
+      const capW = cap.offsetWidth || 80;
+      const pad  = 8;
+      const clampedX = Math.max(capW/2 + pad, Math.min(wrapW - capW/2 - pad, x));
+      cap.style.left = clampedX + "px";
+      cap.textContent = fmt$(lastMC);
+    };
 
-    // ширина самой капсулы
-    const capW = cap.offsetWidth || 80;
-    const pad  = 8;
+    const logLine = (html)=>{
+      const d = document.createElement("div");
+      d.innerHTML = html;
+      log.prepend(d);
+    };
 
-    // держим капсулу в видимой зоне, центрируя по "носикам"
-    const clampedX = Math.max(capW/2 + pad, Math.min(wrapW - capW/2 - pad, x));
-    cap.style.left = clampedX + "px";
-    cap.textContent = fmt$(lastMC);
-  };
+    log.innerHTML = "";
+    setBar(mc0);
 
-  // лог вверху — последние события сверху
-  const logLine = (html)=>{
-    const d = document.createElement("div");
-    d.innerHTML = html;
-    log.prepend(d);
-  };
+    if (!this._simResizeBound){
+      this._simResizeBound = ()=> setBar(lastMC);
+      window.addEventListener("resize", this._simResizeBound, { passive:true });
+    }
 
-  // первый кадр
-  log.innerHTML = "";
-  setBar(mc0);
+    (async ()=>{
+      for (const s of data){
+        let ownPct = 0;
+        const m = (s.group||"").match(/Top (\d+)/);
+        if (m){
+          const n = +m[1];
+          ownPct = th.slice(0,n).reduce((a,h)=> a + parseFloat(h.percent||0), 0);
+        }
+        logLine(`Analyzing <b>${s.group}</b>${ownPct?` (own ${ownPct.toFixed(2)}%)`:``}…`);
+        await wait(600);
 
-  // пересчёт при ресайзе экрана
-  if (!this._simResizeBound){
-    this._simResizeBound = ()=> setBar(lastMC);
-    window.addEventListener("resize", this._simResizeBound, { passive:true });
+        setBar(s.marketCapAfterSale);
+        logLine(`→ Price impact <b style="color:var(--bad)">-${s.marketCapDropPercentage}%</b>. New MC: <b>${fmt$(
+          s.marketCapAfterSale
+        )}</b>`);
+        await wait(900);
+      }
+      logLine("<b>SIMULATION END</b>");
+    })();
   }
 
-  (async ()=>{
-    for (const s of data){
-      // оцениваем долю владения для подписи (как раньше)
-      let ownPct = 0;
-      const m = (s.group||"").match(/Top (\d+)/);
-      if (m){
-        const n = +m[1];
-        ownPct = th.slice(0,n).reduce((a,h)=> a + parseFloat(h.percent||0), 0);
-      }
-      logLine(`Analyzing <b>${s.group}</b>${ownPct?` (own ${ownPct.toFixed(2)}%)`:``}…`);
-      await wait(600);
+  /* ---------- ИНИЦИАЛИЗАЦИЯ ПОЗИЦИИ ЦЕННИКА В СИМУЛЯТОРЕ ДО СТАРТА ---------- */
+  _initSimBarPosition(){
+    const barWrap = this.shadowRoot.querySelector(".simbar");
+    const cap     = this.shadowRoot.querySelector(".sim-cap");
+    const bar     = this.shadowRoot.querySelector(".sim-fill");
+    if (!barWrap || !cap || !bar) return;
 
-      setBar(s.marketCapAfterSale);
-      logLine(`→ Price impact <b style="color:var(--bad)">-${s.marketCapDropPercentage}%</b>. New MC: <b>${fmt$(
-        s.marketCapAfterSale
-      )}</b>`);
-      await wait(900);
-    }
-    logLine("<b>SIMULATION END</b>");
-  })();
-}
+    const wrapW = barWrap.clientWidth || 0;
+    if (!wrapW) return;
 
+    const capW  = cap.offsetWidth || 80;
+    const pad   = 8;
 
+    // ширина зелёной полосы до запуска — 100% (или то, что есть в стилях)
+    const style = getComputedStyle(bar);
+    const fillW = Math.max(0, Math.min(wrapW, parseFloat(style.width) || wrapW));
+    const left  = Math.max(capW/2 + pad, Math.min(wrapW - capW/2 - pad, fillW));
+
+    cap.style.left = left + "px";
+    // текст в самой капсуле уже вставлен в шаблоне — дополнительная установка не требуется
+  }
+
+  /* ---------- АВТОСКРОЛЛ К ОТЧЁТУ ПОСЛЕ ПОЯВЛЕНИЯ ---------- */
+  _autoScrollToReportOnce(offsetPx = 72){
+    if (this._didAutoScroll) return;
+    const rep = this.shadowRoot?.querySelector(".report");
+    if (!rep) return;
+    this._didAutoScroll = true;
+
+    const top = this.getBoundingClientRect().top + window.scrollY - offsetPx;
+    window.scrollTo({ top, behavior: "smooth" });
+  }
+
+  /* ---------- RENDER ---------- */
   render(){
     const report = this.report;
     if (!report){
@@ -424,33 +448,32 @@ class DFNPatrol extends HTMLElement {
 
     const txns = market?.txns24h || {};
 
-   // risk chips
-const chips = [];
-if (security?.launchpad) chips.push({ t:`Launchpad: ${security.launchpad}`, cls:"ok" });
-if (security?.hackerFound) chips.push({ t:`${security.hackerFound}`, cls:"bad" });
+    // risk chips
+    const chips = [];
+    if (security?.launchpad) chips.push({ t:`Launchpad: ${security.launchpad}`, cls:"ok" });
+    if (security?.hackerFound) chips.push({ t:`${security.hackerFound}`, cls:"bad" });
 
-if ("holderConcentration" in security){
-  const hc = Number(security.holderConcentration || 0);
-  chips.push({
-    t: `Top10 ${hc.toFixed(2)}%`,
-    cls: hc > 25 ? "bad" : (hc > 10 ? "warn" : "ok")
-  });
-}
+    if ("holderConcentration" in security){
+      const hc = Number(security.holderConcentration || 0);
+      chips.push({
+        t: `Top10 ${hc.toFixed(2)}%`,
+        cls: hc > 25 ? "bad" : (hc > 10 ? "warn" : "ok")
+      });
+    }
 
-if (security?.isDexVerified) chips.push({ t:"DEX Paid", cls:"ok" });
-else chips.push({ t:"DEX Not Paid", cls:"bad" });
+    if (security?.isDexVerified) chips.push({ t:"DEX Paid", cls:"ok" });
+    else chips.push({ t:"DEX Not Paid", cls:"bad" });
 
-if (security?.isCto) chips.push({ t:"Community Takeover", cls:"ok" });
-if (security?.lpStatus) chips.push({
-  t:`LP: ${security.lpStatus}`,
-  cls: (security.lpStatus === "Burned" || security.lpStatus === "Locked/Burned") ? "ok" : "bad"
-});
-if ("isMutable" in security) chips.push({ t: security.isMutable ? "Mutable meta" : "Immutable meta", cls: security.isMutable ? "bad" : "ok" });
-if ("freezeAuthorityEnabled" in security) chips.push({ t: security.freezeAuthorityEnabled ? "Freeze on" : "No freeze", cls: security.freezeAuthorityEnabled ? "bad" : "ok" });
-if ("mintRenounced" in security) chips.push({ t: security.mintRenounced ? "Mint renounced" : "Mint active", cls: security.mintRenounced ? "ok" : "bad" });
-if ("transferTax" in security) chips.push({ t:`Tax ${security.transferTax}%`, cls:"warn" });
-else if ("noTransferTax" in security) chips.push({ t:"No transfer tax", cls:"ok" });
-
+    if (security?.isCto) chips.push({ t:"Community Takeover", cls:"ok" });
+    if (security?.lpStatus) chips.push({
+      t:`LP: ${security.lpStatus}`,
+      cls: (security.lpStatus === "Burned" || security.lpStatus === "Locked/Burned") ? "ok" : "bad"
+    });
+    if ("isMutable" in security) chips.push({ t: security.isMutable ? "Mutable meta" : "Immutable meta", cls: security.isMutable ? "bad" : "ok" });
+    if ("freezeAuthorityEnabled" in security) chips.push({ t: security.freezeAuthorityEnabled ? "Freeze on" : "No freeze", cls: security.freezeAuthorityEnabled ? "bad" : "ok" });
+    if ("mintRenounced" in security) chips.push({ t: security.mintRenounced ? "Mint renounced" : "Mint active", cls: security.mintRenounced ? "ok" : "bad" });
+    if ("transferTax" in security) chips.push({ t:`Tax ${security.transferTax}%`, cls:"warn" });
+    else if ("noTransferTax" in security) chips.push({ t:"No transfer tax", cls:"ok" });
 
     const hcPct = Number(security?.holderConcentration || 0);
     const top10Width = Math.max(0, Math.min(100, hcPct));
@@ -611,34 +634,47 @@ else if ("noTransferTax" in security) chips.push({ t:"No transfer tax", cls:"ok"
         ${Array.isArray(liquidityDrain) && liquidityDrain.length && market?.marketCap ? `
         <section class="section">
           <h3>💥 Dump Simulation</h3>
-         <div class="sim">
- <div class="simbar">
-  <div class="sim-fill" style="width:100%"></div>
-  <div class="sim-cap">$${fmtNum(market.marketCap)}</div>
-</div>
+          <div class="sim">
+            <div class="simbar">
+              <div class="sim-fill" style="width:100%"></div>
+              <div class="sim-cap">$${fmtNum(market.marketCap)}</div>
+            </div>
 
-  <div class="simlog">Press the button to simulate scenarios.</div>
-  <button class="sbtn" id="sim-btn">Run Simulation</button>
-</div>
-
+            <div class="simlog">Press the button to simulate scenarios.</div>
+            <button class="sbtn" id="sim-btn">Run Simulation</button>
+          </div>
         </section>` : ""}
 
-        <div class="disc">Disclaimer: Automated report for informational purposes only. Always DYOR.</div>
+        <div class="disc">Disclaimer: This report is generated automatically for informational purposes only and does not constitute financial advice. The data is provided 'as is' without warranties of any kind. Always conduct your own research (DYOR) before making any investment decisions. The Department of Financial Nonsense is not liable for any financial losses.</div>
       </div>
     `;
 
-    // Вставляем и добавляем медленный fade-in к отчёту
+    // Вставляем HTML
     this.root.innerHTML = html;
+
+    // Плавный fade-in самого отчёта + автоскролл к нему
     const reportEl = this.shadowRoot.querySelector(".report");
     if (reportEl) {
-      // ставим изначально прозрачность через класс + следом триггерим анимацию
       reportEl.style.opacity = "0";
       reportEl.style.transform = "translateY(8px)";
       requestAnimationFrame(()=>{
         reportEl.classList.add("fade-report");
-        // сброс inline, чтобы не конфликтовать с повторными рендерами
         reportEl.style.opacity = "";
         reportEl.style.transform = "";
+
+        // 1) автоскролл к отчёту (не к плашке)
+        setTimeout(() => this._autoScrollToReportOnce(80), 50);
+
+        // 2) инициализация позиции ценника на шкале до запуска симуляции
+        this._initSimBarPosition();
+        // на всякий случай — ещё один тик, когда DOM 100% промерен
+        setTimeout(() => this._initSimBarPosition(), 120);
+
+        // пересчёт при ресайзе до старта симуляции
+        if (!this._simInitResizeBound){
+          this._simInitResizeBound = () => this._initSimBarPosition();
+          window.addEventListener("resize", this._simInitResizeBound, { passive:true });
+        }
       });
     }
 
