@@ -1,4 +1,4 @@
-console.log("[DFN Components] beta-v1.9 initialized");
+console.log("[DFN Components] beta-v2.0 initialized");
 
 /* ---------------- helpers ---------------- */
 function sanitizeHTML(str) {
@@ -32,6 +32,7 @@ function verdictFromScore(score) {
   if (score >= 40) return { text: "Risky", tone: "warn" };
   return { text: "High Risk", tone: "bad" };
 }
+// универсальная отрисовка path по массиву значений
 function sparkPath(values, w = 120, h = 38, pad = 3) {
   const arr = (values || []).map(v => Number(v ?? 0));
   if (!arr.length) return "";
@@ -46,13 +47,59 @@ function sparkPath(values, w = 120, h = 38, pad = 3) {
   });
   return d;
 }
-// Синтетическая мини-кривая для одного процента (направление и масштаб)
-function sparkFromDelta(delta) {
-  const d = Number(delta || 0);
-  const base = 0;
-  const mid = d * 0.55;
-  const end = d;
-  return sparkPath([base, mid, end]);
+
+/* ---------- построение плавных «истинных» мини-кривых из кумулятивов ---------- */
+// S-easing
+const easeInOutCubic = t => (t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2);
+
+// разворачиваем сегмент "из точки from на delta" в N шагов
+function expandSegment(from, delta, steps){
+  const out = [];
+  for (let i = 1; i <= steps; i++){
+    const k = easeInOutCubic(i/steps);
+    out.push(from + delta * k);
+  }
+  return out;
+}
+
+// генерируем мини-серии для 5m / 1h / 6h / 24h из кумулятивных процентов
+function buildCurveSeries(pcRaw){
+  const v = {
+    m5: Number(pcRaw?.m5 || 0),
+    h1: Number(pcRaw?.h1 || 0),
+    h6: Number(pcRaw?.h6 || 0),
+    h24: Number(pcRaw?.h24 || 0),
+  };
+  // приращения по сегментам
+  const d5  = v.m5;
+  const d1  = v.h1  - v.m5;
+  const d6  = v.h6  - v.h1;
+  const d24 = v.h24 - v.h6;
+
+  const ser5  = [0, ...expandSegment(0, d5, 4)];
+
+  const ser1h = [
+    0,
+    ...expandSegment(0, d5, 3),
+    ...expandSegment(d5, d1, 6),
+  ];
+
+  const ser6h = [
+    0,
+    ...expandSegment(0, d5, 2),
+    ...expandSegment(d5, d1, 4),
+    ...expandSegment(d5 + d1, d6, 6),
+  ];
+
+  const ser24 = [
+    0,
+    ...expandSegment(0, d5, 2),
+    ...expandSegment(d5, d1, 3),
+    ...expandSegment(d5 + d1, d6, 5),
+    ...expandSegment(d5 + d1 + d6, d24, 8),
+  ];
+
+  return { ser5, ser1h, ser6h, ser24 };
 }
 
 /* ---------------- template ---------------- */
@@ -67,6 +114,7 @@ template.innerHTML = `
       font-family:ui-sans-serif,-apple-system,Segoe UI,Roboto,Inter,Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji";
       position:relative; overflow:hidden;
     }
+
     /* blue glow aura */
     :host::before{
       content:""; position:absolute; inset:0; pointer-events:none; border-radius:18px;
@@ -75,9 +123,11 @@ template.innerHTML = `
         radial-gradient(900px 480px at -10% 20%, rgba(80,120,255,0.10), transparent 50%);
       mix-blend-mode:screen; filter:saturate(1.2);
     }
-    /* fade-in */
-    @keyframes fadeIn { from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none} }
-    .fade-in { animation: fadeIn .55s ease forwards; }
+
+    /* fade-ins */
+    @keyframes fadeInSlow { from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none} }
+    .fade-placeholder { animation: fadeInSlow 1.2s ease forwards; } /* заставка — ещё медленнее */
+    .fade-report { animation: fadeInSlow 0.9s ease forwards; }      /* сам отчёт — плавно */
 
     h2{ margin:0; font-size:clamp(1.4rem,1.2rem + 1vw,2rem); letter-spacing:.2px; }
     h3{ margin:0 0 12px; font-size:1.02rem; color:var(--accent); font-weight:800; }
@@ -172,18 +222,20 @@ template.innerHTML = `
     /* responsive */
     @media (max-width:960px){ .kpis{ grid-template-columns:repeat(3, minmax(120px,1fr)); } }
     @media (max-width:640px){
-      .hero{ grid-template-columns:1fr; place-items:center; text-align:center; }
+      .hero{ grid-template-columns:1fr; place-items:center; text-align:center; padding:14px; }
       .token{ flex-direction:column; align-items:center; }
       .meta{ align-items:center; }
       .row-actions{ justify-content:center; }
       .score{ justify-self:center; margin-top:10px; }
+      .logo{ width:120px; min-height:120px; } /* крупнее на телефоне */
       .kpis{ grid-template-columns:repeat(2, minmax(120px,1fr)); }
       .trend{ grid-template-columns:repeat(2,1fr); }
+      .kpi span{ font-size:1rem; } /* чуть компактнее, чтобы не ломалось */
     }
   </style>
 
-  <div id="root" class="fade-in" style="text-align:center; padding:40px; color:var(--muted);">
-    Generating token health report…
+  <div id="root" style="text-align:center; padding:40px; color:var(--muted);">
+    <div class="fade-placeholder">Generating token health report…</div>
   </div>
 `;
 
@@ -277,16 +329,15 @@ class DFNPatrol extends HTMLElement {
   render(){
     const report = this.report;
     if (!report){
-      this.root.classList.add("fade-in");
-      this.root.innerHTML = "Generating token health report…";
+      this.root.innerHTML = `<div class="fade-placeholder">Generating token health report…</div>`;
       return;
     }
     if (report.error){
-      this.root.innerHTML = `<div style="color:var(--bad); text-align:center; padding:40px;">${sanitizeHTML(report.error)}</div>`;
+      this.root.innerHTML = `<div class="fade-report" style="color:var(--bad); text-align:center; padding:40px;">${sanitizeHTML(report.error)}</div>`;
       return;
     }
 
-    const { tokenInfo, security, distribution, market, liquidityDrain, hype, clusterSummary } = report;
+    const { tokenInfo, security, distribution, market, socials, liquidityDrain, hype, clusterSummary } = report;
 
     const name = tokenInfo?.name || "Token";
     const nameShort = name.length > 22 ? name.slice(0,19) + "…" : name;
@@ -298,12 +349,13 @@ class DFNPatrol extends HTMLElement {
     const score = typeof report.trustScore === "number" ? report.trustScore : 0;
     const verdict = verdictFromScore(score);
 
-    // per-horizon micro paths
+    // пер-хоризонты: реальная кривая из кумулятивов
     const pc = market?.priceChange || {};
-    const p5  = sparkFromDelta(pc.m5);
-    const p1h = sparkFromDelta(pc.h1);
-    const p6h = sparkFromDelta(pc.h6);
-    const p24 = sparkFromDelta(pc.h24);
+    const series = buildCurveSeries(pc);
+    const p5  = sparkPath(series.ser5);
+    const p1h = sparkPath(series.ser1h);
+    const p6h = sparkPath(series.ser6h);
+    const p24 = sparkPath(series.ser24);
 
     const txns = market?.txns24h || {};
 
@@ -313,7 +365,7 @@ class DFNPatrol extends HTMLElement {
     if (security?.hackerFound) chips.push({ t:`${security.hackerFound}`, cls:"bad" });
     if ("holderConcentration" in security){
       const hc = Number(security.holderConcentration || 0);
-      chips.push({ t:`Top10 ${hc.toFixed(2)}%`, cls: hc>25?"bad":(hc>10?"warn":"ok") });
+      chips.push({ t:`Top10 ${h c.toFixed(2)}%`.replace(" ",""), cls: hc>25?"bad":(hc>10?"warn":"ok") });
     }
     if (security?.isDexVerified) chips.push({ t:"DEX Paid", cls:"ok" }); else chips.push({ t:"DEX Not Paid", cls:"bad" });
     if (security?.isCto) chips.push({ t:"Community Takeover", cls:"ok" });
@@ -329,7 +381,7 @@ class DFNPatrol extends HTMLElement {
     const clusters = Array.isArray(report.clusters) ? report.clusters : [];
 
     const poolsDetails = (Array.isArray(distribution?.allLpAddresses) && distribution.allLpAddresses.length) ? `
-      <details class="fade-in" style="margin-top:12px;">
+      <details style="margin-top:12px;">
         <summary class="pill" style="background:#15171c;">Pools / CEX / Programmatic — ${distribution.allLpAddresses.length}</summary>
         <ul class="list" style="margin-top:10px;">
           ${distribution.allLpAddresses.map(a=>`<li><a href="https://solscan.io/account/${a}" target="_blank" rel="noopener">${a.slice(0,10)}…${a.slice(-4)}</a></li>`).join("")}
@@ -342,7 +394,7 @@ class DFNPatrol extends HTMLElement {
       const n = tot ? Math.round((hype.sentiment.negative/tot)*100) : 0;
       const ne= tot ? 100 - p - n : 0;
       return `
-      <section class="fade-in">
+      <section class="section">
         <h3>🌐 Social & Hype</h3>
         <div class="grid grid-3">
           <div class="kcube"><h4>Social Interactions (24h)</h4><div style="font-weight:900; font-size:1.2rem;">${fmtNum(hype.socialVolume)}</div></div>
@@ -361,139 +413,152 @@ class DFNPatrol extends HTMLElement {
     })() : "";
 
     const html = `
-      <div class="hero fade-in">
-        <div class="token">
-          ${tokenInfo?.logoUrl ? `<img src="${sanitizeUrl(tokenInfo.logoUrl)}" alt="logo" class="logo">` : `<div class="logo"></div>`}
-          <div class="meta">
+      <div class="report">
+        <div class="hero">
+          <div class="token">
+            ${tokenInfo?.logoUrl ? `<img src="${sanitizeUrl(tokenInfo.logoUrl)}" alt="logo" class="logo">` : `<div class="logo"></div>`}
+            <div class="meta">
+              <div>
+                <h2>${sanitizeHTML(nameShort)}</h2>
+                <div class="symbol">${sanitizeHTML(symbol)}</div>
+              </div>
+              <div class="row-actions">
+                ${addr ? `<button class="pill mono" id="copy-addr">${addrShort}</button>` : ""}
+                <button class="pill mono" id="copy-link">Share</button>
+              </div>
+            </div>
+          </div>
+          <div class="score">
+            <svg viewBox="0 0 132 132">
+              <circle class="ring-bg" cx="66" cy="66" r="56"></circle>
+              <circle class="ring-fg" cx="66" cy="66" r="56" style="stroke-dasharray:351.86; stroke-dashoffset:351.86"></circle>
+            </svg>
+            <div class="score-txt">
+              <div class="score-num">0%</div>
+              <div class="score-cap">Trust Score</div>
+              <div class="verdict ${verdict.tone}">${verdict.text}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi"><b>Price</b><span>${price}</span></div>
+          <div class="kpi"><b>24h Change</b><span class="${(pc.h24??0)>=0?"ok":"bad"}">${(pc.h24??0).toFixed(2)}%</span></div>
+          <div class="kpi"><b>24h Volume</b><span>$${fmtNum(market?.volume24h)}</span></div>
+          <div class="kpi"><b>Market Cap</b><span>$${fmtNum(market?.marketCap)}</span></div>
+          <div class="kpi"><b>Liquidity</b><span>$${fmtNum(market?.liquidity)}</span></div>
+          <div class="kpi"><b>24h TXNs</b>
+            <span class="inline"><span class="ok">${txns.buys||0}</span>/<span class="bad">${txns.sells||0}</span></span>
+          </div>
+        </div>
+
+        <div class="risk">
+          ${chips.map(c=>`<span class="chip ${c.cls}">${sanitizeHTML(c.t)}</span>`).join("")}
+          ${(clusterSummary?.penalty>0 || clusterSummary?.macroBonus>0) ? `<span class="chip" title="Macro bonus / cluster penalty">Credibility: +${clusterSummary?.macroBonus||0} / -${clusterSummary?.penalty||0}</span>` : ""}
+        </div>
+
+        <section class="section">
+          <h3>📈 Micro Trend</h3>
+          <div class="trend">
+            <div class="tcard">
+              <div class="tcap">5 MIN</div>
+              <div class="tval ${(Number(pc.m5)||0)>=0?"ok":"bad"}">${(Number(pc.m5)||0).toFixed(2)}%</div>
+              <svg class="spark" viewBox="0 0 120 38" preserveAspectRatio="none"><path d="${p5}"/></svg>
+            </div>
+            <div class="tcard">
+              <div class="tcap">1 HOUR</div>
+              <div class="tval ${(Number(pc.h1)||0)>=0?"ok":"bad"}">${(Number(pc.h1)||0).toFixed(2)}%</div>
+              <svg class="spark" viewBox="0 0 120 38" preserveAspectRatio="none"><path d="${p1h}"/></svg>
+            </div>
+            <div class="tcard">
+              <div class="tcap">6 HOURS</div>
+              <div class="tval ${(Number(pc.h6)||0)>=0?"ok":"bad"}">${(Number(pc.h6)||0).toFixed(2)}%</div>
+              <svg class="spark" viewBox="0 0 120 38" preserveAspectRatio="none"><path d="${p6h}"/></svg>
+            </div>
+            <div class="tcard">
+              <div class="tcap">24 HOURS</div>
+              <div class="tval ${(Number(pc.h24)||0)>=0?"ok":"bad"}">${(Number(pc.h24)||0).toFixed(2)}%</div>
+              <svg class="spark" viewBox="0 0 120 38" preserveAspectRatio="none"><path d="${p24}"/></svg>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <h3>💰 Holders & Distribution</h3>
+          <div class="grid grid-2">
             <div>
-              <h2>${sanitizeHTML(nameShort)}</h2>
-              <div class="symbol">${sanitizeHTML(symbol)}</div>
+              <h4>Top 10 Holders</h4>
+              <ul class="list">
+                ${(distribution?.topHolders||[]).map(h=>`<li><a href="https://solscan.io/account/${h.address}" target="_blank" rel="noopener">${h.address.slice(0,6)}…${h.address.slice(-4)}</a> <span class="muted">(${h.percent}%)</span></li>`).join("") || '<li class="muted">No significant holders.</li>'}
+              </ul>
+              ${poolsDetails}
             </div>
-            <div class="row-actions">
-              ${addr ? `<button class="pill mono" id="copy-addr">${addrShort}</button>` : ""}
-              <button class="pill mono" id="copy-link">Share</button>
-            </div>
-          </div>
-        </div>
-        <div class="score">
-          <svg viewBox="0 0 132 132">
-            <circle class="ring-bg" cx="66" cy="66" r="56"></circle>
-            <circle class="ring-fg" cx="66" cy="66" r="56" style="stroke-dasharray:351.86; stroke-dashoffset:351.86"></circle>
-          </svg>
-          <div class="score-txt">
-            <div class="score-num">0%</div>
-            <div class="score-cap">Trust Score</div>
-            <div class="verdict ${verdict.tone}">${verdict.text}</div>
-          </div>
-        </div>
-      </div>
+            <div>
+              <h4>Supply Concentration (Top 10)</h4>
+              <div class="barbg" title="Top10 vs Rest"><div class="barfg" style="width:${top10Width}%;"></div></div>
+              <div class="muted" style="margin-top:6px;">Top 10 own ${hcPct.toFixed(2)}% • Rest ${Math.max(0,(100-hcPct)).toFixed(2)}%</div>
 
-      <div class="kpis fade-in">
-        <div class="kpi"><b>Price</b><span>${price}</span></div>
-        <div class="kpi"><b>24h Change</b><span class="${(pc.h24??0)>=0?"ok":"bad"}">${(pc.h24??0).toFixed(2)}%</span></div>
-        <div class="kpi"><b>24h Volume</b><span>$${fmtNum(market?.volume24h)}</span></div>
-        <div class="kpi"><b>Market Cap</b><span>$${fmtNum(market?.marketCap)}</span></div>
-        <div class="kpi"><b>Liquidity</b><span>$${fmtNum(market?.liquidity)}</span></div>
-        <div class="kpi"><b>24h TXNs</b>
-          <span class="inline"><span class="ok">${txns.buys||0}</span>/<span class="bad">${txns.sells||0}</span></span>
-        </div>
-      </div>
-
-      <div class="risk fade-in">
-        ${chips.map(c=>`<span class="chip ${c.cls}">${sanitizeHTML(c.t)}</span>`).join("")}
-        ${(clusterSummary?.penalty>0 || clusterSummary?.macroBonus>0) ? `<span class="chip" title="Macro bonus / cluster penalty">Credibility: +${clusterSummary?.macroBonus||0} / -${clusterSummary?.penalty||0}</span>` : ""}
-      </div>
-
-      <section class="fade-in">
-        <h3>📈 Micro Trend</h3>
-        <div class="trend">
-          <div class="tcard">
-            <div class="tcap">5 MIN</div>
-            <div class="tval ${(Number(pc.m5)||0)>=0?"ok":"bad"}">${(Number(pc.m5)||0).toFixed(2)}%</div>
-            <svg class="spark" viewBox="0 0 120 38" preserveAspectRatio="none"><path d="${p5}"/></svg>
-          </div>
-          <div class="tcard">
-            <div class="tcap">1 HOUR</div>
-            <div class="tval ${(Number(pc.h1)||0)>=0?"ok":"bad"}">${(Number(pc.h1)||0).toFixed(2)}%</div>
-            <svg class="spark" viewBox="0 0 120 38" preserveAspectRatio="none"><path d="${p1h}"/></svg>
-          </div>
-          <div class="tcard">
-            <div class="tcap">6 HOURS</div>
-            <div class="tval ${(Number(pc.h6)||0)>=0?"ok":"bad"}">${(Number(pc.h6)||0).toFixed(2)}%</div>
-            <svg class="spark" viewBox="0 0 120 38" preserveAspectRatio="none"><path d="${p6h}"/></svg>
-          </div>
-          <div class="tcard">
-            <div class="tcap">24 HOURS</div>
-            <div class="tval ${(Number(pc.h24)||0)>=0?"ok":"bad"}">${(Number(pc.h24)||0).toFixed(2)}%</div>
-            <svg class="spark" viewBox="0 0 120 38" preserveAspectRatio="none"><path d="${p24}"/></svg>
-          </div>
-        </div>
-      </section>
-
-      <section class="fade-in">
-        <h3>💰 Holders & Distribution</h3>
-        <div class="grid grid-2">
-          <div>
-            <h4>Top 10 Holders</h4>
-            <ul class="list">
-              ${(distribution?.topHolders||[]).map(h=>`<li><a href="https://solscan.io/account/${h.address}" target="_blank" rel="noopener">${h.address.slice(0,6)}…${h.address.slice(-4)}</a> <span class="muted">(${h.percent}%)</span></li>`).join("") || '<li class="muted">No significant holders.</li>'}
-            </ul>
-            ${poolsDetails}
-          </div>
-          <div>
-            <h4>Supply Concentration (Top 10)</h4>
-            <div class="barbg" title="Top10 vs Rest"><div class="barfg" style="width:${top10Width}%;"></div></div>
-            <div class="muted" style="margin-top:6px;">Top 10 own ${hcPct.toFixed(2)}% • Rest ${Math.max(0,(100-hcPct)).toFixed(2)}%</div>
-
-            ${clusters.length ? `
-            <h4 style="margin-top:14px;">Detected Clusters</h4>
-            <div class="clusters">
-              ${clusters.map((c,i)=>{
-                const pct = (typeof c.supplyPct !== "undefined") ? Number(c.supplyPct).toFixed(2) : "0.00";
-                const reasons = (c.reasons ? Object.keys(c.reasons) : []).slice(0,4).map(r=>`<span class="badge">${r.replace(/-/g," ")}</span>`).join("");
-                return `
-                  <details class="cl">
-                    <summary>
-                      <div class="cl-left">
-                        <span class="cl-idx">${i+1}</span>
-                        <div class="cl-meta">
-                          <span class="badge">${c.addresses.length} addr</span>
-                          <span class="badge">Conf. ${c.confidence}%</span>
-                          <span class="badge cl-supply">≈ ${pct}%</span>
+              ${clusters.length ? `
+              <h4 style="margin-top:14px;">Detected Clusters</h4>
+              <div class="clusters">
+                ${clusters.map((c,i)=>{
+                  const pct = (typeof c.supplyPct !== "undefined") ? Number(c.supplyPct).toFixed(2) : "0.00";
+                  const reasons = (c.reasons ? Object.keys(c.reasons) : []).slice(0,4).map(r=>`<span class="badge">${r.replace(/-/g," ")}</span>`).join("");
+                  return `
+                    <details class="cl">
+                      <summary>
+                        <div class="cl-left">
+                          <span class="cl-idx">${i+1}</span>
+                          <div class="cl-meta">
+                            <span class="badge">${c.addresses.length} addr</span>
+                            <span class="badge">Conf. ${c.confidence}%</span>
+                            <span class="badge cl-supply">≈ ${pct}%</span>
+                          </div>
+                        </div>
+                        <div class="cl-meta">${reasons}</div>
+                      </summary>
+                      <div class="cl-body">
+                        <div class="addrgrid">
+                          ${c.addresses.map(a=>`<a href="https://solscan.io/account/${a}" target="_blank" rel="noopener">${a}</a>`).join("")}
                         </div>
                       </div>
-                      <div class="cl-meta">${reasons}</div>
-                    </summary>
-                    <div class="cl-body">
-                      <div class="addrgrid">
-                        ${c.addresses.map(a=>`<a href="https://solscan.io/account/${a}" target="_blank" rel="noopener">${a}</a>`).join("")}
-                      </div>
-                    </div>
-                  </details>`;
-              }).join("")}
-            </div>` : `<div class="muted" style="margin-top:10px;">No significant clusters detected.</div>`}
+                    </details>`;
+                }).join("")}
+              </div>` : `<div class="muted" style="margin-top:10px;">No significant clusters detected.</div>`}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      ${hypeHTML}
+        ${hypeHTML}
 
-      ${Array.isArray(liquidityDrain) && liquidityDrain.length && market?.marketCap ? `
-      <section class="fade-in">
-        <h3>💥 Dump Simulation</h3>
-        <div class="sim">
-          <div class="simbar"><div>$${fmtNum(market.marketCap)}</div></div>
-          <div class="simlog">Press the button to simulate scenarios.</div>
-          <button class="sbtn" id="sim-btn">Run Simulation</button>
-        </div>
-      </section>` : ""}
+        ${Array.isArray(liquidityDrain) && liquidityDrain.length && market?.marketCap ? `
+        <section class="section">
+          <h3>💥 Dump Simulation</h3>
+          <div class="sim">
+            <div class="simbar"><div>$${fmtNum(market.marketCap)}</div></div>
+            <div class="simlog">Press the button to simulate scenarios.</div>
+            <button class="sbtn" id="sim-btn">Run Simulation</button>
+          </div>
+        </section>` : ""}
 
-      <div class="disc fade-in">Disclaimer: Automated report for informational purposes only. Always DYOR.</div>
+        <div class="disc">Disclaimer: Automated report for informational purposes only. Always DYOR.</div>
+      </div>
     `;
 
-    this.root.classList.remove("fade-in");
+    // Вставляем и добавляем медленный fade-in к отчёту
     this.root.innerHTML = html;
-    this.root.classList.add("fade-in");
+    const reportEl = this.shadowRoot.querySelector(".report");
+    if (reportEl) {
+      // ставим изначально прозрачность через класс + следом триггерим анимацию
+      reportEl.style.opacity = "0";
+      reportEl.style.transform = "translateY(8px)";
+      requestAnimationFrame(()=>{
+        reportEl.classList.add("fade-report");
+        // сброс inline, чтобы не конфликтовать с повторными рендерами
+        reportEl.style.opacity = "";
+        reportEl.style.transform = "";
+      });
+    }
 
     // interactions
     if (addr){
