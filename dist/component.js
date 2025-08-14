@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v3.4.1 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.3.7 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -42,6 +42,12 @@ class DFNPatrol extends HTMLElement {
         .market-list b { color: #aaa; }
         .text-ok { color: #9eff9e; }
         .text-bad { color: #ff6b7b; }
+        .drain-simulator { margin-top: 10px; padding: 0 5px; }
+        .drain-bar-row { display: flex; align-items: center; margin-bottom: 8px; font-size: 13px; }
+        .drain-label { width: 110px; flex-shrink: 0; color: #bbb; }
+        .drain-bar-container { flex-grow: 1; background: rgba(0,0,0,0.2); border: 1px solid #333; border-radius: 4px; height: 20px; overflow: hidden; }
+        .drain-bar { background: linear-gradient(to right, #ff6b7b, #e05068); height: 100%; border-radius: 3px 0 0 3px; font-size: 12px; line-height: 20px; text-align: right; color: #fff; padding-right: 6px; box-sizing: border-box; white-space: nowrap; }
+        .drain-percent { margin-left: 10px; font-weight: bold; width: 45px; text-align: left; }
       </style>
     `;
     
@@ -54,12 +60,20 @@ class DFNPatrol extends HTMLElement {
        return;
     }
     
-    const { tokenInfo, security, distribution, market } = this.report;
+    const { tokenInfo, security, distribution, market, liquidityDrain } = this.report;
     
     const logoHTML = tokenInfo.logoUrl ? `<img src="${tokenInfo.logoUrl}" alt="${tokenInfo.symbol} logo" class="token-logo">` : '';
     const tokenHTML = `<div class="full-width token-header">${logoHTML}<h2>Report: ${tokenInfo.name} (${tokenInfo.symbol})</h2></div>`;
     
-    // В этой версии мы не используем 'isLpLocked', так как убрали сложную логику
+    let lpStatusHTML = '';
+    if (security.lpStatus) {
+        if (security.lpStatus === "Burned") {
+            lpStatusHTML = `<li class="ok">Liquidity is Burned.</li>`;
+        } else if (security.lpStatus === "Unlocked") {
+            lpStatusHTML = `<li class="bad">Liquidity is Unlocked.</li>`;
+        }
+    }
+
     const mintRenouncedHTML = 'mintRenounced' in security ? `<li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? 'Mint authority is renounced.' : 'Dev can mint more tokens.'}</li>` : '';
     const freezeAuthorityHTML = 'freezeAuthorityEnabled' in security ? (security.freezeAuthorityEnabled ? `<li class="bad">Freeze authority is enabled.</li>` : `<li class="ok">Freeze authority is disabled.</li>`) : '';
 
@@ -67,13 +81,14 @@ class DFNPatrol extends HTMLElement {
       <div>
         <h3>🛡️ Security Flags</h3>
         <ul>
+          ${lpStatusHTML}
           ${'isMutable' in security ? `<li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>` : ''}
           ${freezeAuthorityHTML}
           ${mintRenouncedHTML}
           ${'transferTax' in security ? `<li class="warn">Token has a transfer tax: ${security.transferTax}%.</li>` : ('noTransferTax' in security ? '<li class="ok">No transfer tax.</li>' : '')}
           ${'isNewPool' in security ? `<li class="${!security.isNewPool ? 'ok' : 'warn'}">${!security.isNewPool ? 'Pool exists > 24h.' : 'Pool created < 24h ago.'}</li>` : ''}
           ${'hasSufficientLiquidity' in security ? `<li class="${security.hasSufficientLiquidity ? 'ok' : 'bad'}">${security.hasSufficientLiquidity ? 'Liquidity > $10,000' : 'Liquidity < $10,000'}</li>` : ''}
-          ${'holderConcentration' in security ? `<li class="${security.holderConcentration > 25 ? 'bad' : (security.holderConcentration > 10 ? 'warn' : 'ok')}">Top 10 holders own ${security.holderConcentration.toFixed(2)}%.</li>` : ''}
+          ${'holderConcentration' in security && security.holderConcentration > 0 ? `<li class="${security.holderConcentration > 25 ? 'bad' : (security.holderConcentration > 10 ? 'warn' : 'ok')}">Top 10 holders own ${security.holderConcentration.toFixed(2)}%.</li>` : ''}
         </ul>
       </div>
     `;
@@ -82,11 +97,11 @@ class DFNPatrol extends HTMLElement {
       <div>
         <h3>💰 Distribution</h3>
         ${distribution.lpAddress ? `<p><b>LP Address:</b> <a href="https://solscan.io/account/${distribution.lpAddress}" target="_blank" rel="noopener">${distribution.lpAddress.slice(0, 4)}...${distribution.lpAddress.slice(-4)}</a></p>` : ''}
-        <b>Top 10 Holders:</b>
+        <b>Top 10 Holders (Real):</b>
         <ul>
             ${distribution.topHolders && distribution.topHolders.length > 0 
                 ? distribution.topHolders.map(h => `<li><a href="https://solscan.io/account/${h.address}" target="_blank" rel="noopener">${h.address.slice(0,6)}...</a> (${h.percent}%)</li>`).join('') 
-                : '<li>N/A</li>'}
+                : '<li>No individual holders found.</li>'}
         </ul>
       </div>
     `;
@@ -117,6 +132,32 @@ class DFNPatrol extends HTMLElement {
                 </ul>
             </div>`;
     }
+    
+    let drainHTML = '';
+    if (liquidityDrain && liquidityDrain.length > 0) {
+        const validResults = liquidityDrain.filter(item => item.impact !== 'N/A' && Number(item.impact) > 0);
+        if (validResults.length > 0) {
+            drainHTML = `
+            <div class="full-width">
+                <h3>🌊 Liquidity Drain Simulator</h3>
+                <div class="drain-simulator">
+            `;
+            validResults.forEach(item => {
+                const impact = Math.min(100, Math.max(0, item.impact));
+                drainHTML += `
+                  <div class="drain-bar-row">
+                    <span class="drain-label">${item.group}</span>
+                    <div class="drain-bar-container">
+                      <div class="drain-bar" style="width: ${impact}%;">${impact > 15 ? `-${impact}%` : ''}</div>
+                    </div>
+                    <span class="drain-percent">${impact <= 15 ? `-${impact}%` : ''}</span>
+                  </div>
+                `;
+            });
+            drainHTML += '</div></div>';
+        }
+    }
+
 
     this.shadowRoot.innerHTML += `
       <div class="report-grid">
@@ -124,6 +165,7 @@ class DFNPatrol extends HTMLElement {
         ${marketHTML}
         ${securityHTML}
         ${distributionHTML}
+        ${drainHTML}
       </div>
     `;
   }
