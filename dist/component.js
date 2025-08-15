@@ -1,4 +1,4 @@
-console.log("[DFN Components] beta-v2.5 initialized");
+console.log("[DFN Components] beta-v2.6 initialized");
 
 /* ---------------- helpers ---------------- */
 function sanitizeHTML(str) {
@@ -154,6 +154,16 @@ template.innerHTML = `
     .meta{ min-width:0; display:flex; flex-direction:column; justify-content:space-between; }
     .symbol{ color:#c7c9cf; font-size:.92rem; margin-top:2px; }
     .row-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+    .row-socials{
+  display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;
+}
+.row-socials a{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:6px 10px; border-radius:9px; border:1px solid var(--line);
+  background:#15171c; color:#ccd0da; font-size:.85rem; text-decoration:none;
+}
+.row-socials a:hover{ background:#191c22; }
+
     .pill{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:9px; border:1px solid var(--line); background:#15171c; color:#ccd0da; font-size:.85rem; cursor:pointer; }
     .pill:hover{ background:#191c22; }
 
@@ -440,6 +450,30 @@ _autoScrollToReportOnce(customOffset) {
 
     const { tokenInfo, security, distribution, market, socials, liquidityDrain, hype, clusterSummary } = report;
 
+    // Генерация HTML для соц-ссылок
+const socialBtns = (Array.isArray(socials) && socials.length)
+  ? `<div class="row-socials">
+      ${socials.map(s => {
+        const url = typeof s === "string" ? s : s?.url;
+        if (!url) return ""; // пропускаем пустые
+
+        // Человекочитаемая метка
+        let label = (typeof s === "object" ? (s.label || s.type) : null);
+        if (!label) {
+          try { label = new URL(url).hostname.replace(/^www\./, ""); }
+          catch { label = "link"; }
+        }
+
+        return `
+          <a href="${sanitizeUrl(url)}" target="_blank" rel="noopener">
+            ${sanitizeHTML(label)}
+          </a>
+        `;
+      }).join("")}
+     </div>`
+  : "";
+
+
     const name = tokenInfo?.name || "Token";
     const nameShort = name.length > 22 ? name.slice(0,19) + "…" : name;
     const symbol = tokenInfo?.symbol || "";
@@ -538,6 +572,7 @@ _autoScrollToReportOnce(customOffset) {
                 ${addr ? `<button class="pill mono" id="copy-addr">${addrShort}</button>` : ""}
                 <button class="pill mono" id="copy-link">Share</button>
               </div>
+              ${socialBtns}
             </div>
           </div>
           <div class="score">
