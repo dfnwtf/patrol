@@ -1,4 +1,4 @@
-console.log("[DFN Components] beta-v3.1 initialized");
+console.log("[DFN Components] beta-v3.2 initialized");
 
 /* ---------------- helpers ---------------- */
 function sanitizeHTML(str) {
@@ -456,6 +456,15 @@ template.innerHTML = `
     background: #191c22 !important;
     border-color: rgba(255,255,255,.14) !important;
   }
+}
+
+/* Отчёт должен выравниваться влево, даже если #root был с text-align:center */
+.report{ text-align: left; }
+
+/* Десктоп: заголовок и тикер в hero гарантированно по левому краю */
+@media (min-width: 641px){
+  .hero .meta{ align-items: flex-start; }
+  .hero h2, .hero .symbol{ text-align: left; }
 }
 
   </style>
