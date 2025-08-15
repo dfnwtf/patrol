@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v3.4.4 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.4.5 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -47,7 +47,7 @@ class DFNPatrol extends HTMLElement {
         .drain-label { width: 110px; flex-shrink: 0; color: #bbb; }
         .drain-bar-container { flex-grow: 1; background: rgba(0,0,0,0.2); border: 1px solid #333; border-radius: 4px; height: 20px; overflow: hidden; }
         .drain-bar { background: linear-gradient(to right, #ff6b7b, #e05068); height: 100%; border-radius: 3px 0 0 3px; font-size: 12px; line-height: 20px; text-align: right; color: #fff; padding-right: 6px; box-sizing: border-box; white-space: nowrap; }
-        .drain-percent { margin-left: 10px; font-weight: bold; width: 45px; text-align: left; }
+        .drain-result { margin-left: 10px; font-weight: bold; text-align: left; color: #ddd;}
       </style>
     `;
     
@@ -135,7 +135,12 @@ class DFNPatrol extends HTMLElement {
     
     let drainHTML = '';
     if (liquidityDrain && liquidityDrain.length > 0) {
-        const validResults = liquidityDrain.filter(item => item.impact !== 'N/A' && Number(item.impact) > 0);
+        const formatCap = (num) => {
+            if (num < 1000) return `$${num.toFixed(0)}`;
+            if (num < 1000000) return `$${(num/1000).toFixed(1)}K`;
+            return `$${(num/1000000).toFixed(2)}M`;
+        }
+        const validResults = liquidityDrain.filter(item => item.marketCapDropPercentage && item.marketCapDropPercentage > 0);
         if (validResults.length > 0) {
             drainHTML = `
             <div class="full-width">
@@ -143,14 +148,18 @@ class DFNPatrol extends HTMLElement {
                 <div class="drain-simulator">
             `;
             validResults.forEach(item => {
-                const impact = Math.min(100, Math.max(0, item.impact));
+                const impact = Math.min(100, Math.max(0, item.marketCapDropPercentage));
                 drainHTML += `
                   <div class="drain-bar-row">
                     <span class="drain-label">${item.group}</span>
                     <div class="drain-bar-container">
-                      <div class="drain-bar" style="width: ${impact}%;">${impact > 15 ? `-${impact}%` : ''}</div>
+                      <div class="drain-bar" style="width: ${impact}%;">
+                        ${impact > 20 ? `-${impact}%` : ''}
+                      </div>
                     </div>
-                    <span class="drain-percent">${impact <= 15 ? `-${impact}%` : ''}</span>
+                    <span class="drain-result">
+                      ${impact > 20 ? '' : `-${impact}%`} → ${formatCap(item.marketCapAfterSale)}
+                    </span>
                   </div>
                 `;
             });
