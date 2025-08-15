@@ -1,4 +1,4 @@
-console.log("[DFN Components] beta-v2.7 initialized");
+console.log("[DFN Components] beta-v2.8 initialized");
 
 /* ---------------- helpers ---------------- */
 function sanitizeHTML(str) {
@@ -290,13 +290,7 @@ template.innerHTML = `
   border-radius:999px; background:#111318; color:#9aa0aa;
   font-size:.85rem; cursor:pointer;
 }
-.social-menu{
-  position:absolute; top:40px; left:0; z-index:10;
-  min-width:220px; max-width:92vw;
-  background:#0e1014; border:1px solid var(--line);
-  border-radius:12px; padding:6px; box-shadow:0 8px 24px rgba(0,0,0,.35);
-  display:none;
-}
+
 .social-menu.open{ display:block; }
 .social-item{
   display:flex; align-items:center; gap:8px;
@@ -314,6 +308,60 @@ template.innerHTML = `
   .social-chip, .social-more-btn{ justify-content:center; width:100%; }
 }
 
+/* ===== SOCIALS (desktop & mobile) ===== */
+.row-socials{ margin-top:10px; }
+.socials-wrap{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+
+.social-chip{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:6px 10px; border:1px solid var(--line);
+  border-radius:999px; background:#15171c; color:#ccd0da;
+  font-size:.85rem; text-decoration:none; line-height:1;
+  max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.social-chip:hover{ background:#191c22; }
+
+/* More dropdown — как "портал" (фиксированный, поверх всего) */
+.social-more{ position:relative; }
+.social-more-btn{
+  padding:6px 10px; border:1px dashed var(--line);
+  border-radius:999px; background:#111318; color:#9aa0aa;
+  font-size:.85rem; cursor:pointer;
+}
+.social-menu{
+  position:fixed; /* важно: fixed, чтобы не обрезалось родителем */
+  z-index:99999;
+  min-width:220px; max-width:92vw;
+  background:#0e1014; border:1px solid var(--line);
+  border-radius:12px; padding:6px; box-shadow:0 8px 24px rgba(0,0,0,.35);
+  display:none;
+}
+.social-menu.open{ display:block; }
+.social-item{
+  display:flex; align-items:center; gap:8px;
+  padding:8px 10px; border-radius:8px; text-decoration:none; color:#cfd3dd;
+}
+.social-item:hover{ background:#151922; }
+
+/* Мобильный отдельный блок */
+.socials-section-mobile{ display:none; }
+@media (max-width: 768px){
+  /* В hero ничего не показываем */
+  .hero .row-socials{ display:none; }
+  /* Показываем отдельный секшен под Hero */
+  .socials-section-mobile{ display:block; }
+  .socials-wrap{
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap:8px;
+  }
+  .social-chip, .social-more-btn{ justify-content:center; width:100%; }
+}
+
+/* Очень узкие экраны */
+@media (max-width: 360px){
+  .social-chip, .social-more-btn { font-size:.8rem; }
+}
     
   </style>
 
@@ -489,28 +537,23 @@ _autoScrollToReportOnce(customOffset) {
 
     const { tokenInfo, security, distribution, market, socials, liquidityDrain, hype, clusterSummary } = report;
 
-// Rank socials: top-3 go as chips, the rest into "More"
+    // --- Socials: нормализация, приоритет, раскладка top-3 + "More"
 const priorityOrder = ["twitter","x","telegram","website","discord","dexscreener","github","whitepaper","medium"];
-const emojiByType = {
-  twitter: "𝕏", x: "𝕏", telegram: "✈️", website: "🌐", discord: "💬",
-  dexscreener: "📈", github: "💻", whitepaper: "📄", medium: "📰", social: "🔗"
-};
+const emojiByType = { twitter:"𝕏", x:"𝕏", telegram:"✈️", website:"🌐", discord:"💬", dexscreener:"📈", github:"💻", whitepaper:"📄", medium:"📰", social:"🔗" };
 
 function normalizeType(s){
-  const t = (s.type || "").toLowerCase();
+  const t = (s?.type || "").toLowerCase();
   if (t === "x" || t === "twitter") return "twitter";
   if (t === "tg" || t === "telegram") return "telegram";
   if (t === "site" || t === "web" || t === "website") return "website";
   if (t === "dexscreener") return "dexscreener";
   return t || "social";
 }
-
 function rankSocials(list){
   const safe = Array.isArray(list) ? list.filter(x => x && x.url) : [];
   const scored = safe.map(s => {
     const type = normalizeType(s);
     const score = Math.max(0, priorityOrder.length - (priorityOrder.indexOf(type) + 1));
-    // label fallback: hostname
     let label = s.label || s.type;
     if (!label) {
       try { label = new URL(s.url).hostname.replace(/^www\./,""); }
@@ -518,42 +561,50 @@ function rankSocials(list){
     }
     return { ...s, type, score, label };
   });
-  // sort by priority first, then by label
-  scored.sort((a,b) => (b.score - a.score) || a.label.localeCompare(b.label));
+  scored.sort((a,b)=> (b.score - a.score) || a.label.localeCompare(b.label));
   const primary = scored.slice(0,3);
   const rest = scored.slice(3);
   return { primary, rest };
 }
-
 const { primary: socialPrimary, rest: socialRest } = rankSocials(socials);
 
-// Build HTML
-const socialChips = socialPrimary.map(s => `
-  <a class="social-chip" href="${sanitizeUrl(s.url)}" target="_blank" rel="noopener">
-    <span>${emojiByType[s.type] || "🔗"}</span>
-    <span>${sanitizeHTML(s.label)}</span>
-  </a>
-`).join("");
-
-const socialMenuItems = socialRest.map(s => `
-  <a class="social-item" href="${sanitizeUrl(s.url)}" target="_blank" rel="noopener">
-    <span>${emojiByType[s.type] || "🔗"}</span>
-    <span>${sanitizeHTML(s.label)}</span>
-  </a>
-`).join("");
-
-const socialBlock = (socialPrimary.length || socialRest.length) ? `
+// HTML для десктопного блока (в Hero)
+const socialHTMLDesktop = (socialPrimary.length || socialRest.length) ? `
   <div class="row-socials">
     <div class="socials-wrap">
-      ${socialChips}
+      ${socialPrimary.map(s => `
+        <a class="social-chip" href="${sanitizeUrl(s.url)}" target="_blank" rel="noopener">
+          <span>${emojiByType[s.type] || "🔗"}</span>
+          <span>${sanitizeHTML(s.label)}</span>
+        </a>`).join("")}
       ${socialRest.length ? `
         <div class="social-more">
           <button class="social-more-btn" id="social-more-btn">More</button>
-          <div class="social-menu" id="social-menu">${socialMenuItems}</div>
+          <div class="social-menu" id="social-menu">${socialRest.map(s => `
+            <a class="social-item" href="${sanitizeUrl(s.url)}" target="_blank" rel="noopener">
+              <span>${emojiByType[s.type] || "🔗"}</span>
+              <span>${sanitizeHTML(s.label)}</span>
+            </a>
+          `).join("")}</div>
         </div>` : ``}
     </div>
-  </div>
-` : ``;
+  </div>` : "";
+
+// HTML для мобильного отдельного секшена (покажется только на мобайле через CSS)
+const socialHTMLMobile = (socialPrimary.length || socialRest.length) ? `
+  <section class="section socials-section-mobile">
+    <h3>Official Links</h3>
+    <div class="socials-wrap">
+      ${[...socialPrimary, ...socialRest].map(s => `
+        <a class="social-chip" href="${sanitizeUrl(s.url)}" target="_blank" rel="noopener">
+          <span>${emojiByType[s.type] || "🔗"}</span>
+          <span>${sanitizeHTML(s.label)}</span>
+        </a>`).join("")}
+    </div>
+  </section>` : "";
+
+
+
 
 
 
@@ -655,7 +706,7 @@ const socialBlock = (socialPrimary.length || socialRest.length) ? `
                 ${addr ? `<button class="pill mono" id="copy-addr">${addrShort}</button>` : ""}
                 <button class="pill mono" id="copy-link">Share</button>
               </div>
-              ${socialBlock}
+              ${socialHTMLDesktop}
             </div>
           </div>
           <div class="score">
@@ -670,6 +721,8 @@ const socialBlock = (socialPrimary.length || socialRest.length) ? `
             </div>
           </div>
         </div>
+
+        ${socialHTMLMobile}
 
         <div class="kpis">
           <div class="kpi"><b>Price</b><span>${price}</span></div>
@@ -816,29 +869,61 @@ const socialBlock = (socialPrimary.length || socialRest.length) ? `
     const share = this.shadowRoot.querySelector("#copy-link");
     share?.addEventListener("click", ()=> this.copy(window.location.href, share));
 
-    // toggle "More" menu"
+// --- Socials: toggle "More" menu с фиксацией позиции (fixed)
 const moreBtn = this.shadowRoot.getElementById("social-more-btn");
 const menu = this.shadowRoot.getElementById("social-menu");
-if (moreBtn && menu) {
-  const toggle = (e) => {
-    e?.stopPropagation?.();
-    menu.classList.toggle("open");
-  };
-  moreBtn.addEventListener("click", toggle);
 
-  // закрываем меню по клику вне
-  const onDocClick = (e) => {
-    if (!menu.classList.contains("open")) return;
-    if (!menu.contains(e.target) && e.target !== moreBtn) {
-      menu.classList.remove("open");
-    }
-  };
-  document.addEventListener("click", onDocClick, { once:false });
+function placeMenu(){
+  if (!moreBtn || !menu) return;
+  const r = moreBtn.getBoundingClientRect();
+
+  // показать, измерить и поставить
+  menu.style.display = "block";
+  menu.classList.add("open");
+
+  const mw = menu.offsetWidth || 260;
+  const mh = menu.offsetHeight || 120;
+
+  // базовая позиция — под кнопкой
+  let top  = r.bottom + 8;
+  let left = r.left;
+
+  // держим меню в пределах окна
+  if (left + mw > window.innerWidth - 8) left = window.innerWidth - mw - 8;
+  if (left < 8) left = 8;
+  if (top + mh > window.innerHeight - 8) top = Math.max(8, r.top - mh - 8);
+
+  menu.style.top  = `${top}px`;
+  menu.style.left = `${left}px`;
 }
 
+if (moreBtn && menu){
+  const openClose = (e) => {
+    e?.stopPropagation?.();
+    if (menu.classList.contains("open")){
+      menu.classList.remove("open");
+      menu.style.display = "none";
+    } else {
+      placeMenu();
+    }
+  };
+  moreBtn.addEventListener("click", openClose);
 
-    const simBtn = this.shadowRoot.querySelector("#sim-btn");
-    simBtn?.addEventListener("click", ()=> this.runSimulation());
+  const closeIfOpen = () => {
+    if (!menu.classList.contains("open")) return;
+    menu.classList.remove("open");
+    menu.style.display = "none";
+  };
+  document.addEventListener("click", (e) => {
+    if (!menu.contains(e.target) && e.target !== moreBtn) closeIfOpen();
+  });
+  window.addEventListener("resize", closeIfOpen);
+  window.addEventListener("scroll", closeIfOpen, { passive:true });
+}
+
+// (оставь как было)
+const simBtn = this.shadowRoot.querySelector("#sim-btn");
+simBtn?.addEventListener("click", ()=> this.runSimulation());
   }
 }
 
