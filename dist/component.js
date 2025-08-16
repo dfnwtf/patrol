@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v3.4.6 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.4.7 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -48,8 +48,9 @@ class DFNPatrol extends HTMLElement {
         .drain-bar-container { flex-grow: 1; background: rgba(0,0,0,0.2); border: 1px solid #333; border-radius: 4px; height: 20px; overflow: hidden; }
         .drain-bar { background: linear-gradient(to right, #ff6b7b, #e05068); height: 100%; border-radius: 3px 0 0 3px; font-size: 12px; line-height: 20px; text-align: right; color: #fff; padding-right: 6px; box-sizing: border-box; white-space: nowrap; }
         .drain-result { margin-left: 10px; font-weight: bold; text-align: left; color: #ddd;}
-        .chart-container { background: #111; border: 1px solid #222; border-radius: 8px; padding: 16px; }
+        .chart-container { background: #111; border: 1px solid #222; border-radius: 8px; padding: 16px; height: 100px; display: flex; align-items: center; justify-content: center;}
         .sparkline { stroke-width: 2; fill: none; }
+        .chart-placeholder { font-size: 14px; color: #666; }
       </style>
     `;
     
@@ -135,33 +136,38 @@ class DFNPatrol extends HTMLElement {
             </div>`;
     }
     
-    // --- НОВЫЙ БЛОК ДЛЯ ГРАФИКА ---
     let chartHTML = '';
     const prices = market.priceHistory24h;
     if (prices && prices.length > 1) {
-        const width = 600;
-        const height = 100;
-        const minPrice = Math.min(...prices);
-        const maxPrice = Math.max(...prices);
-        const priceRange = maxPrice - minPrice;
-        
-        const points = prices.map((price, i) => {
-            const x = (i / (prices.length - 1)) * width;
-            const y = height - ((price - minPrice) / priceRange) * height;
-            return `${x},${y}`;
-        }).join(' ');
-        
-        const strokeColor = prices[prices.length - 1] >= prices[0] ? '#9eff9e' : '#ff6b7b';
+        try {
+            const width = 600;
+            const height = 100;
+            const minPrice = Math.min(...prices);
+            const maxPrice = Math.max(...prices);
+            const priceRange = maxPrice - minPrice;
+            
+            const points = prices.map((price, i) => {
+                const x = (i / (prices.length - 1)) * width;
+                const y = priceRange === 0 ? height / 2 : height - ((price - minPrice) / priceRange) * (height - 4) + 2;
+                return `${x},${y}`;
+            }).join(' ');
+            
+            const strokeColor = prices[prices.length - 1] >= prices[0] ? '#9eff9e' : '#ff6b7b';
 
-        chartHTML = `
-            <div class="full-width chart-container">
-                <svg width="100%" height="100%" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
-                    <polyline class="sparkline" points="${points}" stroke="${strokeColor}" />
-                </svg>
-            </div>
-        `;
+            chartHTML = `
+                <div class="full-width chart-container">
+                    <svg width="100%" height="100%" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+                        <polyline class="sparkline" points="${points}" stroke="${strokeColor}" />
+                    </svg>
+                </div>
+            `;
+        } catch (e) {
+            console.error("Chart rendering failed:", e);
+            chartHTML = `<div class="full-width chart-container"><div class="chart-placeholder">Chart render error</div></div>`;
+        }
+    } else {
+        chartHTML = `<div class="full-width chart-container"><div class="chart-placeholder">24h chart data not available</div></div>`;
     }
-    // --- КОНЕЦ НОВОГО БЛОКА ---
     
     let drainHTML = '';
     if (liquidityDrain && liquidityDrain.length > 0) {
