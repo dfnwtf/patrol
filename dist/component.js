@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v3.5.1 initialized (Raw Debug Mode)");
+console.log("[DFN Components] v3.5.2 initialized (Raw Debug Mode)");
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
@@ -48,6 +48,9 @@ class DFNPatrol extends HTMLElement {
         .drain-bar-container { flex-grow: 1; background: rgba(0,0,0,0.2); border: 1px solid #333; border-radius: 4px; height: 20px; overflow: hidden; }
         .drain-bar { background: linear-gradient(to right, #ff6b7b, #e05068); height: 100%; border-radius: 3px 0 0 3px; font-size: 12px; line-height: 20px; text-align: right; color: #fff; padding-right: 6px; box-sizing: border-box; white-space: nowrap; }
         .drain-result { margin-left: 10px; font-weight: bold; text-align: left; color: #ddd;}
+        .socials-list { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin-top: 4px;}
+        .socials-list a { display: inline-block; padding: 4px 12px; background: #252525; border: 1px solid #333; border-radius: 16px; font-size: 13px; text-decoration: none; color: #ffd447; }
+        .socials-list a:hover { background: #333; }
       </style>
     `;
     
@@ -60,7 +63,7 @@ class DFNPatrol extends HTMLElement {
        return;
     }
     
-    const { tokenInfo, security, distribution, market, liquidityDrain } = this.report;
+    const { tokenInfo, security, distribution, market, liquidityDrain, socials } = this.report;
     
     const logoHTML = tokenInfo.logoUrl ? `<img src="${tokenInfo.logoUrl}" alt="${tokenInfo.symbol} logo" class="token-logo">` : '';
     const tokenHTML = `<div class="full-width token-header">${logoHTML}<h2>Report: ${tokenInfo.name} (${tokenInfo.symbol})</h2></div>`;
@@ -133,6 +136,20 @@ class DFNPatrol extends HTMLElement {
             </div>`;
     }
     
+    let socialHTML = '';
+    if (socials && socials.length > 0) {
+        socialHTML = `
+            <div>
+                <h3>🔗 Socials</h3>
+                <ul class="socials-list">
+        `;
+        socials.forEach(social => {
+            let label = social.label || social.type || 'Link';
+            socialHTML += `<li><a href="${social.url}" target="_blank" rel="noopener">${label.charAt(0).toUpperCase() + label.slice(1)}</a></li>`;
+        });
+        socialHTML += '</ul></div>';
+    }
+    
     let drainHTML = '';
     if (liquidityDrain && liquidityDrain.length > 0) {
         const formatCap = (num) => {
@@ -169,6 +186,7 @@ class DFNPatrol extends HTMLElement {
         ${marketHTML}
         ${securityHTML}
         ${distributionHTML}
+        ${socialHTML}
         ${drainHTML}
       </div>
     `;
