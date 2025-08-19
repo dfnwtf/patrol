@@ -1,5 +1,5 @@
 // patrol.js
-console.log("[DFN Patrol] v4.0.3 initialized");
+console.log("[DFN Patrol] v4.0.4 initialized");
 let ws;
 let turnstileToken = null; // Глобальная переменная для хранения токена
 
