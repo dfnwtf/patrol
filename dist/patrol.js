@@ -73,6 +73,7 @@ function connectToWebSocket(token, turnstileResponse) {
             panel.setReport(data.data);
         });
     }
+    // Разблокируем кнопку после получения отчета
     cleanup();
   });
 
