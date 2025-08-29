@@ -1,5 +1,5 @@
 // patrol.js
-console.log("[DFN Patrol] v4.0.7 initialized");
+console.log("[DFN Patrol] v4.0.8 initialized");
 let ws;
 let turnstileToken = null;
 
@@ -14,8 +14,7 @@ function onloadTurnstileCallback() {
     try {
         turnstile.render(searchForm, {
             // V-- ВАЖНО: Вставьте сюда ваш Site Key от Cloudflare Turnstile --V
-            sitekey: '0x4AAAAAABks_fM_MFRf0FP_
-', 
+            sitekey: '0x4AAAAAABks_fM_MFRf0FP_', 
             callback: onTurnstileSuccess,
             'error-callback': onTurnstileError,
             theme: 'dark',
