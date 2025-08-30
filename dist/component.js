@@ -1,21 +1,24 @@
 // component.js
-console.log("[DFN Components] v4.0.6 initialized");
+console.log("[DFN Components] v4.1.0 initialized");
 
+// --- ПУНКТЫ 1 и 2: БЕЗОПАСНЫЕ ФУНКЦИИ-ПОМОЩНИКИ ---
 function sanitizeHTML(str) {
     if (!str) return '';
-    const temp = document.createElement('div');
-    temp.textContent = str;
-    return temp.innerHTML;
+    // Простая функция для удаления HTML тегов
+    return str.toString().replace(/<[^>]*>?/gm, '');
 }
 
 function sanitizeUrl(url) {
     try {
         const u = new URL(url);
+        // Разрешаем только безопасные протоколы
         if (u.protocol === 'http:' || u.protocol === 'https:') {
             return u.href;
         }
-    } catch (e) {}
-    return '#';
+    } catch (e) {
+        // Если URL невалидный, ничего не возвращаем
+    }
+    return '#'; // Возвращаем безопасный "пустой" href
 }
 
 class DFNPatrol extends HTMLElement {
