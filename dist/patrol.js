@@ -1,39 +1,20 @@
 // patrol.js
-console.log("[DFN Patrol] v4.0.8 initialized");
+console.log("[DFN Patrol] v4.0.9 initialized");
 let ws;
 let turnstileToken = null;
+let tokenToScan = null;
 
-// Эта функция будет вызвана автоматически скриптом Turnstile, когда он будет готов
-function onloadTurnstileCallback() {
-    const searchForm = document.querySelector('#token-search');
-    if (!searchForm) {
-        console.error("Turnstile target #token-search not found.");
-        return;
-    }
-
-    try {
-        turnstile.render(searchForm, {
-            // V-- ВАЖНО: Вставьте сюда ваш Site Key от Cloudflare Turnstile --V
-            sitekey: '0x4AAAAAABks_fM_MFRf0FP_', 
-            callback: onTurnstileSuccess,
-            'error-callback': onTurnstileError,
-            theme: 'dark',
-        });
-        const scanButton = searchForm.querySelector('button[type="submit"]');
-        if(scanButton) {
-            scanButton.disabled = true;
-            scanButton.textContent = 'Verifying...';
-        }
-    } catch (e) {
-        console.error("Failed to render Turnstile widget:", e);
-        onTurnstileError();
-    }
-}
-
+// --- Функции обратного вызова для Turnstile ---
 function onTurnstileSuccess(token) {
     turnstileToken = token;
     const scanButton = document.querySelector('#token-search button[type="submit"]');
-    if (scanButton) {
+
+    // Если мы ждали токен для конкретного сканирования, запускаем его
+    if (tokenToScan) {
+        connectToWebSocket(tokenToScan, turnstileToken);
+        tokenToScan = null; // Сбрасываем, чтобы не запустить снова
+    } else if (scanButton) {
+        // Это была первоначальная загрузка, просто активируем кнопку
         scanButton.disabled = false;
         scanButton.textContent = 'Scan';
     }
@@ -44,6 +25,11 @@ function onTurnstileError() {
     const panel = document.querySelector("dfn-patrol");
     if (panel) {
         panel.setReport({ error: "Security check failed. Please refresh." });
+    }
+    const scanButton = document.querySelector('#token-search button[type="submit"]');
+    if (scanButton) {
+        scanButton.disabled = false;
+        scanButton.textContent = 'Scan Failed';
     }
 }
 
@@ -73,7 +59,6 @@ function connectToWebSocket(token, turnstileResponse) {
             panel.setReport(data.data);
         });
     }
-    // Разблокируем кнопку после получения отчета
     cleanup();
   });
 
@@ -91,11 +76,6 @@ function connectToWebSocket(token, turnstileResponse) {
 
 document.querySelector("#token-search")?.addEventListener("submit", (e) => {
     e.preventDefault();
-
-    if (!turnstileToken) {
-        alert("Please wait for human verification check or refresh the page.");
-        return;
-    }
   
     const scanButton = e.currentTarget.querySelector('button[type="submit"]');
     const field = document.querySelector("#token-input");
@@ -105,7 +85,7 @@ document.querySelector("#token-search")?.addEventListener("submit", (e) => {
 
     if(scanButton) {
         scanButton.disabled = true;
-        scanButton.textContent = 'Scanning...';
+        scanButton.textContent = 'Verifying...';
     }
 
     const oldPanel = document.querySelector("dfn-patrol");
@@ -116,11 +96,38 @@ document.querySelector("#token-search")?.addEventListener("submit", (e) => {
     newPanel.id = "patrol";
     document.querySelector("#patrol-block")?.appendChild(newPanel);
     
-    connectToWebSocket(token, turnstileToken);
+    // Сохраняем токен, который хотим сканировать
+    tokenToScan = token;
+    // И запускаем проверку Turnstile заново, чтобы получить новый токен
+    try {
+        turnstile.execute();
+    } catch(err) {
+        console.error("Failed to execute Turnstile:", err);
+        onTurnstileError();
+    }
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Эта логика нужна для предзагрузки токена, который уже есть в HTML
+    const searchForm = document.querySelector('#token-search');
+    if (searchForm) {
+        try {
+            turnstile.render(searchForm, {
+                sitekey: '0x4AAAAAABks_fM_MFRf0FP_', // <-- УБЕДИТЕСЬ, ЧТО ЗДЕСЬ ВАШ ПРАВИЛЬНЫЙ КЛЮЧ
+                callback: onTurnstileSuccess,
+                'error-callback': onTurnstileError,
+                theme: 'dark',
+                // 'execution': 'execute', // Этот режим позволяет вызывать проверку вручную
+            });
+            const scanButton = searchForm.querySelector('button[type="submit"]');
+            if(scanButton) {
+                scanButton.disabled = true;
+                scanButton.textContent = 'Verifying...';
+            }
+        } catch (e) {
+            console.error("Failed to render Turnstile widget:", e);
+        }
+    }
+
     const initialPanel = document.querySelector("dfn-patrol");
     if (initialPanel) {
         const initialToken = initialPanel.getAttribute("embed");
