@@ -1,16 +1,16 @@
 // patrol.js
-console.log("[DFN Patrol] v4.1.0 initialized");
+console.log("[DFN Patrol] v4.1.1 initialized");
 let ws;
 
 function connectToWebSocket(token) {
   if (!token) return;
 
-  if (ws && ws.readyState < 2) { 
+  if (ws && ws.readyState < 2) {
       ws.close();
   }
 
   const scanButton = document.querySelector('#token-search button[type="submit"]');
-  
+
   ws = new WebSocket(`wss://dfn.wtf/api/?embed=${token}`);
 
   const cleanup = () => {
@@ -19,7 +19,7 @@ function connectToWebSocket(token) {
           scanButton.textContent = 'Scan';
       }
   };
-  
+
   ws.addEventListener("message", (e) => {
       const data = JSON.parse(e.data);
       const panel = document.querySelector("dfn-patrol");
@@ -44,11 +44,11 @@ function connectToWebSocket(token) {
 
 document.querySelector("#token-search")?.addEventListener("submit", (e) => {
   e.preventDefault();
-  
+
   const scanButton = e.currentTarget.querySelector('button[type="submit"]');
   const field = document.querySelector("#token-input");
   const token = field.value.trim();
-  
+
   if (!token) return;
 
   if(scanButton) {
@@ -58,12 +58,12 @@ document.querySelector("#token-search")?.addEventListener("submit", (e) => {
 
   const oldPanel = document.querySelector("dfn-patrol");
   if (oldPanel) oldPanel.remove();
-  
+
   const newPanel = document.createElement("dfn-patrol");
   newPanel.setAttribute("embed", token);
   newPanel.id = "patrol";
   document.querySelector("#patrol-block")?.appendChild(newPanel);
-  
+
   connectToWebSocket(token);
 });
 
