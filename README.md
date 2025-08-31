@@ -27,7 +27,7 @@
 Our mission is to bring clarity and transparency to the chaotic and often unpredictable ecosystem of digital assets.  
 We provide traders, investors, and project developers with powerful tools for quick and effective due diligence on Solana tokens.
 
-The scanner collects and analyzes dozens of parameters in real‑time — from smart‑contract characteristics to market data and holder activity — to generate a single, easy‑to‑understand security rating: the **Trust Score**.  
+The scanner collects and analyzes dozens of parameters in real‑time - from smart‑contract characteristics to market data and holder activity - to generate a single, easy‑to‑understand security rating: the **Trust Score**.  
 Our goal is to help users make informed decisions and avoid potential risks.
 
 ---
