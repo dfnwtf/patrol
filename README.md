@@ -47,7 +47,7 @@ Nonsense Patrol evaluates tokens across several key vectors to determine its Tru
 ### 🚀 Showcase Your Trust Score
 
 Confident in your token’s security? Display your DFN Trust Score on your site with our official widget.  
-It ships with a transparent background and two color themes so it looks sharp on any design.
+It ships with a transparent background and two color themes so it looks sharp on any design..
 
 ---
 
