@@ -1,5 +1,5 @@
 // patrol.js
-console.log("[DFN Patrol] v4.1.4 initialized");
+console.log("[DFN Patrol] v4.1.9 initialized");
 let ws;
 
 function connectToWebSocket(token) {
@@ -46,8 +46,13 @@ document.querySelector("#token-search")?.addEventListener("submit", (e) => {
   e.preventDefault();
 
   const scanButton = e.currentTarget.querySelector('button[type="submit"]');
-  const field = document.querySelector("#token-input");
-  const token = field.value.trim();
+  const visibleField = document.querySelector("#token-input");
+  const hiddenField = document.getElementById('hidden-mint-address');
+
+  // --- ИЗМЕНЕНИЕ ЗДЕСЬ ---
+  // Приоритет отдаем адресу из скрытого поля (выбранного из списка).
+  // Если его нет, берем то, что введено вручную.
+  const token = (hiddenField ? hiddenField.value : visibleField.value).trim();
 
   if (!token) return;
 
@@ -63,6 +68,11 @@ document.querySelector("#token-search")?.addEventListener("submit", (e) => {
   newPanel.setAttribute("embed", token);
   newPanel.id = "patrol";
   document.querySelector("#patrol-block")?.appendChild(newPanel);
+  
+  // После выбора из списка, удаляем скрытое поле, чтобы не мешать следующим ручным поискам
+  if (hiddenField) {
+      hiddenField.remove();
+  }
 
   connectToWebSocket(token);
 });
