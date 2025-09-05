@@ -1,14 +1,12 @@
-// component.js - v4.1.7 - Улучшена обработка соц. ссылок
-console.log("[DFN Components] v4.1.8 initialized - Optimized");
+console.log("[DFN Components] v4.2.0 initialized - Optimized");
 
 function sanitizeHTML(str) {
     if (!str) return '';
-    // DOMPurify должен быть подключен в index.html
+    if (typeof DOMPurify === 'undefined') return str;
     return DOMPurify.sanitize(str.toString());
 }
 
 function sanitizeUrl(url) {
-    // Проверка, чтобы избежать ошибок, если url не строка
     if (typeof url !== 'string' || !url) {
         return '#';
     }
@@ -21,7 +19,6 @@ function sanitizeUrl(url) {
     return '#';
 }
 
-// Создаём шаблон один раз при загрузке скрипта
 const template = document.createElement('template');
 template.innerHTML = `
   <style>
@@ -45,6 +42,7 @@ template.innerHTML = `
     .stat-item { display: flex; flex-direction: column; }
     .stat-item b { font-size: 12px; color: #aaa; font-weight: normal; }
     .stat-item span { font-size: 16px; font-weight: 600; }
+    .stat-item .buys-sells { font-weight: 600; } /* Спец. стиль для транзакций */
     
     .report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px 32px; }
     .report-grid > div { background: #111; padding: 16px; border-radius: 8px; border: 1px solid #222;}
@@ -62,7 +60,7 @@ template.innerHTML = `
     
     @media (max-width: 600px) {
         .summary-block { flex-direction: column; align-items: flex-start; gap: 16px; }
-        .summary-market-stats { width: 100%; text-align: left; }
+        .summary-market-stats { width: 100%; text-align: left; grid-template-columns: 1fr; } /* В один столбец на мобильных */
         .stat-item { flex-direction: row; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #222; }
         .token-name-symbol h2 { font-size: 22px; }
     }
@@ -100,6 +98,23 @@ class DFNPatrol extends HTMLElement {
     const priceChangeColor = market?.priceChange24h >= 0 ? 'text-ok' : 'text-bad';
     const price = Number(market?.priceUsd) < 0.000001 ? Number(market?.priceUsd).toExponential(2) : Number(market?.priceUsd).toLocaleString('en-US', {maximumFractionDigits: 8});
 
+    // --- ИЗМЕНЕНИЕ ЗДЕСЬ ---
+    const marketStatsHTML = `
+        <div class="summary-market-stats">
+            <div class="stat-item"><b>Price</b><span>$${price}</span></div>
+            <div class="stat-item"><b>24h Change</b><span class="${priceChangeColor}">${market?.priceChange24h?.toFixed(2) || 'N/A'}%</span></div>
+            <div class="stat-item"><b>Market Cap</b><span>$${formatNum(market?.marketCap)}</span></div>
+            <div class="stat-item"><b>Liquidity</b><span>$${formatNum(market?.liquidity)}</span></div>
+            <div class="stat-item"><b>24h Volume</b><span>$${formatNum(market?.volume24h)}</span></div>
+            <div class="stat-item">
+                <b>24h TXNs</b>
+                <span class="buys-sells">
+                    <span class="text-ok">${market?.txns24h?.buys || 0}</span> / <span class="text-bad">${market?.txns24h?.sells || 0}</span>
+                </span>
+            </div>
+        </div>
+    `;
+
     const newContent = `
         <div class="report-grid">
             <div class="summary-block">
@@ -110,12 +125,7 @@ class DFNPatrol extends HTMLElement {
                         <span>${sanitizeHTML(tokenInfo.symbol)}</span>
                     </div>
                 </div>
-                <div class="summary-market-stats">
-                    <div class="stat-item"><b>Price</b><span>$${price}</span></div>
-                    <div class="stat-item"><b>24h Change</b><span class="${priceChangeColor}">${market?.priceChange24h?.toFixed(2) || 'N/A'}%</span></div>
-                    <div class="stat-item"><b>Market Cap</b><span>$${formatNum(market?.marketCap)}</span></div>
-                    <div class="stat-item"><b>Liquidity</b><span>$${formatNum(market?.liquidity)}</span></div>
-                </div>
+                ${marketStatsHTML}
             </div>
 
             ${socials && socials.length > 0 ? `
