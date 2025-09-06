@@ -1,6 +1,6 @@
 // component.js - v4.2.3 - Final UI Fixes
 
-console.log("[DFN Components] v4.3.1 initialized - Final UI Fixes");
+console.log("[DFN Components] v4.3.2 initialized - Final UI Fixes");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -25,18 +25,18 @@ function sanitizeUrl(url) {
 const template = document.createElement('template');
 template.innerHTML = `
   <style>
-    /* Версия стилей с исправленными отступами и цветами */
+    /* Версия с исправленными отступами в шапке */
     :host {
       display: block;
       font-family: sans-serif;
       background-color: #111;
       color: #eee;
-      padding: 24px; /* Увеличили внешние отступы */
+      padding: 24px;
       border-radius: 12px;
       border: 1px solid #333;
     }
     h3 {
-      margin: 24px 0 16px; /* Увеличили отступ снизу */
+      margin: 24px 0 16px;
       font-size: 1.1rem;
       font-weight: 600;
       color: var(--accent, #FFD447);
@@ -65,11 +65,16 @@ template.innerHTML = `
     a { color: var(--accent, #FFD447); text-decoration: none; font-weight: 500; }
     a:hover { text-decoration: underline; }
 
+    /* ИСПРАВЛЕНИЕ ЗДЕСЬ */
     .summary-block {
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 16px 32px;
-      padding-bottom: 24px;
+      padding: 24px; /* Добавлены внутренние отступы */
+      background: #191919; /* Добавлен фон как у других блоков */
+      border-radius: 8px; /* Добавлено скругление как у других блоков */
+      border: 1px solid #282828;
+      margin-bottom: 24px; /* Добавлен отступ снизу */
     }
     .summary-token-info { display: flex; align-items: center; gap: 16px; }
     .token-logo { width: 48px; height: 48px; border-radius: 50%; background: #222; }
@@ -86,7 +91,6 @@ template.innerHTML = `
     .stat-item b { font-size: 0.9rem; color: #888; font-weight: 500; margin-bottom: 4px; text-transform: uppercase; }
     .stat-item span { font-size: 1.2rem; font-weight: 600; color: #fff; }
     
-    /* ИСПРАВЛЕНИЕ ЦВЕТОВ: Делаем селекторы более конкретными */
     .stat-item span.text-ok, .stat-item .buys-sells .text-ok { color: #9eff9e; }
     .stat-item span.text-bad, .stat-item .buys-sells .text-bad { color: #ff6b7b; }
 
@@ -99,7 +103,7 @@ template.innerHTML = `
     }
     .report-grid > div {
       background: #191919;
-      padding: 24px; /* Увеличили внутренние отступы */
+      padding: 24px;
       border-radius: 8px;
       border: 1px solid #282828;
     }
@@ -123,7 +127,7 @@ template.innerHTML = `
     @media (max-width: 600px) {
         .summary-market-stats { grid-template-columns: repeat(2, 1fr); }
     }
-  </style>
+</style>
   <div id="report-container">
     <div class="placeholder">Generating token health report...</div>
   </div>
