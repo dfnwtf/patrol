@@ -1,10 +1,11 @@
-// component.js - v4.2.2 - Refined UI
+// component.js - v4.2.3 - Final UI Fixes
 
-console.log("[DFN Components] v4.2.2 initialized - Refined UI");
+console.log("[DFN Components] v4.3.1 initialized - Final UI Fixes");
 
 function sanitizeHTML(str) {
     if (!str) return '';
-    if (typeof DOMPurify === 'undefined') return str;
+    // DOMPurify is expected to be available globally from index.html
+    if (typeof DOMPurify === 'undefined') return str; 
     return DOMPurify.sanitize(str.toString());
 }
 
@@ -24,23 +25,23 @@ function sanitizeUrl(url) {
 const template = document.createElement('template');
 template.innerHTML = `
   <style>
-    /* Новые, более консервативные и структурные стили */
+    /* Версия стилей с исправленными отступами и цветами */
     :host {
       display: block;
       font-family: sans-serif;
       background-color: #111;
       color: #eee;
-      padding: 20px;
+      padding: 24px; /* Увеличили внешние отступы */
       border-radius: 12px;
       border: 1px solid #333;
     }
     h3 {
-      margin: 24px 0 12px;
+      margin: 24px 0 16px; /* Увеличили отступ снизу */
       font-size: 1.1rem;
       font-weight: 600;
       color: var(--accent, #FFD447);
       border-top: 1px solid #333;
-      padding-top: 20px;
+      padding-top: 24px;
     }
     h3:first-of-type {
       margin-top: 0;
@@ -64,10 +65,6 @@ template.innerHTML = `
     a { color: var(--accent, #FFD447); text-decoration: none; font-weight: 500; }
     a:hover { text-decoration: underline; }
 
-    /* Возвращаем цвета для цифр */
-    .text-ok { color: #9eff9e; }
-    .text-bad { color: #ff6b7b; }
-
     .summary-block {
       display: grid;
       grid-template-columns: 1fr auto;
@@ -88,6 +85,11 @@ template.innerHTML = `
     .stat-item { display: flex; flex-direction: column; }
     .stat-item b { font-size: 0.9rem; color: #888; font-weight: 500; margin-bottom: 4px; text-transform: uppercase; }
     .stat-item span { font-size: 1.2rem; font-weight: 600; color: #fff; }
+    
+    /* ИСПРАВЛЕНИЕ ЦВЕТОВ: Делаем селекторы более конкретными */
+    .stat-item span.text-ok, .stat-item .buys-sells .text-ok { color: #9eff9e; }
+    .stat-item span.text-bad, .stat-item .buys-sells .text-bad { color: #ff6b7b; }
+
     .stat-item .buys-sells { font-weight: 600; }
     
     .report-grid {
@@ -97,7 +99,7 @@ template.innerHTML = `
     }
     .report-grid > div {
       background: #191919;
-      padding: 20px;
+      padding: 24px; /* Увеличили внутренние отступы */
       border-radius: 8px;
       border: 1px solid #282828;
     }
