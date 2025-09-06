@@ -1,10 +1,10 @@
-// component.js - v4.2.1 - New UI/UX
-console.log("[DFN Components] v4.2.1 initialized - New UI");
+// component.js - v4.2.2 - Refined UI
+
+console.log("[DFN Components] v4.2.2 initialized - Refined UI");
 
 function sanitizeHTML(str) {
     if (!str) return '';
-    // DOMPurify is expected to be available globally from index.html
-    if (typeof DOMPurify === 'undefined') return str; 
+    if (typeof DOMPurify === 'undefined') return str;
     return DOMPurify.sanitize(str.toString());
 }
 
@@ -24,26 +24,23 @@ function sanitizeUrl(url) {
 const template = document.createElement('template');
 template.innerHTML = `
   <style>
-    /* Новые стили для компонента */
+    /* Новые, более консервативные и структурные стили */
     :host {
       display: block;
       font-family: sans-serif;
-      background: rgba(26, 26, 26, 0.5); /* Полупрозрачный фон */
-      color: var(--fg-0, #EAEAEA);
-      padding: 24px;
-      border-radius: 16px;
-      border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
-      backdrop-filter: blur(10px); /* Эффект матового стекла */
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+      background-color: #111;
+      color: #eee;
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid #333;
     }
     h3 {
       margin: 24px 0 12px;
-      font-size: 1.25rem;
+      font-size: 1.1rem;
       font-weight: 600;
-      color: var(--fg-0, #EAEAEA);
-      border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
-      padding-top: 24px;
-      letter-spacing: 0px;
+      color: var(--accent, #FFD447);
+      border-top: 1px solid #333;
+      padding-top: 20px;
     }
     h3:first-of-type {
       margin-top: 0;
@@ -51,58 +48,78 @@ template.innerHTML = `
       border-top: none;
     }
     ul { list-style: none; padding-left: 0; font-size: 0.95rem; margin-top: 8px; }
-    li { margin-bottom: 10px; line-height: 1.5; display: flex; align-items: center; word-break: break-word; color: var(--fg-1, #A0A0A0); }
+    li { margin-bottom: 10px; line-height: 1.5; display: flex; align-items: center; word-break: break-word; color: #aaa; }
     
     .placeholder, .error { text-align: center; padding: 40px; font-size: 1.1em; color: #888; }
     .error { color: #ff6b7b; }
     
-    .ok::before, .bad::before, .warn::before { content: ''; width: 18px; height: 18px; margin-right: 12px; display: inline-block; vertical-align: middle; background-size: contain; background-repeat: no-repeat; background-position: center; }
+    .ok::before, .bad::before, .warn::before { content: '✓'; margin-right: 10px; font-weight: bold; font-size: 1.1em; }
     .ok { color: #9eff9e; }
     .bad { color: #ff6b7b; }
+    .bad::before { content: '🔴'; }
+    .ok::before { content: '✅'; }
     .warn { color: #ffd447; }
-    .bad::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff6b7b'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z'/%3E%3C/svg%3E"); }
-    .ok::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%239eff9e'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z'/%3E%3C/svg%3E"); }
-    .warn::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffd447'%3E%3Cpath d='M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z'/%3E%3C/svg%3E"); }
+    .warn::before { content: '🟡'; }
     
     a { color: var(--accent, #FFD447); text-decoration: none; font-weight: 500; }
     a:hover { text-decoration: underline; }
+
+    /* Возвращаем цвета для цифр */
     .text-ok { color: #9eff9e; }
     .text-bad { color: #ff6b7b; }
 
-    .summary-block { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; padding-bottom: 24px; }
+    .summary-block {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px 32px;
+      padding-bottom: 24px;
+    }
     .summary-token-info { display: flex; align-items: center; gap: 16px; }
-    .token-logo { width: 56px; height: 56px; border-radius: 50%; background: #333; border: 2px solid rgba(255,255,255,0.1); }
-    .token-name-symbol h2 { font-size: 2rem; margin: 0; line-height: 1.1; word-break: break-all; color: #fff; }
-    .token-name-symbol span { font-size: 1rem; color: var(--fg-1, #A0A0A0); }
+    .token-logo { width: 48px; height: 48px; border-radius: 50%; background: #222; }
+    .token-name-symbol h2 { font-size: 1.8rem; margin: 0; line-height: 1.1; color: #fff; }
+    .token-name-symbol span { font-size: 1rem; color: #999; }
     
-    .summary-market-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 32px; text-align: right; }
+    .summary-market-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px 24px;
+      text-align: right;
+    }
     .stat-item { display: flex; flex-direction: column; }
-    .stat-item b { font-size: 0.9rem; color: var(--fg-1, #A0A0A0); font-weight: 400; margin-bottom: 4px; }
-    .stat-item span { font-size: 1.1rem; font-weight: 600; color: #fff; }
+    .stat-item b { font-size: 0.9rem; color: #888; font-weight: 500; margin-bottom: 4px; text-transform: uppercase; }
+    .stat-item span { font-size: 1.2rem; font-weight: 600; color: #fff; }
     .stat-item .buys-sells { font-weight: 600; }
     
-    .report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
-    .report-grid > div { background: rgba(0,0,0,0.15); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1)); }
+    .report-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+    }
+    .report-grid > div {
+      background: #191919;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #282828;
+    }
     .full-width { grid-column: 1 / -1; }
 
-    .socials-list { display: flex; flex-wrap: wrap; gap: 10px; list-style: none; padding: 0; margin-top: 4px;}
-    .socials-list a { display: inline-block; padding: 6px 16px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1)); border-radius: 8px; font-size: 0.9rem; transition: background 0.2s; }
-    .socials-list a:hover { background: rgba(255,255,255,0.1); }
+    .socials-list { display: flex; flex-wrap: wrap; gap: 10px; list-style: none; padding: 0; margin-top: 4px; }
+    .socials-list a { display: inline-block; padding: 6px 16px; background: #252525; border-radius: 8px; font-size: 0.9rem; transition: background 0.2s; }
+    .socials-list a:hover { background: #333; }
     
-    .drain-simulator { margin-top: 10px; padding: 0 5px; }
+    .drain-simulator { margin-top: 10px; padding: 0; }
     .drain-bar-row { display: flex; align-items: center; margin-bottom: 8px; font-size: 0.9rem; }
-    .drain-label { width: 120px; flex-shrink: 0; color: var(--fg-1, #A0A0A0); }
-    .drain-bar-container { flex-grow: 1; background: rgba(0,0,0,0.2); border-radius: 4px; height: 22px; overflow: hidden; }
+    .drain-label { width: 120px; flex-shrink: 0; color: #aaa; }
+    .drain-bar-container { flex-grow: 1; background: #252525; border-radius: 4px; height: 22px; overflow: hidden; }
     .drain-bar { background: linear-gradient(to right, #e05068, #ff6b7b); height: 100%; font-size: 0.8rem; line-height: 22px; text-align: right; color: #fff; padding-right: 8px; box-sizing: border-box; white-space: nowrap; }
-    .drain-result { margin-left: 12px; font-weight: 600; text-align: left; color: #fff;}
+    .drain-result { margin-left: 12px; font-weight: 600; text-align: left; color: #fff; }
     
     @media (max-width: 900px) {
-        .summary-block { flex-direction: column; align-items: flex-start; gap: 24px; }
-        .summary-market-stats { width: 100%; text-align: left; }
+        .summary-block { grid-template-columns: 1fr; }
+        .summary-market-stats { text-align: left; }
     }
     @media (max-width: 600px) {
-        .summary-market-stats { grid-template-columns: 1fr; }
-        .token-name-symbol h2 { font-size: 1.5rem; }
+        .summary-market-stats { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
   <div id="report-container">
