@@ -1,11 +1,10 @@
-// component.js - v4.2.3 - Final UI Fixes
+// component.js - v4.4.0 - Activity Chart
 
-console.log("[DFN Components] v4.3.2 initialized - Final UI Fixes");
+console.log("[DFN Components] v4.4.0 initialized - Activity Chart");
 
 function sanitizeHTML(str) {
     if (!str) return '';
-    // DOMPurify is expected to be available globally from index.html
-    if (typeof DOMPurify === 'undefined') return str; 
+    if (typeof DOMPurify === 'undefined') return str;
     return DOMPurify.sanitize(str.toString());
 }
 
@@ -25,7 +24,7 @@ function sanitizeUrl(url) {
 const template = document.createElement('template');
 template.innerHTML = `
   <style>
-    /* Версия с исправленными отступами в шапке */
+    /* Версия стилей с исправленными отступами и цветами */
     :host {
       display: block;
       font-family: sans-serif;
@@ -65,16 +64,15 @@ template.innerHTML = `
     a { color: var(--accent, #FFD447); text-decoration: none; font-weight: 500; }
     a:hover { text-decoration: underline; }
 
-    /* ИСПРАВЛЕНИЕ ЗДЕСЬ */
     .summary-block {
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 16px 32px;
-      padding: 24px; /* Добавлены внутренние отступы */
-      background: #191919; /* Добавлен фон как у других блоков */
-      border-radius: 8px; /* Добавлено скругление как у других блоков */
+      padding: 24px;
+      background: #191919;
+      border-radius: 8px;
       border: 1px solid #282828;
-      margin-bottom: 24px; /* Добавлен отступ снизу */
+      margin-bottom: 24px;
     }
     .summary-token-info { display: flex; align-items: center; gap: 16px; }
     .token-logo { width: 48px; height: 48px; border-radius: 50%; background: #222; }
@@ -120,6 +118,13 @@ template.innerHTML = `
     .drain-bar { background: linear-gradient(to right, #e05068, #ff6b7b); height: 100%; font-size: 0.8rem; line-height: 22px; text-align: right; color: #fff; padding-right: 8px; box-sizing: border-box; white-space: nowrap; }
     .drain-result { margin-left: 12px; font-weight: 600; text-align: left; color: #fff; }
     
+    .chart-container {
+      background: #191919;
+      padding: 24px;
+      border-radius: 8px;
+      border: 1px solid #282828;
+    }
+    
     @media (max-width: 900px) {
         .summary-block { grid-template-columns: 1fr; }
         .summary-market-stats { text-align: left; }
@@ -127,7 +132,7 @@ template.innerHTML = `
     @media (max-width: 600px) {
         .summary-market-stats { grid-template-columns: repeat(2, 1fr); }
     }
-</style>
+  </style>
   <div id="report-container">
     <div class="placeholder">Generating token health report...</div>
   </div>
@@ -139,11 +144,84 @@ class DFNPatrol extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.shadowRoot.appendChild(template.content.cloneNode(true));
     this.container = this.shadowRoot.querySelector('#report-container');
+    this.chartInstance = null; // Для хранения экземпляра графика
   }
   
   setReport(report) {
     this.report = report;
     this.render();
+  }
+
+  renderVolumeChart(historyData) {
+    const canvas = this.shadowRoot.querySelector('#volumeChart');
+    if (!canvas || !historyData || historyData.length === 0) return;
+
+    if (this.chartInstance) {
+        this.chartInstance.destroy(); // Уничтожаем старый график перед отрисовкой нового
+    }
+
+    const labels = historyData.map(d => new Date(d.timestamp * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+    const data = historyData.map(d => d.volumeUsd);
+
+    const accentColor = '#FFD447';
+    const accentGradient = canvas.getContext('2d').createLinearGradient(0, 0, 0, 250);
+    accentGradient.addColorStop(0, accentColor);
+    accentGradient.addColorStop(1, 'rgba(255, 212, 71, 0.2)');
+
+    this.chartInstance = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Hourly Volume (USD)',
+                data: data,
+                backgroundColor: accentGradient,
+                borderColor: accentColor,
+                borderWidth: 1,
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#000',
+                    titleFont: { size: 14 },
+                    bodyFont: { size: 12 },
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) { label += ': '; }
+                            if (context.parsed.y !== null) {
+                                label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: {
+                        color: '#888',
+                        callback: function(value) {
+                            if (value >= 1000000) return '$' + (value / 1000000).toFixed(1) + 'M';
+                            if (value >= 1000) return '$' + (value / 1000).toFixed(1) + 'K';
+                            return '$' + value;
+                        }
+                    }
+                },
+                x: {
+                    grid: { color: 'rgba(255, 255, 255, 0.0)' },
+                    ticks: { color: '#888' }
+                }
+            }
+        }
+    });
   }
 
   render() {
@@ -156,7 +234,7 @@ class DFNPatrol extends HTMLElement {
        return;
     }
 
-    const { tokenInfo, security, distribution, market, liquidityDrain, socials } = this.report;
+    const { tokenInfo, security, distribution, market, liquidityDrain, socials, volumeHistory } = this.report;
     const formatNum = (num) => num ? Number(num).toLocaleString('en-US', {maximumFractionDigits: 0}) : 'N/A';
     const priceChangeColor = market?.priceChange24h >= 0 ? 'text-ok' : 'text-bad';
     const price = Number(market?.priceUsd) < 0.000001 ? Number(market?.priceUsd).toExponential(2) : Number(market?.priceUsd).toLocaleString('en-US', {maximumFractionDigits: 8});
@@ -198,9 +276,8 @@ class DFNPatrol extends HTMLElement {
                         try {
                             const link = typeof social === 'string' ? social : social.url;
                             if(!link) return '';
-                            const label = typeof social === 'string'
-                                          ? (new URL(link).hostname.replace('www.',''))
-                                          : (social.label || social.type || 'Link');
+                            const hostname = new URL(link).hostname.replace('www.','');
+                            const label = typeof social === 'string' ? hostname : (social.label || social.type || 'Link');
                             return `<li><a href="${sanitizeUrl(link)}" target="_blank" rel="noopener nofollow">${sanitizeHTML(label)}</a></li>`;
                         } catch(e) { return ''; }
                     }).join('')}
@@ -228,6 +305,15 @@ class DFNPatrol extends HTMLElement {
                       : '<li>No significant individual holders found.</li>'}
               </ul>
             </div>
+            
+            ${volumeHistory && volumeHistory.length > 0 ? `
+            <div class="full-width chart-container">
+                <h3>📊 24h Trading Activity</h3>
+                <div style="position: relative; height:250px;">
+                    <canvas id="volumeChart"></canvas>
+                </div>
+            </div>
+            ` : ''}
 
             ${liquidityDrain && liquidityDrain.filter(item => item.marketCapDropPercentage > 0).length > 0 ? `
             <div class="full-width">
@@ -250,6 +336,8 @@ class DFNPatrol extends HTMLElement {
     `;
     
     this.container.innerHTML = newContent;
+    
+    this.renderVolumeChart(volumeHistory);
   }
 }
 
