@@ -1,6 +1,6 @@
-// component.js - v4.4.0 - Activity Chart
+// component.js - v4.4.1 - Chart Debugging
 
-console.log("[DFN Components] v4.4.0 initialized - Activity Chart");
+console.log("[DFN Components] v4.4.1 initialized - Chart Debugging");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -144,7 +144,7 @@ class DFNPatrol extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.shadowRoot.appendChild(template.content.cloneNode(true));
     this.container = this.shadowRoot.querySelector('#report-container');
-    this.chartInstance = null; // Для хранения экземпляра графика
+    this.chartInstance = null;
   }
   
   setReport(report) {
@@ -154,10 +154,16 @@ class DFNPatrol extends HTMLElement {
 
   renderVolumeChart(historyData) {
     const canvas = this.shadowRoot.querySelector('#volumeChart');
-    if (!canvas || !historyData || historyData.length === 0) return;
+    
+    console.log('Attempting to render chart. Canvas element found:', canvas);
+    
+    if (!canvas || !historyData || historyData.length === 0) {
+        console.log('Bailing on chart render: no canvas or no data.');
+        return;
+    }
 
     if (this.chartInstance) {
-        this.chartInstance.destroy(); // Уничтожаем старый график перед отрисовкой нового
+        this.chartInstance.destroy();
     }
 
     const labels = historyData.map(d => new Date(d.timestamp * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
@@ -235,6 +241,9 @@ class DFNPatrol extends HTMLElement {
     }
 
     const { tokenInfo, security, distribution, market, liquidityDrain, socials, volumeHistory } = this.report;
+    
+    console.log('Received volume history from backend:', volumeHistory);
+
     const formatNum = (num) => num ? Number(num).toLocaleString('en-US', {maximumFractionDigits: 0}) : 'N/A';
     const priceChangeColor = market?.priceChange24h >= 0 ? 'text-ok' : 'text-bad';
     const price = Number(market?.priceUsd) < 0.000001 ? Number(market?.priceUsd).toExponential(2) : Number(market?.priceUsd).toLocaleString('en-US', {maximumFractionDigits: 8});
@@ -337,7 +346,9 @@ class DFNPatrol extends HTMLElement {
     
     this.container.innerHTML = newContent;
     
-    this.renderVolumeChart(volumeHistory);
+    setTimeout(() => {
+        this.renderVolumeChart(volumeHistory);
+    }, 0);
   }
 }
 
