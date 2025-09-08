@@ -1,6 +1,6 @@
-// component.js - v4.4.1 - Chart Debugging
+// component.js - v4.5.0 - Trend Indicator Feature
 
-console.log("[DFN Components] v4.4.1 initialized - Chart Debugging");
+console.log("[DFN Components] v4.5.0 initialized - Trend Indicator");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -24,7 +24,6 @@ function sanitizeUrl(url) {
 const template = document.createElement('template');
 template.innerHTML = `
   <style>
-    /* Версия стилей с исправленными отступами и цветами */
     :host {
       display: block;
       font-family: sans-serif;
@@ -118,12 +117,35 @@ template.innerHTML = `
     .drain-bar { background: linear-gradient(to right, #e05068, #ff6b7b); height: 100%; font-size: 0.8rem; line-height: 22px; text-align: right; color: #fff; padding-right: 8px; box-sizing: border-box; white-space: nowrap; }
     .drain-result { margin-left: 12px; font-weight: 600; text-align: left; color: #fff; }
     
-    .chart-container {
-      background: #191919;
-      padding: 24px;
-      border-radius: 8px;
+    /* --- СТИЛИ ДЛЯ ИНДИКАТОРА ТРЕНДА --- */
+    .trend-indicator {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background-color: #282828;
       border: 1px solid #282828;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 24px;
     }
+    .trend-item {
+      background-color: #191919;
+      padding: 16px 12px;
+      text-align: center;
+    }
+    .trend-item b {
+      font-size: 0.75rem;
+      color: #888;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .trend-item div {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+    .text-ok { color: #9eff9e; }
+    .text-bad { color: #ff6b7b; }
     
     @media (max-width: 900px) {
         .summary-block { grid-template-columns: 1fr; }
@@ -131,6 +153,7 @@ template.innerHTML = `
     }
     @media (max-width: 600px) {
         .summary-market-stats { grid-template-columns: repeat(2, 1fr); }
+        .trend-indicator { grid-template-columns: repeat(2, 1fr); } /* 2x2 на мобильных */
     }
   </style>
   <div id="report-container">
@@ -144,90 +167,11 @@ class DFNPatrol extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.shadowRoot.appendChild(template.content.cloneNode(true));
     this.container = this.shadowRoot.querySelector('#report-container');
-    this.chartInstance = null;
   }
   
   setReport(report) {
     this.report = report;
     this.render();
-  }
-
-  renderVolumeChart(historyData) {
-    const canvas = this.shadowRoot.querySelector('#volumeChart');
-    
-    console.log('Attempting to render chart. Canvas element found:', canvas);
-    
-    if (!canvas || !historyData || historyData.length === 0) {
-        console.log('Bailing on chart render: no canvas or no data.');
-        return;
-    }
-
-    if (this.chartInstance) {
-        this.chartInstance.destroy();
-    }
-
-    const labels = historyData.map(d => new Date(d.timestamp * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
-    const data = historyData.map(d => d.volumeUsd);
-
-    const accentColor = '#FFD447';
-    const accentGradient = canvas.getContext('2d').createLinearGradient(0, 0, 0, 250);
-    accentGradient.addColorStop(0, accentColor);
-    accentGradient.addColorStop(1, 'rgba(255, 212, 71, 0.2)');
-
-    this.chartInstance = new Chart(canvas, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Hourly Volume (USD)',
-                data: data,
-                backgroundColor: accentGradient,
-                borderColor: accentColor,
-                borderWidth: 1,
-                borderRadius: 4,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#000',
-                    titleFont: { size: 14 },
-                    bodyFont: { size: 12 },
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.dataset.label || '';
-                            if (label) { label += ': '; }
-                            if (context.parsed.y !== null) {
-                                label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
-                            }
-                            return label;
-                        }
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                    ticks: {
-                        color: '#888',
-                        callback: function(value) {
-                            if (value >= 1000000) return '$' + (value / 1000000).toFixed(1) + 'M';
-                            if (value >= 1000) return '$' + (value / 1000).toFixed(1) + 'K';
-                            return '$' + value;
-                        }
-                    }
-                },
-                x: {
-                    grid: { color: 'rgba(255, 255, 255, 0.0)' },
-                    ticks: { color: '#888' }
-                }
-            }
-        }
-    });
   }
 
   render() {
@@ -240,10 +184,7 @@ class DFNPatrol extends HTMLElement {
        return;
     }
 
-    const { tokenInfo, security, distribution, market, liquidityDrain, socials, volumeHistory } = this.report;
-    
-    console.log('Received volume history from backend:', volumeHistory);
-
+    const { tokenInfo, security, distribution, market, liquidityDrain, socials } = this.report;
     const formatNum = (num) => num ? Number(num).toLocaleString('en-US', {maximumFractionDigits: 0}) : 'N/A';
     const priceChangeColor = market?.priceChange24h >= 0 ? 'text-ok' : 'text-bad';
     const price = Number(market?.priceUsd) < 0.000001 ? Number(market?.priceUsd).toExponential(2) : Number(market?.priceUsd).toLocaleString('en-US', {maximumFractionDigits: 8});
@@ -264,6 +205,29 @@ class DFNPatrol extends HTMLElement {
         </div>
     `;
 
+    // --- ЛОГИКА ДЛЯ ИНДИКАТОРА ТРЕНДА ---
+    const priceChange = market?.priceChange || {};
+    const trendIndicatorHTML = `
+      <div class="trend-indicator">
+        <div class="trend-item">
+          <b>5 MIN</b>
+          <div class="${priceChange.m5 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.m5?.toFixed(2) ?? '0.00'}%</div>
+        </div>
+        <div class="trend-item">
+          <b>1 HOUR</b>
+          <div class="${priceChange.h1 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.h1?.toFixed(2) ?? '0.00'}%</div>
+        </div>
+        <div class="trend-item">
+          <b>6 HOURS</b>
+          <div class="${priceChange.h6 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.h6?.toFixed(2) ?? '0.00'}%</div>
+        </div>
+        <div class="trend-item">
+          <b>24 HOURS</b>
+          <div class="${priceChange.h24 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.h24?.toFixed(2) ?? '0.00'}%</div>
+        </div>
+      </div>
+    `;
+
     const newContent = `
         <div class="summary-block">
             <div class="summary-token-info">
@@ -275,6 +239,8 @@ class DFNPatrol extends HTMLElement {
             </div>
             ${marketStatsHTML}
         </div>
+
+        ${trendIndicatorHTML}
 
         <div class="report-grid">
             ${socials && socials.length > 0 ? `
@@ -314,15 +280,6 @@ class DFNPatrol extends HTMLElement {
                       : '<li>No significant individual holders found.</li>'}
               </ul>
             </div>
-            
-            ${volumeHistory && volumeHistory.length > 0 ? `
-            <div class="full-width chart-container">
-                <h3>📊 24h Trading Activity</h3>
-                <div style="position: relative; height:250px;">
-                    <canvas id="volumeChart"></canvas>
-                </div>
-            </div>
-            ` : ''}
 
             ${liquidityDrain && liquidityDrain.filter(item => item.marketCapDropPercentage > 0).length > 0 ? `
             <div class="full-width">
@@ -345,10 +302,6 @@ class DFNPatrol extends HTMLElement {
     `;
     
     this.container.innerHTML = newContent;
-    
-    setTimeout(() => {
-        this.renderVolumeChart(volumeHistory);
-    }, 0);
   }
 }
 
