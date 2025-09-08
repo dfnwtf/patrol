@@ -1,6 +1,6 @@
-// component.js - v4.5.0 - Trend Indicator Feature
+// component.js - v4.5.1 - Fix 24h Change display
 
-console.log("[DFN Components] v4.5.0 initialized - Trend Indicator");
+console.log("[DFN Components] v4.5.1 initialized - Fix 24h Change");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -24,6 +24,7 @@ function sanitizeUrl(url) {
 const template = document.createElement('template');
 template.innerHTML = `
   <style>
+    /* ... все стили остаются без изменений ... */
     :host {
       display: block;
       font-family: sans-serif;
@@ -48,10 +49,8 @@ template.innerHTML = `
     }
     ul { list-style: none; padding-left: 0; font-size: 0.95rem; margin-top: 8px; }
     li { margin-bottom: 10px; line-height: 1.5; display: flex; align-items: center; word-break: break-word; color: #aaa; }
-    
     .placeholder, .error { text-align: center; padding: 40px; font-size: 1.1em; color: #888; }
     .error { color: #ff6b7b; }
-    
     .ok::before, .bad::before, .warn::before { content: '✓'; margin-right: 10px; font-weight: bold; font-size: 1.1em; }
     .ok { color: #9eff9e; }
     .bad { color: #ff6b7b; }
@@ -59,10 +58,8 @@ template.innerHTML = `
     .ok::before { content: '✅'; }
     .warn { color: #ffd447; }
     .warn::before { content: '🟡'; }
-    
     a { color: var(--accent, #FFD447); text-decoration: none; font-weight: 500; }
     a:hover { text-decoration: underline; }
-
     .summary-block {
       display: grid;
       grid-template-columns: 1fr auto;
@@ -77,7 +74,6 @@ template.innerHTML = `
     .token-logo { width: 48px; height: 48px; border-radius: 50%; background: #222; }
     .token-name-symbol h2 { font-size: 1.8rem; margin: 0; line-height: 1.1; color: #fff; }
     .token-name-symbol span { font-size: 1rem; color: #999; }
-    
     .summary-market-stats {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -87,12 +83,9 @@ template.innerHTML = `
     .stat-item { display: flex; flex-direction: column; }
     .stat-item b { font-size: 0.9rem; color: #888; font-weight: 500; margin-bottom: 4px; text-transform: uppercase; }
     .stat-item span { font-size: 1.2rem; font-weight: 600; color: #fff; }
-    
     .stat-item span.text-ok, .stat-item .buys-sells .text-ok { color: #9eff9e; }
     .stat-item span.text-bad, .stat-item .buys-sells .text-bad { color: #ff6b7b; }
-
     .stat-item .buys-sells { font-weight: 600; }
-    
     .report-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -105,19 +98,15 @@ template.innerHTML = `
       border: 1px solid #282828;
     }
     .full-width { grid-column: 1 / -1; }
-
     .socials-list { display: flex; flex-wrap: wrap; gap: 10px; list-style: none; padding: 0; margin-top: 4px; }
     .socials-list a { display: inline-block; padding: 6px 16px; background: #252525; border-radius: 8px; font-size: 0.9rem; transition: background 0.2s; }
     .socials-list a:hover { background: #333; }
-    
     .drain-simulator { margin-top: 10px; padding: 0; }
     .drain-bar-row { display: flex; align-items: center; margin-bottom: 8px; font-size: 0.9rem; }
     .drain-label { width: 120px; flex-shrink: 0; color: #aaa; }
     .drain-bar-container { flex-grow: 1; background: #252525; border-radius: 4px; height: 22px; overflow: hidden; }
     .drain-bar { background: linear-gradient(to right, #e05068, #ff6b7b); height: 100%; font-size: 0.8rem; line-height: 22px; text-align: right; color: #fff; padding-right: 8px; box-sizing: border-box; white-space: nowrap; }
     .drain-result { margin-left: 12px; font-weight: 600; text-align: left; color: #fff; }
-    
-    /* --- СТИЛИ ДЛЯ ИНДИКАТОРА ТРЕНДА --- */
     .trend-indicator {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -146,14 +135,13 @@ template.innerHTML = `
     }
     .text-ok { color: #9eff9e; }
     .text-bad { color: #ff6b7b; }
-    
     @media (max-width: 900px) {
         .summary-block { grid-template-columns: 1fr; }
         .summary-market-stats { text-align: left; }
     }
     @media (max-width: 600px) {
         .summary-market-stats { grid-template-columns: repeat(2, 1fr); }
-        .trend-indicator { grid-template-columns: repeat(2, 1fr); } /* 2x2 на мобильных */
+        .trend-indicator { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
   <div id="report-container">
@@ -186,13 +174,13 @@ class DFNPatrol extends HTMLElement {
 
     const { tokenInfo, security, distribution, market, liquidityDrain, socials } = this.report;
     const formatNum = (num) => num ? Number(num).toLocaleString('en-US', {maximumFractionDigits: 0}) : 'N/A';
-    const priceChangeColor = market?.priceChange24h >= 0 ? 'text-ok' : 'text-bad';
+    const priceChangeColor = market?.priceChange?.h24 >= 0 ? 'text-ok' : 'text-bad'; // ИСПРАВЛЕНО
     const price = Number(market?.priceUsd) < 0.000001 ? Number(market?.priceUsd).toExponential(2) : Number(market?.priceUsd).toLocaleString('en-US', {maximumFractionDigits: 8});
 
     const marketStatsHTML = `
         <div class="summary-market-stats">
             <div class="stat-item"><b>Price</b><span>$${price}</span></div>
-            <div class="stat-item"><b>24h Change</b><span class="${priceChangeColor}">${market?.priceChange24h?.toFixed(2) || 'N/A'}%</span></div>
+            <div class="stat-item"><b>24h Change</b><span class="${priceChangeColor}">${market?.priceChange?.h24?.toFixed(2) || 'N/A'}%</span></div>
             <div class="stat-item"><b>24h Volume</b><span>$${formatNum(market?.volume24h)}</span></div>
             <div class="stat-item"><b>Market Cap</b><span>$${formatNum(market?.marketCap)}</span></div>
             <div class="stat-item"><b>Liquidity</b><span>$${formatNum(market?.liquidity)}</span></div>
@@ -205,7 +193,6 @@ class DFNPatrol extends HTMLElement {
         </div>
     `;
 
-    // --- ЛОГИКА ДЛЯ ИНДИКАТОРА ТРЕНДА ---
     const priceChange = market?.priceChange || {};
     const trendIndicatorHTML = `
       <div class="trend-indicator">
