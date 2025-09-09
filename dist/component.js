@@ -1,6 +1,6 @@
-// component.js 
+// component.js - v4.6.0 - CTO Detection Feature
 
-console.log("[DFN Components] v4.5.3 initialized - Refined Socials");
+console.log("[DFN Components] v4.6.0 initialized - CTO Detection");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -24,6 +24,7 @@ function sanitizeUrl(url) {
 const template = document.createElement('template');
 template.innerHTML = `
   <style>
+    /* ... все стили без изменений ... */
     :host {
       display: block;
       font-family: sans-serif;
@@ -48,10 +49,8 @@ template.innerHTML = `
     }
     ul { list-style: none; padding-left: 0; font-size: 0.95rem; margin-top: 8px; }
     li { margin-bottom: 10px; line-height: 1.5; display: flex; align-items: center; word-break: break-word; color: #aaa; }
-    
     .placeholder, .error { text-align: center; padding: 40px; font-size: 1.1em; color: #888; }
     .error { color: #ff6b7b; }
-    
     .ok::before, .bad::before, .warn::before { content: '✓'; margin-right: 10px; font-weight: bold; font-size: 1.1em; }
     .ok { color: #9eff9e; }
     .bad { color: #ff6b7b; }
@@ -59,10 +58,8 @@ template.innerHTML = `
     .ok::before { content: '✅'; }
     .warn { color: #ffd447; }
     .warn::before { content: '🟡'; }
-    
     a { color: var(--accent, #FFD447); text-decoration: none; font-weight: 500; }
     a:hover { text-decoration: underline; }
-
     .summary-block {
       display: grid;
       grid-template-columns: 1fr auto;
@@ -77,7 +74,6 @@ template.innerHTML = `
     .token-logo { width: 48px; height: 48px; border-radius: 50%; background: #222; }
     .token-name-symbol h2 { font-size: 1.8rem; margin: 0; line-height: 1.1; color: #fff; }
     .token-name-symbol span { font-size: 1rem; color: #999; }
-    
     .summary-market-stats {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -87,12 +83,9 @@ template.innerHTML = `
     .stat-item { display: flex; flex-direction: column; }
     .stat-item b { font-size: 0.9rem; color: #888; font-weight: 500; margin-bottom: 4px; text-transform: uppercase; }
     .stat-item span { font-size: 1.2rem; font-weight: 600; color: #fff; }
-    
     .stat-item span.text-ok, .stat-item .buys-sells .text-ok { color: #9eff9e; }
     .stat-item span.text-bad, .stat-item .buys-sells .text-bad { color: #ff6b7b; }
-
     .stat-item .buys-sells { font-weight: 600; }
-    
     .report-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -105,7 +98,6 @@ template.innerHTML = `
       border: 1px solid #282828;
     }
     .full-width { grid-column: 1 / -1; }
-
     .socials-intro-text {
       font-size: 0.9rem;
       color: #aaa;
@@ -125,7 +117,7 @@ template.innerHTML = `
       padding: 8px 18px;
       background: #252525;
       border: 1px solid #333;
-      border-radius: 20px; /* Стиль "таблетки" */
+      border-radius: 20px;
       font-size: 0.9rem;
       font-weight: 500;
       text-decoration: none;
@@ -137,14 +129,12 @@ template.innerHTML = `
       color: #fff;
       border-color: #444;
     }
-    
     .drain-simulator { margin-top: 10px; padding: 0; }
     .drain-bar-row { display: flex; align-items: center; margin-bottom: 8px; font-size: 0.9rem; }
     .drain-label { width: 120px; flex-shrink: 0; color: #aaa; }
     .drain-bar-container { flex-grow: 1; background: #252525; border-radius: 4px; height: 22px; overflow: hidden; }
     .drain-bar { background: linear-gradient(to right, #e05068, #ff6b7b); height: 100%; font-size: 0.8rem; line-height: 22px; text-align: right; color: #fff; padding-right: 8px; box-sizing: border-box; white-space: nowrap; }
     .drain-result { margin-left: 12px; font-weight: 600; text-align: left; color: #fff; }
-    
     .trend-indicator {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -173,7 +163,6 @@ template.innerHTML = `
     }
     .text-ok { color: #9eff9e; }
     .text-bad { color: #ff6b7b; }
-    
     @media (max-width: 900px) {
         .summary-block { grid-template-columns: 1fr; }
         .summary-market-stats { text-align: left; }
@@ -292,6 +281,7 @@ class DFNPatrol extends HTMLElement {
             <div>
               <h3>🛡️ Security Flags</h3>
               <ul>
+                ${security.isCto ? `<li class="ok">Community Takeover</li>` : ''}
                 ${security.lpStatus ? `<li class="${security.lpStatus === 'Burned' ? 'ok' : 'bad'}">Liquidity is ${security.lpStatus}.</li>` : ''}
                 ${'isMutable' in security ? `<li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>` : ''}
                 ${'freezeAuthorityEnabled' in security ? `<li class="${!security.freezeAuthorityEnabled ? 'ok' : 'bad'}">Freeze authority is disabled.</li>` : ''}
