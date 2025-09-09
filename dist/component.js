@@ -1,6 +1,6 @@
-// component.js - v4.5.2 - Refined Socials Block
+// component.js 
 
-console.log("[DFN Components] v4.5.2 initialized - Refined Socials");
+console.log("[DFN Components] v4.5.3 initialized - Refined Socials");
 
 function sanitizeHTML(str) {
     if (!str) return '';
