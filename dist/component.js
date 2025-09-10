@@ -1,6 +1,6 @@
-// component.js - v4.6.1 - Add CTO Badge
+// component.js - v4.6.3 - Add CTO Badge
 
-console.log("[DFN Components] v4.6.2 initialized - CTO Badge");
+console.log("[DFN Components] v4.6.3 initialized - CTO Badge");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -78,7 +78,7 @@ template.innerHTML = `
     .token-name-symbol h2 { font-size: 1.8rem; margin: 0; line-height: 1.1; color: #fff; display: flex; align-items: flex-start; }
     .token-name-symbol span { font-size: 1rem; color: #999; }
     
-    ..cto-badge {
+.cto-badge {
  font-size: 0.55em; /* Ещё меньше шрифт */
  font-weight: 700;
  vertical-align: top; /* Поднимаем выше имени */
