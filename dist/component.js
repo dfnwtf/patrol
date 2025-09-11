@@ -1,6 +1,6 @@
-// component.js - v4.6.5 - Reverted CTO Badge
+// component.js - v4.6.6 - Restore Holder Concentration Flag
 
-console.log("[DFN Components] v4.6.5 initialized - Reverted CTO Badge");
+console.log("[DFN Components] v4.6.6 initialized - Restore Holder Concentration Flag");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -169,8 +169,6 @@ template.innerHTML = `
       font-weight: 700;
       margin-top: 8px;
     }
-    .text-ok { color: #9eff9e; }
-    .text-bad { color: #ff6b7b; }
     
     @media (max-width: 900px) {
         .summary-block { grid-template-columns: 1fr; }
@@ -291,11 +289,12 @@ class DFNPatrol extends HTMLElement {
               <h3>🛡️ Security Flags</h3>
               <ul>
                 ${security.isCto ? `<li class="ok">Community Takeover</li>` : ''}
+                ${'holderConcentration' in security && security.holderConcentration > 0 ? `<li class="${security.holderConcentration > 25 ? 'bad' : (security.holderConcentration > 10 ? 'warn' : 'ok')}">Top 10 holders own ${security.holderConcentration.toFixed(2)}%.</li>` : ''}
+                ${security.lpStatus ? `<li class="${security.lpStatus === 'Burned' ? 'ok' : 'bad'}">Liquidity is ${security.lpStatus}.</li>` : ''}
                 ${'isMutable' in security ? `<li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>` : ''}
                 ${'freezeAuthorityEnabled' in security ? `<li class="${!security.freezeAuthorityEnabled ? 'ok' : 'bad'}">Freeze authority is disabled.</li>` : ''}
                 ${'mintRenounced' in security ? `<li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? 'Mint authority is renounced.' : 'Dev can mint more tokens.'}</li>` : ''}
                 ${'transferTax' in security ? `<li class="warn">Token has a transfer tax: ${security.transferTax}%.</li>` : ('noTransferTax' in security ? '<li class="ok">No transfer tax.</li>' : '')}
-                ${security.lpStatus ? `<li class="${security.lpStatus === 'Burned' ? 'ok' : 'bad'}">Liquidity is ${security.lpStatus}.</li>` : ''}
               </ul>
             </div>
             
