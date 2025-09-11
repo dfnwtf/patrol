@@ -1,6 +1,6 @@
-// component.js - v4.6.4 - Enhanced CTO Badge
+// component.js - v4.6.5 - Reverted CTO Badge
 
-console.log("[DFN Components] v4.6.4 initialized - Enhanced CTO Badge");
+console.log("[DFN Components] v4.6.5 initialized - Reverted CTO Badge");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -76,33 +76,8 @@ template.innerHTML = `
     .summary-token-info { display: flex; align-items: center; gap: 16px; }
     .token-logo { width: 48px; height: 48px; border-radius: 50%; background: #222; }
     .token-name-symbol h2 { font-size: 1.8rem; margin: 0; line-height: 1.1; color: #fff; }
-    .token-name-symbol span { font-size: 1rem; color: #999; }
+    .token-name-symbol span { font-size: 1rem; color: #999; margin-top: 4px; display: block; }
 
-    .ticker-and-badge {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-top: 4px;
-    }
-    .cto-pill-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 4px 8px;
-        background-color: rgba(46, 139, 87, 0.2);
-        border: 1px solid rgba(46, 139, 87, 0.6);
-        border-radius: 6px;
-        color: #9eff9e;
-        font-size: 0.8rem;
-        font-weight: 600;
-        cursor: help;
-    }
-    .cto-pill-badge svg {
-        width: 14px;
-        height: 14px;
-        fill: currentColor;
-    }
-    
     .summary-market-stats {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -301,15 +276,7 @@ class DFNPatrol extends HTMLElement {
                 ${tokenInfo.logoUrl ? `<img src="${sanitizeUrl(tokenInfo.logoUrl)}" alt="${sanitizeHTML(tokenInfo.symbol)} logo" class="token-logo">` : ''}
                 <div class="token-name-symbol">
                     <h2>${sanitizeHTML(tokenInfo.name)}</h2>
-                    <div class="ticker-and-badge">
-                        <span>${sanitizeHTML(tokenInfo.symbol)}</span>
-                        ${security.isCto ? `
-                            <div class="cto-pill-badge" title="${sanitizeHTML(security.ctoDescription || 'This token is managed by its community.')}">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-                                <span>CTO</span>
-                            </div>
-                        ` : ''}
-                    </div>
+                    <span>${sanitizeHTML(tokenInfo.symbol)}</span>
                 </div>
             </div>
             ${marketStatsHTML}
