@@ -1,6 +1,6 @@
 // component.js
 
-console.log("[DFN Components] v4.6.8 initialized - Fix Trend Indicator Colors");
+console.log("[DFN Components] v4.6.9 initialized - Fix Trend Indicator Colors");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -203,11 +203,11 @@ class DFNPatrol extends HTMLElement {
 
   render() {
     if (!this.report) {
-        this.container.innerHTML = `<div class="placeholder">Generating token health report...</div>`;
+        this.container.innerHTML = \`<div class="placeholder">Generating token health report...</div>\`;
         return;
     }
     if (this.report.error) {
-       this.container.innerHTML = `<div class="error">${sanitizeHTML(this.report.error)}</div>`;
+       this.container.innerHTML = \`<div class="error">\${sanitizeHTML(this.report.error)}</div>\`;
        return;
     }
 
@@ -216,134 +216,134 @@ class DFNPatrol extends HTMLElement {
     const priceChangeColor = market?.priceChange?.h24 >= 0 ? 'text-ok' : 'text-bad';
     const price = Number(market?.priceUsd) < 0.000001 ? Number(market?.priceUsd).toExponential(2) : Number(market?.priceUsd).toLocaleString('en-US', {maximumFractionDigits: 8});
 
-    const marketStatsHTML = `
+    const marketStatsHTML = \`
         <div class="summary-market-stats">
-            <div class="stat-item"><b>Price</b><span>$${price}</span></div>
-            <div class="stat-item"><b>24h Change</b><span class="${priceChangeColor}">${market?.priceChange?.h24?.toFixed(2) || 'N/A'}%</span></div>
-            <div class="stat-item"><b>24h Volume</b><span>$${formatNum(market?.volume24h)}</span></div>
-            <div class="stat-item"><b>Market Cap</b><span>$${formatNum(market?.marketCap)}</span></div>
-            <div class="stat-item"><b>Liquidity</b><span>$${formatNum(market?.liquidity)}</span></div>
+            <div class="stat-item"><b>Price</b><span>$\${price}</span></div>
+            <div class="stat-item"><b>24h Change</b><span class="\${priceChangeColor}">\${market?.priceChange?.h24?.toFixed(2) || 'N/A'}%</span></div>
+            <div class="stat-item"><b>24h Volume</b><span>$\${formatNum(market?.volume24h)}</span></div>
+            <div class="stat-item"><b>Market Cap</b><span>$\${formatNum(market?.marketCap)}</span></div>
+            <div class="stat-item"><b>Liquidity</b><span>$\${formatNum(market?.liquidity)}</span></div>
             <div class="stat-item">
                 <b>24h TXNs</b>
                 <span class="buys-sells">
-                    <span class="text-ok">${market?.txns24h?.buys || 0}</span> / <span class="text-bad">${market?.txns24h?.sells || 0}</span>
+                    <span class="text-ok">\${market?.txns24h?.buys || 0}</span> / <span class="text-bad">\${market?.txns24h?.sells || 0}</span>
                 </span>
             </div>
         </div>
-    `;
+    \`;
 
     const priceChange = market?.priceChange || {};
-    const trendIndicatorHTML = `
+    const trendIndicatorHTML = \`
       <div class="trend-indicator">
         <div class="trend-item">
           <b>5 MIN</b>
-          <div class="${priceChange.m5 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.m5?.toFixed(2) ?? '0.00'}%</div>
+          <div class="\${priceChange.m5 >= 0 ? 'text-ok' : 'text-bad'}">\${priceChange.m5?.toFixed(2) ?? '0.00'}%</div>
         </div>
         <div class="trend-item">
           <b>1 HOUR</b>
-          <div class="${priceChange.h1 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.h1?.toFixed(2) ?? '0.00'}%</div>
+          <div class="\${priceChange.h1 >= 0 ? 'text-ok' : 'text-bad'}">\${priceChange.h1?.toFixed(2) ?? '0.00'}%</div>
         </div>
         <div class="trend-item">
           <b>6 HOURS</b>
-          <div class="${priceChange.h6 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.h6?.toFixed(2) ?? '0.00'}%</div>
+          <div class="\${priceChange.h6 >= 0 ? 'text-ok' : 'text-bad'}">\${priceChange.h6?.toFixed(2) ?? '0.00'}%</div>
         </div>
         <div class="trend-item">
           <b>24 HOURS</b>
-          <div class="${priceChange.h24 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.h24?.toFixed(2) ?? '0.00'}%</div>
+          <div class="\${priceChange.h24 >= 0 ? 'text-ok' : 'text-bad'}">\${priceChange.h24?.toFixed(2) ?? '0.00'}%</div>
         </div>
       </div>
-    `;
+    \`;
 
-    const socialsHTML = socials && socials.length > 0 ? `
+    const socialsHTML = socials && socials.length > 0 ? \`
         <div class="full-width">
             <h3>🔗 Socials</h3>
             <p class="socials-intro-text">Official project channels and community hubs:</p>
             <div class="socials-list">
-                ${socials.map(social => {
+                \${socials.map(social => {
                     try {
                         const link = typeof social === 'string' ? social : social.url;
                         if(!link) return '';
                         const hostname = new URL(link).hostname.replace('www.','');
                         const label = typeof social === 'string' ? hostname : (social.label || social.type || 'Link');
-                        return `<a href="${sanitizeUrl(link)}" target="_blank" rel="noopener nofollow">${sanitizeHTML(label)}</a>`;
+                        return \`<a href="\${sanitizeUrl(link)}" target="_blank" rel="noopener nofollow">\${sanitizeHTML(label)}</a>\`;
                     } catch(e) { return ''; }
                 }).join('')}
             </div>
         </div>
-    ` : '';
+    \` : '';
 
-    const newContent = `
+    const newContent = \`
         <div class="summary-block">
             <div class="summary-token-info">
-                ${tokenInfo.logoUrl ? `<img src="${sanitizeUrl(tokenInfo.logoUrl)}" alt="${sanitizeHTML(tokenInfo.symbol)} logo" class="token-logo">` : ''}
+                \${tokenInfo.logoUrl ? \`<img src="\${sanitizeUrl(tokenInfo.logoUrl)}" alt="\${sanitizeHTML(tokenInfo.symbol)} logo" class="token-logo">\` : ''}
                 <div class="token-name-symbol">
-                    <h2>${sanitizeHTML(tokenInfo.name)}</h2>
-                    <span>${sanitizeHTML(tokenInfo.symbol)}</span>
+                    <h2>\${sanitizeHTML(tokenInfo.name)}</h2>
+                    <span>\${sanitizeHTML(tokenInfo.symbol)}</span>
                 </div>
             </div>
-            ${marketStatsHTML}
+            \${marketStatsHTML}
         </div>
 
-        ${trendIndicatorHTML}
+        \${trendIndicatorHTML}
 
         <div class="report-grid">
-            ${socialsHTML}
+            \${socialsHTML}
 
             <div>
               <h3>🛡️ Security Flags</h3>
               <ul>
-                ${'holderConcentration' in security && security.holderConcentration > 0 ? `<li class="${security.holderConcentration > 25 ? 'bad' : (security.holderConcentration > 10 ? 'warn' : 'ok')}">Top 10 holders own ${security.holderConcentration.toFixed(2)}%.</li>` : ''}
-                ${security.isCto ? `<li class="ok">Community Takeover</li>` : ''}
-                ${security.lpStatus ? `<li class="${security.lpStatus === 'Burned' ? 'ok' : 'bad'}">Liquidity is ${security.lpStatus}.</li>` : ''}
-                ${'isMutable' in security ? `<li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>` : ''}
-                ${'freezeAuthorityEnabled' in security ? `<li class="${!security.freezeAuthorityEnabled ? 'ok' : 'bad'}">Freeze authority is disabled.</li>` : ''}
-                ${'mintRenounced' in security ? `<li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? 'Mint authority is renounced.' : 'Dev can mint more tokens.'}</li>` : ''}
-                ${'transferTax' in security ? `<li class="warn">Token has a transfer tax: ${security.transferTax}%.</li>` : ('noTransferTax' in security ? '<li class="ok">No transfer tax.</li>' : '')}
+                \${'holderConcentration' in security && security.holderConcentration > 0 ? \`<li class="\${security.holderConcentration > 25 ? 'bad' : (security.holderConcentration > 10 ? 'warn' : 'ok')}">Top 10 holders own \${security.holderConcentration.toFixed(2)}%.</li>\` : ''}
+                \${security.isCto ? \`<li class="ok">Community Takeover</li>\` : ''}
+                \${security.lpStatus ? \`<li class="\${security.lpStatus === 'Burned' ? 'ok' : 'bad'}">Liquidity is \${security.lpStatus}.</li>\` : ''}
+                \${'isMutable' in security ? \`<li class="\${!security.isMutable ? 'ok' : 'bad'}">\${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>\` : ''}
+                \${'freezeAuthorityEnabled' in security ? \`<li class="\${!security.freezeAuthorityEnabled ? 'ok' : 'bad'}">Freeze authority is disabled.</li>\` : ''}
+                \${'mintRenounced' in security ? \`<li class="\${security.mintRenounced ? 'ok' : 'bad'}">\${security.mintRenounced ? 'Mint authority is renounced.' : 'Dev can mint more tokens.'}</li>\` : ''}
+                \${'transferTax' in security ? \`<li class="warn">Token has a transfer tax: \${security.transferTax}%.</li>\` : ('noTransferTax' in security ? '<li class="ok">No transfer tax.</li>' : '')}
               </ul>
             </div>
             
-           <div>
-    <h3>💰 Distribution</h3>
-    
-    ${/* ✨ НОВОЕ: Отображаем список отфильтрованных пулов */}
-    ${distribution.allLpAddresses && distribution.allLpAddresses.length > 0 ? `
-        <div style="margin-bottom: 12px;">
-            <b>Programmatic Accounts (Pools, etc.):</b>
-            <ul style="font-size: 0.85em; list-style-type: square; padding-left: 20px; margin-top: 4px;">
-                ${distribution.allLpAddresses.map(addr => `
-                    <li><a href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${addr.slice(0, 10)}...${addr.slice(-4)}</a></li>
-                `).join('')}
-            </ul>
-        </div>
-    ` : ''}
-    
-    <b>Top 10 Holders (Real):</b>
-    <ul>
-        ${distribution.topHolders && distribution.topHolders.length > 0
-            ? distribution.topHolders.map(h => `<li><a href="https://solscan.io/account/${h.address}" target="_blank" rel="noopener">${h.address.slice(0,6)}...${h.address.slice(-4)}</a> (${h.percent}%)</li>`).join('')
-            : '<li>No significant individual holders found.</li>'}
-    </ul>
-</div>
+            <div>
+              <h3>💰 Distribution</h3>
+              
+              \${/* ✨ НОВОЕ: Отображаем список отфильтрованных пулов */}
+              \${distribution.allLpAddresses && distribution.allLpAddresses.length > 0 ? \`
+                  <div style="margin-bottom: 12px;">
+                      <b>Programmatic Accounts (Pools, etc.):</b>
+                      <ul style="font-size: 0.85em; list-style-type: square; padding-left: 20px; margin-top: 4px;">
+                          \${distribution.allLpAddresses.map(addr => \`
+                              <li><a href="https://solscan.io/account/\${addr}" target="_blank" rel="noopener">\${addr.slice(0, 10)}...\${addr.slice(-4)}</a></li>
+                          \`).join('')}
+                      </ul>
+                  </div>
+              \` : ''}
+              
+              <b>Top 10 Holders (Real):</b>
+              <ul>
+                  \${distribution.topHolders && distribution.topHolders.length > 0
+                      ? distribution.topHolders.map(h => \`<li><a href="https://solscan.io/account/\${h.address}" target="_blank" rel="noopener">\${h.address.slice(0,6)}...\${h.address.slice(-4)}</a> (\${h.percent}%)</li>\`).join('') 
+                      : '<li>No significant individual holders found.</li>'}
+              </ul>
+            </div>
 
-            ${liquidityDrain && liquidityDrain.filter(item => item.marketCapDropPercentage > 0).length > 0 ? `
+            \${liquidityDrain && liquidityDrain.filter(item => item.marketCapDropPercentage > 0).length > 0 ? \`
             <div class="full-width">
                 <h3>🌊 Liquidity Drain Simulator</h3>
                 <div class="drain-simulator">
-                    ${liquidityDrain.filter(item => item.marketCapDropPercentage > 0).map(item => {
+                    \${liquidityDrain.filter(item => item.marketCapDropPercentage > 0).map(item => {
                         const impact = Math.min(100, Math.max(0, item.marketCapDropPercentage));
-                        const formatCap = (num) => num < 1000 ? `$${num.toFixed(0)}` : (num < 1000000 ? `$${(num/1000).toFixed(1)}K` : `$${(num/1000000).toFixed(2)}M`);
-                        return `
+                        const formatCap = (num) => num < 1000 ? \`$\${num.toFixed(0)}\` : (num < 1000000 ? \`$\${(num/1000).toFixed(1)}K\` : \`$\${(num/1000000).toFixed(2)}M\`);
+                        return \`
                           <div class="drain-bar-row">
-                            <span class="drain-label">${sanitizeHTML(item.group)}</span>
-                            <div class="drain-bar-container"><div class="drain-bar" style="width: ${impact}%;">${impact > 20 ? `-${impact}%` : ''}</div></div>
-                            <span class="drain-result">${impact > 20 ? '' : `-${impact}%`} → ${formatCap(item.marketCapAfterSale)}</span>
+                            <span class="drain-label">\${sanitizeHTML(item.group)}</span>
+                            <div class="drain-bar-container"><div class="drain-bar" style="width: \${impact}%;">\${impact > 20 ? \`-\${impact}%\` : ''}</div></div>
+                            <span class="drain-result">\${impact > 20 ? '' : \`-\${impact}%\`} → \${formatCap(item.marketCapAfterSale)}</span>
                           </div>
-                        `;
+                        \`;
                     }).join('')}
                 </div>
-            </div>` : ''}
+            </div>\` : ''}
         </div>
-    `;
+    \`;
     
     this.container.innerHTML = newContent;
   }
