@@ -1,6 +1,6 @@
-// component.js - v4.6.7 - Fix Trend Indicator Colors
+// component.js
 
-console.log("[DFN Components] v4.6.7 initialized - Fix Trend Indicator Colors");
+console.log("[DFN Components] v4.6.8 initialized - Fix Trend Indicator Colors");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -302,16 +302,28 @@ class DFNPatrol extends HTMLElement {
               </ul>
             </div>
             
-            <div>
-              <h3>💰 Distribution</h3>
-              ${distribution.lpAddress ? `<p><b>LP Address:</b> <a href="https://solscan.io/account/${distribution.lpAddress}" target="_blank" rel="noopener">${distribution.lpAddress.slice(0, 4)}...${distribution.lpAddress.slice(-4)}</a></p>` : ''}
-              <b>Top 10 Holders (Real):</b>
-              <ul>
-                  ${distribution.topHolders && distribution.topHolders.length > 0 
-                      ? distribution.topHolders.map(h => `<li><a href="https://solscan.io/account/${h.address}" target="_blank" rel="noopener">${h.address.slice(0,6)}...</a> (${h.percent}%)</li>`).join('') 
-                      : '<li>No significant individual holders found.</li>'}
-              </ul>
-            </div>
+           <div>
+    <h3>💰 Distribution</h3>
+    
+    ${/* ✨ НОВОЕ: Отображаем список отфильтрованных пулов */}
+    ${distribution.allLpAddresses && distribution.allLpAddresses.length > 0 ? `
+        <div style="margin-bottom: 12px;">
+            <b>Programmatic Accounts (Pools, etc.):</b>
+            <ul style="font-size: 0.85em; list-style-type: square; padding-left: 20px; margin-top: 4px;">
+                ${distribution.allLpAddresses.map(addr => `
+                    <li><a href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${addr.slice(0, 10)}...${addr.slice(-4)}</a></li>
+                `).join('')}
+            </ul>
+        </div>
+    ` : ''}
+    
+    <b>Top 10 Holders (Real):</b>
+    <ul>
+        ${distribution.topHolders && distribution.topHolders.length > 0
+            ? distribution.topHolders.map(h => `<li><a href="https://solscan.io/account/${h.address}" target="_blank" rel="noopener">${h.address.slice(0,6)}...${h.address.slice(-4)}</a> (${h.percent}%)</li>`).join('')
+            : '<li>No significant individual holders found.</li>'}
+    </ul>
+</div>
 
             ${liquidityDrain && liquidityDrain.filter(item => item.marketCapDropPercentage > 0).length > 0 ? `
             <div class="full-width">
