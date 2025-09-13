@@ -1,6 +1,6 @@
 // component.js
 
-console.log("[DFN Components] v4.7.2 initialized - Final Report Structure");
+console.log("[DFN Components] v4.7.3 initialized - Final Report Structure");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -291,7 +291,6 @@ class DFNPatrol extends HTMLElement {
             <div>
               <h3>🛡️ Security Flags</h3>
               <ul>
-                ${/* ✨ НОВОЕ: Флаг для хакерских кошельков */}
                 ${security.hackerFound ? `<li class="bad">${sanitizeHTML(security.hackerFound)}</li>` : ''}
                 
                 ${'holderConcentration' in security && security.holderConcentration > 0 ? `<li class="${security.holderConcentration > 25 ? 'bad' : (security.holderConcentration > 10 ? 'warn' : 'ok')}">Top 10 holders own ${security.holderConcentration.toFixed(2)}%.</li>` : ''}
