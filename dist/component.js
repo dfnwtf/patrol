@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v4.7.8 initialized - Final Report Structure");
+console.log("[DFN Components] v4.7.4 initialized - Final Report Structure");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -104,12 +104,6 @@ template.innerHTML = `
       border: 1px solid #282828;
     }
     .full-width { grid-column: 1 / -1; }
-    .socials-intro-text {
-      font-size: 0.9rem;
-      color: #aaa;
-      margin-bottom: 16px;
-      padding-left: 4px;
-    }
     .socials-list { 
       display: flex; 
       flex-wrap: wrap; 
@@ -166,35 +160,38 @@ template.innerHTML = `
     .trend-item div.text-ok { color: #9eff9e; }
     .trend-item div.text-bad { color: #ff6b7b; }
     
+    /* --- ИЗМЕНЕНИЕ СТИЛЕЙ ДЛЯ ИНТЕГРАЦИИ АККОРДЕОНА --- */
     details.programmatic-accounts-details {
-      border: 1px solid #282828;
-      border-radius: 8px;
       margin-bottom: 16px;
-      background-color: #1c1c1c;
-      transition: background-color 0.2s ease;
-    }
-    details.programmatic-accounts-details:hover {
-        background-color: #222;
     }
     summary {
       cursor: pointer;
-      padding: 12px 16px;
-      font-weight: 600;
-      color: #ccc;
+      font-size: 0.9em;
+      color: #888;
       outline: none;
-      list-style-position: inside;
+      list-style-type: '▸ ';
+      transition: color 0.2s ease;
+    }
+    summary:hover {
+      color: #bbb;
     }
     details[open] > summary {
-      border-bottom: 1px solid #282828;
+      list-style-type: '▾ ';
     }
     .programmatic-list {
-      padding: 12px 16px 4px 40px;
+      padding: 12px 0 4px 24px;
       list-style-type: square;
       font-size: 0.85em;
     }
     .programmatic-list li {
       margin-bottom: 8px;
     }
+    
+    .real-holders-title {
+        font-weight: 600;
+        display: block;
+    }
+    /* --- КОНЕЦ ИЗМЕНЕНИЙ --- */
 
     @media (max-width: 900px) {
         .summary-block { grid-template-columns: 1fr; }
@@ -345,7 +342,7 @@ class DFNPatrol extends HTMLElement {
               
               ${programmaticAccountsHTML}
               
-              <b>Top 10 Holders (Real):</b>
+              <b class="real-holders-title">Top 10 Holders (Real):</b>
               <ul>
                   ${distribution.topHolders && distribution.topHolders.length > 0
                       ? distribution.topHolders.map(h => `<li><a href="https://solscan.io/account/${h.address}" target="_blank" rel="noopener">${h.address.slice(0,6)}...${h.address.slice(-4)}</a> (${h.percent}%)</li>`).join('') 
