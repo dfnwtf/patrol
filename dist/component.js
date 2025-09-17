@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v4.7.4 initialized - Final Report Structure");
+console.log("[DFN Components] v4.8.3 initialized - Address Copy Feature");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -77,6 +77,34 @@ template.innerHTML = `
     .token-name-symbol h2 { font-size: 1.8rem; margin: 0; line-height: 1.1; color: #fff; }
     .token-name-symbol span { font-size: 1rem; color: #999; margin-top: 4px; display: block; }
 
+    /* --- NEW STYLES FOR ADDRESS AND COPY ICON --- */
+    .address-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+        font-family: monospace;
+        font-size: 0.9em;
+        color: #888;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+    }
+    .address-container:hover {
+        background-color: #252525;
+    }
+    .address-container .copy-icon {
+        width: 14px;
+        height: 14px;
+        stroke: #888;
+        transition: stroke 0.2s;
+    }
+    .address-container:hover .copy-icon {
+        stroke: #eee;
+    }
+    /* --- END OF NEW STYLES --- */
+
     .summary-market-stats {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -104,14 +132,7 @@ template.innerHTML = `
       border: 1px solid #282828;
     }
     .full-width { grid-column: 1 / -1; }
-    .socials-list { 
-      display: flex; 
-      flex-wrap: wrap; 
-      gap: 10px; 
-      list-style: none; 
-      padding: 0; 
-      margin: 0;
-    }
+    .socials-list { display: flex; flex-wrap: wrap; gap: 10px; list-style: none; padding: 0; margin: 0; }
     .socials-list a {
       display: inline-block;
       padding: 8px 18px;
@@ -124,11 +145,7 @@ template.innerHTML = `
       color: #ddd;
       transition: all 0.2s ease;
     }
-    .socials-list a:hover {
-      background-color: #333;
-      color: #fff;
-      border-color: #444;
-    }
+    .socials-list a:hover { background-color: #333; color: #fff; border-color: #444; }
 
     .trend-indicator {
       display: grid;
@@ -140,53 +157,19 @@ template.innerHTML = `
       overflow: hidden;
       margin-bottom: 24px;
     }
-    .trend-item {
-      background-color: #191919;
-      padding: 16px 12px;
-      text-align: center;
-    }
-    .trend-item b {
-      font-size: 0.75rem;
-      color: #888;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-    .trend-item div {
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin-top: 8px;
-      color: #fff;
-    }
+    .trend-item { background-color: #191919; padding: 16px 12px; text-align: center; }
+    .trend-item b { font-size: 0.75rem; color: #888; font-weight: 600; text-transform: uppercase; }
+    .trend-item div { font-size: 1.5rem; font-weight: 700; margin-top: 8px; color: #fff; }
     .trend-item div.text-ok { color: #9eff9e; }
     .trend-item div.text-bad { color: #ff6b7b; }
     
-    details.programmatic-accounts-details {
-      margin-top: 16px;
-    }
-    summary {
-      cursor: pointer;
-      font-size: 0.9em;
-      color: #888;
-      outline: none;
-      list-style-type: '▸ ';
-      transition: color 0.2s ease;
-    }
-    summary:hover {
-      color: #bbb;
-    }
-    details[open] > summary {
-      list-style-type: '▾ ';
-    }
-    .programmatic-list {
-      padding: 12px 0 4px 24px;
-      list-style-type: square;
-      font-size: 0.85em;
-    }
-    .programmatic-list li {
-      margin-bottom: 8px;
-    }
+    details.programmatic-accounts-details { margin-top: 16px; }
+    summary { cursor: pointer; font-size: 0.9em; color: #888; outline: none; list-style-type: '▸ '; transition: color 0.2s ease; }
+    summary:hover { color: #bbb; }
+    details[open] > summary { list-style-type: '▾ '; }
+    .programmatic-list { padding: 12px 0 4px 24px; list-style-type: square; font-size: 0.85em; }
+    .programmatic-list li { margin-bottom: 8px; }
 
-    /* Стили для симулятора */
     .drain-simulator { margin-top: 10px; padding: 0; }
     .drain-bar-row { display: flex; align-items: center; margin-bottom: 8px; font-size: 0.9rem; }
     .drain-label { width: 120px; flex-shrink: 0; color: #aaa; }
@@ -214,11 +197,31 @@ class DFNPatrol extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.shadowRoot.appendChild(template.content.cloneNode(true));
     this.container = this.shadowRoot.querySelector('#report-container');
+    this.copyIconSVG = `<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+    this.checkIconSVG = `<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9eff9e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
   }
   
   setReport(report) {
     this.report = report;
     this.render();
+  }
+
+  // --- NEW METHOD FOR COPYING ---
+  handleAddressCopy() {
+    if (!this.report?.tokenInfo?.address) return;
+
+    navigator.clipboard.writeText(this.report.tokenInfo.address).then(() => {
+        const addrContainer = this.shadowRoot.querySelector('.address-container');
+        if (addrContainer) {
+            const originalText = addrContainer.querySelector('span').textContent;
+            addrContainer.innerHTML = `${this.checkIconSVG} <span>Copied!</span>`;
+            setTimeout(() => {
+                addrContainer.innerHTML = `${this.copyIconSVG} <span>${originalText}</span>`;
+            }, 1500);
+        }
+    }).catch(err => {
+        console.error('Failed to copy address: ', err);
+    });
   }
 
   render() {
@@ -231,11 +234,22 @@ class DFNPatrol extends HTMLElement {
        return;
     }
 
-    // Добавляем liquidityDrain в деструктуризацию
     const { tokenInfo, security, distribution, market, socials, liquidityDrain } = this.report;
     const formatNum = (num) => num ? Number(num).toLocaleString('en-US', {maximumFractionDigits: 0}) : 'N/A';
     const priceChangeColor = market?.priceChange?.h24 >= 0 ? 'text-ok' : 'text-bad';
     const price = !market?.priceUsd ? 'N/A' : (Number(market.priceUsd) < 0.000001 ? `$${Number(market.priceUsd).toExponential(2)}` : `$${Number(market.priceUsd).toLocaleString('en-US', {maximumFractionDigits: 8})}`);
+    
+    // --- NEW: LOGIC FOR TRUNCATED ADDRESS ---
+    let truncatedAddress = '';
+    if(tokenInfo.address) {
+        truncatedAddress = `${tokenInfo.address.slice(0, 4)}...${tokenInfo.address.slice(-4)}`;
+    }
+    const addressHTML = tokenInfo.address ? `
+        <div class="address-container" title="Copy Address: ${tokenInfo.address}">
+            ${this.copyIconSVG}
+            <span>${truncatedAddress}</span>
+        </div>
+    ` : '';
 
     const marketStatsHTML = `
         <div class="summary-market-stats">
@@ -256,22 +270,10 @@ class DFNPatrol extends HTMLElement {
     const priceChange = market?.priceChange || {};
     const trendIndicatorHTML = `
       <div class="trend-indicator">
-        <div class="trend-item">
-          <b>5 MIN</b>
-          <div class="${priceChange.m5 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.m5?.toFixed(2) ?? '0.00'}%</div>
-        </div>
-        <div class="trend-item">
-          <b>1 HOUR</b>
-          <div class="${priceChange.h1 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.h1?.toFixed(2) ?? '0.00'}%</div>
-        </div>
-        <div class="trend-item">
-          <b>6 HOURS</b>
-          <div class="${priceChange.h6 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.h6?.toFixed(2) ?? '0.00'}%</div>
-        </div>
-        <div class="trend-item">
-          <b>24 HOURS</b>
-          <div class="${priceChange.h24 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.h24?.toFixed(2) ?? '0.00'}%</div>
-        </div>
+        <div class="trend-item"><b>5 MIN</b><div class="${priceChange.m5 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.m5?.toFixed(2) ?? '0.00'}%</div></div>
+        <div class="trend-item"><b>1 HOUR</b><div class="${priceChange.h1 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.h1?.toFixed(2) ?? '0.00'}%</div></div>
+        <div class="trend-item"><b>6 HOURS</b><div class="${priceChange.h6 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.h6?.toFixed(2) ?? '0.00'}%</div></div>
+        <div class="trend-item"><b>24 HOURS</b><div class="${priceChange.h24 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.h24?.toFixed(2) ?? '0.00'}%</div></div>
       </div>
     `;
 
@@ -292,19 +294,8 @@ class DFNPatrol extends HTMLElement {
     ` : '';
     
     const programmaticAccountsHTML = distribution.allLpAddresses && distribution.allLpAddresses.length > 0 ?
-      `
-      <details class="programmatic-accounts-details">
-          <summary>Pools, CEX, etc.: ${distribution.allLpAddresses.length}</summary>
-          <ul class="programmatic-list">
-              ${distribution.allLpAddresses.map(addr => `
-                  <li><a href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${addr.slice(0, 10)}...${addr.slice(-4)}</a></li>
-              `).join('')}
-          </ul>
-      </details>
-      `
-    : '';
+      `<details class="programmatic-accounts-details"><summary>Pools, CEX, etc.: ${distribution.allLpAddresses.length}</summary><ul class="programmatic-list">${distribution.allLpAddresses.map(addr => `<li><a href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${addr.slice(0, 10)}...${addr.slice(-4)}</a></li>`).join('')}</ul></details>` : '';
 
-    // Восстановленный блок для симулятора
     const liquidityDrainHTML = liquidityDrain && liquidityDrain.filter(item => item.marketCapDropPercentage > 0).length > 0 ? `
         <div class="full-width">
             <h3>🌊 Liquidity Drain Simulator</h3>
@@ -312,13 +303,7 @@ class DFNPatrol extends HTMLElement {
                 ${liquidityDrain.filter(item => item.marketCapDropPercentage > 0).map(item => {
                     const impact = Math.min(100, Math.max(0, item.marketCapDropPercentage));
                     const formatCap = (num) => num < 1000 ? `$${num.toFixed(0)}` : (num < 1000000 ? `$${(num/1000).toFixed(1)}K` : `$${(num/1000000).toFixed(2)}M`);
-                    return `
-                      <div class="drain-bar-row">
-                        <span class="drain-label">${sanitizeHTML(item.group)}</span>
-                        <div class="drain-bar-container"><div class="drain-bar" style="width: ${impact}%;">${impact > 20 ? `-${impact.toFixed(0)}%` : ''}</div></div>
-                        <span class="drain-result">${impact > 20 ? '' : `-${impact.toFixed(0)}%`} → ${formatCap(item.marketCapAfterSale)}</span>
-                      </div>
-                    `;
+                    return `<div class="drain-bar-row"><span class="drain-label">${sanitizeHTML(item.group)}</span><div class="drain-bar-container"><div class="drain-bar" style="width: ${impact}%;">${impact > 20 ? `-${impact.toFixed(0)}%` : ''}</div></div><span class="drain-result">${impact > 20 ? '' : `-${impact.toFixed(0)}%`} → ${formatCap(item.marketCapAfterSale)}</span></div>`;
                 }).join('')}
             </div>
         </div>` : '';
@@ -331,51 +316,42 @@ class DFNPatrol extends HTMLElement {
                 <div class="token-name-symbol">
                     <h2>${sanitizeHTML(tokenInfo.name)}</h2>
                     <span>${sanitizeHTML(tokenInfo.symbol)}</span>
+                    ${addressHTML}
                 </div>
             </div>
             ${marketStatsHTML}
         </div>
-
         ${trendIndicatorHTML}
-
         <div class="report-grid">
             ${socialsHTML}
-
             <div>
               <h3>🛡️ Security Flags</h3>
               <ul>
                 ${security.hackerFound ? `<li class="bad">${sanitizeHTML(security.hackerFound)}</li>` : ''}
-                
                 ${'holderConcentration' in security && security.holderConcentration > 0 ? `<li class="${security.holderConcentration > 25 ? 'bad' : (security.holderConcentration > 10 ? 'warn' : 'ok')}">Top 10 holders own ${security.holderConcentration.toFixed(2)}%.</li>` : ''}
                 ${security.isCto ? `<li class="ok">Community Takeover</li>` : ''}
                 ${security.lpStatus ? `<li class="${security.lpStatus === 'Burned' ? 'ok' : 'bad'}">Liquidity is ${security.lpStatus}.</li>` : '<li>Liquidity status is Unknown.</li>'}
-                
                 ${'isMutable' in security ? `<li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>` : ''}
                 ${'freezeAuthorityEnabled' in security ? `<li class="${!security.freezeAuthorityEnabled ? 'ok' : 'bad'}">${!security.freezeAuthorityEnabled ? 'Freeze authority is disabled.' : 'Freeze authority is enabled.'}</li>` : ''}
                 ${'mintRenounced' in security ? `<li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? 'Mint authority is renounced.' : 'Dev can mint more tokens.'}</li>` : ''}
-                
                 ${'transferTax' in security ? `<li class="warn">Token has a transfer tax: ${security.transferTax}%.</li>` : ('noTransferTax' in security ? '<li class="ok">No transfer tax.</li>' : '')}
               </ul>
             </div>
-            
             <div>
               <h3>💰 Top 10 Holders</h3>
-              
               <ul>
-                  ${distribution.topHolders && distribution.topHolders.length > 0
-                      ? distribution.topHolders.map(h => `<li><a href="https://solscan.io/account/${h.address}" target="_blank" rel="noopener">${h.address.slice(0,6)}...${h.address.slice(-4)}</a> (${h.percent}%)</li>`).join('') 
-                      : '<li>No significant individual holders found.</li>'}
+                  ${distribution.topHolders && distribution.topHolders.length > 0 ? distribution.topHolders.map(h => `<li><a href="https://solscan.io/account/${h.address}" target="_blank" rel="noopener">${h.address.slice(0,6)}...${h.address.slice(-4)}</a> (${h.percent}%)</li>`).join('') : '<li>No significant individual holders found.</li>'}
               </ul>
-
               ${programmaticAccountsHTML}
-
             </div>
-            
             ${liquidityDrainHTML}
         </div>
     `;
     
     this.container.innerHTML = newContent;
+
+    // --- ADD EVENT LISTENER FOR COPY ---
+    this.shadowRoot.querySelector('.address-container')?.addEventListener('click', () => this.handleAddressCopy());
   }
 }
 
