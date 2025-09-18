@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v4.8.7 initialized - Cascade Dump Simulator");
+console.log("[DFN Components] v4.8.8 initialized - True Cascade Dump Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -77,84 +77,27 @@ template.innerHTML = `
     .token-name-symbol h2 { font-size: 1.8rem; margin: 0; line-height: 1.1; color: #fff; }
     .token-name-symbol span { font-size: 1rem; color: #999; margin-top: 4px; display: block; }
 
-    .address-container {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-top: 8px;
-        font-family: monospace;
-        font-size: 0.9em;
-        color: #888;
-        cursor: pointer;
-        padding: 4px 8px;
-        border-radius: 4px;
-        transition: background-color 0.2s;
-    }
-    .address-container:hover {
-        background-color: #252525;
-    }
-    .address-container .copy-icon {
-        width: 14px;
-        height: 14px;
-        stroke: #888;
-        transition: stroke 0.2s;
-    }
-    .address-container:hover .copy-icon {
-        stroke: #eee;
-    }
+    .address-container { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-family: monospace; font-size: 0.9em; color: #888; cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: background-color 0.2s; }
+    .address-container:hover { background-color: #252525; }
+    .address-container .copy-icon { width: 14px; height: 14px; stroke: #888; transition: stroke 0.2s; }
+    .address-container:hover .copy-icon { stroke: #eee; }
 
-    .summary-market-stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px 24px;
-      text-align: right;
-    }
+    .summary-market-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 24px; text-align: right; }
     .stat-item { display: flex; flex-direction: column; }
     .stat-item b { font-size: 0.9rem; color: #888; font-weight: 500; margin-bottom: 4px; text-transform: uppercase; }
     .stat-item span { font-size: 1.2rem; font-weight: 600; color: #fff; }
-    
     .stat-item span.text-ok, .stat-item .buys-sells .text-ok { color: #9eff9e; }
     .stat-item span.text-bad, .stat-item .buys-sells .text-bad { color: #ff6b7b; }
-
     .stat-item .buys-sells { font-weight: 600; }
     
-    .report-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 24px;
-    }
-    .report-grid > div {
-      background: #191919;
-      padding: 24px;
-      border-radius: 8px;
-      border: 1px solid #282828;
-    }
+    .report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
+    .report-grid > div { background: #191919; padding: 24px; border-radius: 8px; border: 1px solid #282828; }
     .full-width { grid-column: 1 / -1; }
     .socials-list { display: flex; flex-wrap: wrap; gap: 10px; list-style: none; padding: 0; margin: 0; }
-    .socials-list a {
-      display: inline-block;
-      padding: 8px 18px;
-      background: #252525;
-      border: 1px solid #333;
-      border-radius: 20px;
-      font-size: 0.9rem;
-      font-weight: 500;
-      text-decoration: none;
-      color: #ddd;
-      transition: all 0.2s ease;
-    }
+    .socials-list a { display: inline-block; padding: 8px 18px; background: #252525; border: 1px solid #333; border-radius: 20px; font-size: 0.9rem; font-weight: 500; text-decoration: none; color: #ddd; transition: all 0.2s ease; }
     .socials-list a:hover { background-color: #333; color: #fff; border-color: #444; }
 
-    .trend-indicator {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1px;
-      background-color: #282828;
-      border: 1px solid #282828;
-      border-radius: 8px;
-      overflow: hidden;
-      margin-bottom: 24px;
-    }
+    .trend-indicator { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background-color: #282828; border: 1px solid #282828; border-radius: 8px; overflow: hidden; margin-bottom: 24px; }
     .trend-item { background-color: #191919; padding: 16px 12px; text-align: center; }
     .trend-item b { font-size: 0.75rem; color: #888; font-weight: 600; text-transform: uppercase; }
     .trend-item div { font-size: 1.5rem; font-weight: 700; margin-top: 8px; color: #fff; }
@@ -167,7 +110,7 @@ template.innerHTML = `
     details[open] > summary { list-style-type: '▾ '; }
     .programmatic-list { padding: 12px 0 4px 24px; list-style-type: square; font-size: 0.85em; }
     .programmatic-list li { margin-bottom: 8px; }
-
+    
     /* --- CASCADE DUMP SIMULATOR STYLES --- */
     #cascade-dump-simulator { text-align: center; background: #191919; padding: 24px; border-radius: 8px; border: 1px solid #282828;}
     #start-sim-btn {
@@ -180,16 +123,15 @@ template.innerHTML = `
     .sim-bar-container { width: 100%; height: 30px; background-color: #2a2a2a; border-radius: 6px; overflow: hidden; border: 1px solid #333; }
     .sim-bar {
         height: 100%; width: 100%;
-        background: linear-gradient(to right, #9eff9e, #34d399);
-        transition: width 1.2s cubic-bezier(0.25, 1, 0.5, 1); /* Smoother, slower transition */
+        background: linear-gradient(to right, #ff6b7b, #e05068);
+        transition: width 1.2s cubic-bezier(0.25, 1, 0.5, 1);
         display: flex; align-items: center; justify-content: flex-end;
-        font-size: 0.9em; color: #000; font-weight: 600;
+        font-size: 0.9em; color: #fff; font-weight: 600;
         padding-right: 10px;
         box-sizing: border-box;
     }
-    .sim-bar.draining { background: linear-gradient(to right, #ffd447, #ff6b7b); }
     .sim-label { font-size: 0.9em; color: #aaa; }
-    .sim-log { margin-top: 16px; min-height: 105px; background-color: #111; border-radius: 6px; padding: 12px; text-align: left; font-family: monospace; font-size: 0.9em; color: #aaa; overflow: hidden; }
+    .sim-log { margin-top: 16px; min-height: 125px; background-color: #111; border-radius: 6px; padding: 12px; text-align: left; font-family: monospace; font-size: 0.9em; color: #aaa; overflow: hidden; }
     .sim-log-entry { animation: logFadeIn 0.5s ease; border-bottom: 1px solid #222; padding-bottom: 6px; margin-bottom: 6px; white-space: pre-wrap; }
     .sim-log-entry strong { color: #eee; }
     @keyframes logFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -230,46 +172,60 @@ class DFNPatrol extends HTMLElement {
     }).catch(err => { console.error('Failed to copy address: ', err); });
   }
 
+  // --- REWRITTEN SIMULATION LOGIC FOR A TRUE CASCADE ---
   async runSimulation() {
       const btn = this.shadowRoot.querySelector('#start-sim-btn');
       const log = this.shadowRoot.querySelector('#simulation-log');
       const lpBar = this.shadowRoot.querySelector('.sim-bar');
       const lpBarValue = this.shadowRoot.querySelector('.sim-bar-value');
-      const drainData = this.report.liquidityDrain.filter(item => item.marketCapDropPercentage > 0);
+      const topHolders = this.report.distribution.topHolders.slice(0, 5); // Simulate top 5 for visual impact
+      const initialLiquidity = this.report.market.liquidity;
 
-      if (!btn || !log || !lpBar || !lpBarValue || drainData.length === 0) return;
+      if (!btn || !log || !lpBar || !lpBarValue || topHolders.length === 0 || !initialLiquidity) return;
 
       btn.disabled = true;
       btn.textContent = 'Simulating...';
       log.innerHTML = '';
       
-      const initialLiquidity = this.report.market.liquidity;
+      let currentLiquidity = initialLiquidity;
+      let barWidth = 100;
+
+      lpBar.style.width = '100%';
+      lpBarValue.textContent = `$${Number(initialLiquidity).toLocaleString('en-US', {maximumFractionDigits: 0})}`;
       
       const wait = (ms) => new Promise(res => setTimeout(res, ms));
+      await wait(500); // Initial pause
 
-      for (const step of drainData) {
-          // Reset bar for each step to show full potential impact
-          lpBar.classList.remove('draining');
-          lpBar.style.width = '100%';
-          lpBarValue.textContent = `$${Number(initialLiquidity).toLocaleString('en-US', {maximumFractionDigits: 0})}`;
-          await wait(2000); // Pause before showing the next impact
+      for (let i = 0; i < topHolders.length; i++) {
+          await wait(1800); // Pause between each sale
 
+          const holder = topHolders[i];
+          const holderPercent = parseFloat(holder.percent);
+          
+          // This is a simplified linear model for visual effect.
+          // It assumes a holder selling X% of tokens removes ~X% of remaining liquidity.
+          const liquidityImpact = currentLiquidity * (holderPercent / 100);
+          currentLiquidity -= liquidityImpact;
+          if (currentLiquidity < 0) currentLiquidity = 0;
+          
+          barWidth = (currentLiquidity / initialLiquidity) * 100;
+          
           const logEntry = document.createElement('div');
           logEntry.className = 'sim-log-entry';
-          logEntry.innerHTML = `Calculating impact of <strong>${step.group}</strong> sale...`;
-          log.prepend(logEntry); // Add to top of log
-          
-          await wait(500);
+          logEntry.innerHTML = `Holder #${i + 1} (<strong>${holder.percent}%</strong>) sells...`;
+          log.prepend(logEntry); // Add new entry to the top
 
-          const percentageRemaining = 100 - parseFloat(step.marketCapDropPercentage);
-          lpBar.classList.add('draining');
-          lpBar.style.width = `${percentageRemaining}%`;
-          lpBarValue.textContent = `$${Number(step.marketCapAfterSale).toLocaleString('en-US', {maximumFractionDigits: 0})}`;
-          
-          logEntry.innerHTML += ` Price Impact: <strong style="color: #ff6b7b;">-${step.marketCapDropPercentage}%</strong>. Remaining Liquidity: <strong>~$${Number(step.marketCapAfterSale).toLocaleString('en-US', {maximumFractionDigits: 0})}</strong>`;
+          lpBar.style.width = `${barWidth}%`;
+          lpBarValue.textContent = `$${Number(currentLiquidity).toLocaleString('en-US', {maximumFractionDigits: 0})}`;
       }
       
-      await wait(2500);
+      await wait(2000);
+
+      const finalLog = document.createElement('div');
+      finalLog.className = 'sim-log-entry';
+      finalLog.innerHTML = `Simulation complete. Remaining liquidity is critically low.`;
+      log.prepend(finalLog);
+
       btn.disabled = false;
       btn.textContent = 'Run Simulation Again';
   }
@@ -340,18 +296,18 @@ class DFNPatrol extends HTMLElement {
     const programmaticAccountsHTML = distribution.allLpAddresses && distribution.allLpAddresses.length > 0 ?
       `<details class="programmatic-accounts-details"><summary>Pools, CEX, etc.: ${distribution.allLpAddresses.length}</summary><ul class="programmatic-list">${distribution.allLpAddresses.map(addr => `<li><a href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${addr.slice(0, 10)}...${addr.slice(-4)}</a></li>`).join('')}</ul></details>` : '';
 
-    const cascadeSimulatorHTML = liquidityDrain && liquidityDrain.filter(d => d.marketCapDropPercentage > 0).length > 0 ? `
+    const cascadeSimulatorHTML = liquidityDrain && liquidityDrain.length > 0 && market.liquidity > 0 ? `
         <div id="cascade-dump-simulator" class="full-width">
             <h3>💥 Financial Collapse Drill</h3>
             <div class="sim-display">
-                <div class="sim-label">Liquidity Status</div>
+                <div class="sim-label">Liquidity Status:</div>
                 <div class="sim-bar-container">
                     <div class="sim-bar">
                         <span class="sim-bar-value">$${formatNum(market.liquidity)}</span>
                     </div>
                 </div>
             </div>
-            <div id="simulation-log" class="sim-log">Simulation log will appear here...</div>
+            <div id="simulation-log" class="sim-log">Press the button to simulate a cascade dump by the top 5 holders.</div>
             <button id="start-sim-btn">Run Simulation</button>
         </div>` : '';
 
