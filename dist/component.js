@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v4.8.8 initialized - True Cascade Dump Simulation");
+console.log("[DFN Components] v4.8.8 initialized - Market Cap Collapse Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -172,59 +172,83 @@ class DFNPatrol extends HTMLElement {
     }).catch(err => { console.error('Failed to copy address: ', err); });
   }
 
-  // --- REWRITTEN SIMULATION LOGIC FOR A TRUE CASCADE ---
+  // --- REWRITTEN SIMULATION LOGIC TO USE MARKET CAP ---
   async runSimulation() {
       const btn = this.shadowRoot.querySelector('#start-sim-btn');
       const log = this.shadowRoot.querySelector('#simulation-log');
-      const lpBar = this.shadowRoot.querySelector('.sim-bar');
-      const lpBarValue = this.shadowRoot.querySelector('.sim-bar-value');
-      const topHolders = this.report.distribution.topHolders.slice(0, 5); // Simulate top 5 for visual impact
-      const initialLiquidity = this.report.market.liquidity;
+      const mcBar = this.shadowRoot.querySelector('.sim-bar');
+      const mcBarValue = this.shadowRoot.querySelector('.sim-bar-value');
+      
+      const topHolders = this.report.distribution.topHolders;
+      if (!topHolders || topHolders.length < 5) {
+          log.innerHTML = "Not enough holder data for a full simulation.";
+          return;
+      }
 
-      if (!btn || !log || !lpBar || !lpBarValue || topHolders.length === 0 || !initialLiquidity) return;
+      const initialMarketCap = this.report.market.marketCap;
+      if (!btn || !log || !mcBar || !mcBarValue || !initialMarketCap) return;
 
       btn.disabled = true;
       btn.textContent = 'Simulating...';
       log.innerHTML = '';
       
-      let currentLiquidity = initialLiquidity;
-      let barWidth = 100;
-
-      lpBar.style.width = '100%';
-      lpBarValue.textContent = `$${Number(initialLiquidity).toLocaleString('en-US', {maximumFractionDigits: 0})}`;
+      let currentMarketCap = initialMarketCap;
       
+      const formatAsCurrency = (num) => `$${Number(num).toLocaleString('en-US', {maximumFractionDigits: 0})}`;
       const wait = (ms) => new Promise(res => setTimeout(res, ms));
-      await wait(500); // Initial pause
 
-      for (let i = 0; i < topHolders.length; i++) {
-          await wait(1800); // Pause between each sale
-
-          const holder = topHolders[i];
-          const holderPercent = parseFloat(holder.percent);
-          
-          // This is a simplified linear model for visual effect.
-          // It assumes a holder selling X% of tokens removes ~X% of remaining liquidity.
-          const liquidityImpact = currentLiquidity * (holderPercent / 100);
-          currentLiquidity -= liquidityImpact;
-          if (currentLiquidity < 0) currentLiquidity = 0;
-          
-          barWidth = (currentLiquidity / initialLiquidity) * 100;
-          
-          const logEntry = document.createElement('div');
-          logEntry.className = 'sim-log-entry';
-          logEntry.innerHTML = `Holder #${i + 1} (<strong>${holder.percent}%</strong>) sells...`;
-          log.prepend(logEntry); // Add new entry to the top
-
-          lpBar.style.width = `${barWidth}%`;
-          lpBarValue.textContent = `$${Number(currentLiquidity).toLocaleString('en-US', {maximumFractionDigits: 0})}`;
-      }
+      const updateBar = (mc) => {
+          const barWidth = (mc / initialMarketCap) * 100;
+          mcBar.style.width = `${barWidth < 0 ? 0 : barWidth}%`;
+          mcBarValue.textContent = formatAsCurrency(mc);
+      };
       
-      await wait(2000);
+      const logEvent = (message) => {
+          const entry = document.createElement('div');
+          entry.className = 'sim-log-entry';
+          entry.innerHTML = message;
+          log.prepend(entry);
+      };
 
-      const finalLog = document.createElement('div');
-      finalLog.className = 'sim-log-entry';
-      finalLog.innerHTML = `Simulation complete. Remaining liquidity is critically low.`;
-      log.prepend(finalLog);
+      const simulateSale = async (actorName, holder, sellPercentage) => {
+          const holderShare = parseFloat(holder.percent);
+          const sellAmountPercent = holderShare * (sellPercentage / 100);
+          
+          // Simplified model: holder selling X% of total supply reduces current market cap by X%.
+          const marketCapImpact = currentMarketCap * (sellAmountPercent / 100);
+          
+          currentMarketCap -= marketCapImpact;
+          updateBar(currentMarketCap);
+          await wait(1000);
+      };
+
+      // --- The Simulation Story ---
+      updateBar(initialMarketCap);
+      await wait(500);
+
+      // Act 1
+      logEvent(`<strong>ACT 1:</strong> A major player (Holder #2) starts taking profit...`);
+      await simulateSale("Profit Taker", topHolders[1], 70);
+
+      // Act 2
+      await wait(2000);
+      logEvent(`<strong>ACT 2:</strong> The price dip triggers a panic sell-off...`);
+      await wait(500);
+      logEvent(`...Holder #4 (<strong>${topHolders[3].percent}%</strong>) is dumping their entire position! Price crashes!`);
+      await simulateSale("Panic Seller 1", topHolders[3], 100);
+
+      await wait(1000);
+      logEvent(`...Holder #5 (<strong>${topHolders[4].percent}%</strong>) follows suit! Further collapse.`);
+      await simulateSale("Panic Seller 2", topHolders[4], 100);
+
+      // Act 3
+      await wait(2000);
+      logEvent(`<strong>ACT 3:</strong> The initial whale exits their remaining position into the crash.`);
+      await simulateSale("Profit Taker", topHolders[1], 30);
+
+      // Conclusion
+      await wait(2000);
+      logEvent(`<strong>SIMULATION END:</strong> Market cap critically compromised. Initial profit-taking led to a cascade failure.`);
 
       btn.disabled = false;
       btn.textContent = 'Run Simulation Again';
@@ -296,18 +320,18 @@ class DFNPatrol extends HTMLElement {
     const programmaticAccountsHTML = distribution.allLpAddresses && distribution.allLpAddresses.length > 0 ?
       `<details class="programmatic-accounts-details"><summary>Pools, CEX, etc.: ${distribution.allLpAddresses.length}</summary><ul class="programmatic-list">${distribution.allLpAddresses.map(addr => `<li><a href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${addr.slice(0, 10)}...${addr.slice(-4)}</a></li>`).join('')}</ul></details>` : '';
 
-    const cascadeSimulatorHTML = liquidityDrain && liquidityDrain.length > 0 && market.liquidity > 0 ? `
+    const cascadeSimulatorHTML = distribution.topHolders && distribution.topHolders.length > 0 && market.marketCap > 0 ? `
         <div id="cascade-dump-simulator" class="full-width">
-            <h3>💥 Financial Collapse Drill</h3>
+            <h3>💥 Price Collapse Drill</h3>
             <div class="sim-display">
-                <div class="sim-label">Liquidity Status:</div>
+                <div class="sim-label">Market Cap:</div>
                 <div class="sim-bar-container">
                     <div class="sim-bar">
-                        <span class="sim-bar-value">$${formatNum(market.liquidity)}</span>
+                        <span class="sim-bar-value">$${formatNum(market.marketCap)}</span>
                     </div>
                 </div>
             </div>
-            <div id="simulation-log" class="sim-log">Press the button to simulate a cascade dump by the top 5 holders.</div>
+            <div id="simulation-log" class="sim-log">Press the button to simulate a price collapse.</div>
             <button id="start-sim-btn">Run Simulation</button>
         </div>` : '';
 
