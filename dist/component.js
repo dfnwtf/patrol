@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v4.9.4 initialized - What-If Scenario Simulation");
+console.log("[DFN Components] v4.9.5 initialized - Final Cascade Simulation Logic");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -123,16 +123,15 @@ template.innerHTML = `
     .sim-bar-container { width: 100%; height: 30px; background-color: #2a2a2a; border-radius: 6px; overflow: hidden; border: 1px solid #333; }
     .sim-bar {
         height: 100%; width: 100%;
-        background: linear-gradient(to right, #9eff9e, #34d399); /* Green for "healthy" state */
-        transition: width 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+        background: linear-gradient(to right, #ff6b7b, #e05068);
+        transition: width 1.2s cubic-bezier(0.25, 1, 0.5, 1); /* This makes the animation smooth */
         display: flex; align-items: center; justify-content: flex-end;
-        font-size: 0.9em; color: #000; font-weight: 600;
+        font-size: 0.9em; color: #fff; font-weight: 600;
         padding-right: 10px;
         box-sizing: border-box;
     }
-    .sim-bar.draining { background: linear-gradient(to right, #ff6b7b, #e05068); } /* Red when draining */
     .sim-label { font-size: 0.9em; color: #aaa; }
-    .sim-log { margin-top: 16px; min-height: 105px; background-color: #111; border-radius: 6px; padding: 12px; text-align: left; font-family: monospace; font-size: 0.9em; color: #aaa; overflow: hidden; }
+    .sim-log { margin-top: 16px; min-height: 145px; background-color: #111; border-radius: 6px; padding: 12px; text-align: left; font-family: monospace; font-size: 0.9em; color: #aaa; overflow: hidden; }
     .sim-log-entry { animation: logFadeIn 0.5s ease; border-bottom: 1px solid #222; padding-bottom: 6px; margin-bottom: 6px; white-space: pre-wrap; }
     .sim-log-entry strong { color: #eee; }
     @keyframes logFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -173,16 +172,16 @@ class DFNPatrol extends HTMLElement {
     }).catch(err => { console.error('Failed to copy address: ', err); });
   }
 
-  // --- REWRITTEN "WHAT-IF" SCENARIO SIMULATION LOGIC ---
+  // --- REWRITTEN SIMULATION LOGIC FOR CONTINUOUS CASCADE ---
   async runSimulation() {
       const btn = this.shadowRoot.querySelector('#start-sim-btn');
       const log = this.shadowRoot.querySelector('#simulation-log');
       const mcBar = this.shadowRoot.querySelector('.sim-bar');
       const mcBarValue = this.shadowRoot.querySelector('.sim-bar-value');
       
-      const drainScenarios = this.report.liquidityDrain;
-      if (!drainScenarios || drainScenarios.length === 0) {
-          log.innerHTML = "Not enough data for simulation.";
+      const topHolders = this.report.distribution.topHolders;
+      if (!topHolders || topHolders.length < 10) {
+          log.innerHTML = "Not enough holder data for a full simulation.";
           return;
       }
       
@@ -192,6 +191,8 @@ class DFNPatrol extends HTMLElement {
       btn.disabled = true;
       btn.textContent = 'Simulating...';
       log.innerHTML = '';
+      
+      let currentMarketCap = initialMarketCap;
       
       const formatAsCurrency = (num) => `$${Number(num).toLocaleString('en-US', {maximumFractionDigits: 0})}`;
       const wait = (ms) => new Promise(res => setTimeout(res, ms));
@@ -208,22 +209,48 @@ class DFNPatrol extends HTMLElement {
           entry.innerHTML = message;
           log.prepend(entry);
       };
-      
-      // --- The "What-If" Simulation Story ---
-      for (const scenario of drainScenarios) {
-          // Reset the bar to 100% to show the full potential of the next scenario
-          mcBar.classList.remove('draining');
-          updateBar(initialMarketCap);
-          logEvent(`<strong>Scenario Analysis:</strong> What if <strong>${scenario.group}</strong> sold everything?`);
-          await wait(2500); // Pause to read the scenario
 
-          mcBar.classList.add('draining');
-          updateBar(scenario.marketCapAfterSale);
-          logEvent(`Price would collapse by <strong style="color: #ff6b7b;">-${scenario.marketCapDropPercentage}%</strong>. New Market Cap: <strong>${formatAsCurrency(scenario.marketCapAfterSale)}</strong>`);
-          await wait(3000); // Pause to see the result
-      }
+      const simulateSale = async (percent) => {
+          const marketCapImpact = currentMarketCap * (percent / 100);
+          currentMarketCap -= marketCapImpact;
+          updateBar(currentMarketCap);
+      };
+
+      // --- The New Simulation Story ---
+      updateBar(initialMarketCap);
+      logEvent(`Simulation started. Initial Market Cap: <strong>${formatAsCurrency(initialMarketCap)}</strong>`);
+      await wait(1500);
+
+      // Step 1: Holder #1 Sells
+      let percent1 = parseFloat(topHolders[0].percent);
+      await simulateSale(percent1);
+      logEvent(`Holder #1 (${topHolders[0].percent}%) sells. Market Cap drops to <strong>${formatAsCurrency(currentMarketCap)}</strong>.`);
+      await wait(2000);
+
+      // Step 2: Holders #2 & #3 Panic Sell
+      let percent2_3 = parseFloat(topHolders[1].percent) + parseFloat(topHolders[2].percent);
+      logEvent(`This triggers a panic sale from Holders #2 & #3 (total <strong>${percent2_3.toFixed(2)}%</strong>)...`);
+      await wait(500);
+      await simulateSale(percent2_3);
+      logEvent(`Market Cap falls further to <strong>${formatAsCurrency(currentMarketCap)}</strong>.`);
+      await wait(2000);
+
+      // Step 3: Holders #4 & #5 Follow
+      let percent4_5 = parseFloat(topHolders[3].percent) + parseFloat(topHolders[4].percent);
+      logEvent(`Holders #4 & #5 (total <strong>${percent4_5.toFixed(2)}%</strong>) join the sell-off...`);
+      await wait(500);
+      await simulateSale(percent4_5);
+      logEvent(`Market Cap is now <strong>${formatAsCurrency(currentMarketCap)}</strong>.`);
+      await wait(2500);
+
+      // Step 4: The Rest of Top 10
+      let percent6_10 = topHolders.slice(5, 10).reduce((sum, h) => sum + parseFloat(h.percent), 0);
+      logEvent(`The rest of the Top 10 (total <strong>${percent6_10.toFixed(2)}%</strong>) capitulate...`);
+      await wait(500);
+      await simulateSale(percent6_10);
+      logEvent(`<strong>FINALE:</strong> After a full cascade from the Top 10, the final Market Cap is <strong>${formatAsCurrency(currentMarketCap)}</strong>.`);
       
-      logEvent(`<strong>SIMULATION END:</strong> High ownership concentration poses a significant risk.`);
+      await wait(2000);
       btn.disabled = false;
       btn.textContent = 'Run Simulation Again';
   }
@@ -238,7 +265,7 @@ class DFNPatrol extends HTMLElement {
        return;
     }
 
-    const { tokenInfo, security, distribution, market, socials, liquidityDrain } = this.report;
+    const { tokenInfo, security, distribution, market, socials } = this.report;
     const formatNum = (num) => num ? Number(num).toLocaleString('en-US', {maximumFractionDigits: 0}) : 'N/A';
     const priceChangeColor = market?.priceChange?.h24 >= 0 ? 'text-ok' : 'text-bad';
     const price = !market?.priceUsd ? 'N/A' : (Number(market.priceUsd) < 0.000001 ? `$${Number(market.priceUsd).toExponential(2)}` : `$${Number(market.priceUsd).toLocaleString('en-US', {maximumFractionDigits: 8})}`);
@@ -294,18 +321,18 @@ class DFNPatrol extends HTMLElement {
     const programmaticAccountsHTML = distribution.allLpAddresses && distribution.allLpAddresses.length > 0 ?
       `<details class="programmatic-accounts-details"><summary>Pools, CEX, etc.: ${distribution.allLpAddresses.length}</summary><ul class="programmatic-list">${distribution.allLpAddresses.map(addr => `<li><a href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${addr.slice(0, 10)}...${addr.slice(-4)}</a></li>`).join('')}</ul></details>` : '';
 
-    const cascadeSimulatorHTML = liquidityDrain && liquidityDrain.length > 0 && market.marketCap > 0 ? `
+    const cascadeSimulatorHTML = distribution.topHolders && distribution.topHolders.length > 0 && market.marketCap > 0 ? `
         <div id="cascade-dump-simulator" class="full-width">
             <h3>💥 Price Collapse Drill</h3>
             <div class="sim-display">
-                <div class="sim-label">Market Cap ("Health"):</div>
+                <div class="sim-label">Market Cap:</div>
                 <div class="sim-bar-container">
                     <div class="sim-bar">
                         <span class="sim-bar-value">$${formatNum(market.marketCap)}</span>
                     </div>
                 </div>
             </div>
-            <div id="simulation-log" class="sim-log">Press the button to simulate "what-if" scenarios.</div>
+            <div id="simulation-log" class="sim-log">Press the button to simulate a price collapse caused by top holders.</div>
             <button id="start-sim-btn">Run Simulation</button>
         </div>` : '';
 
