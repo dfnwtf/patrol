@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v4.9.7 initialized - Final What-If Simulation with percentages");
+console.log("[DFN Components] v4.9.8 initialized - Price Chart Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -110,33 +110,16 @@ template.innerHTML = `
     details[open] > summary { list-style-type: '▾ '; }
     .programmatic-list { padding: 12px 0 4px 24px; list-style-type: square; font-size: 0.85em; }
     .programmatic-list li { margin-bottom: 8px; }
-    
-    /* --- CASCADE DUMP SIMULATOR STYLES --- */
-    #cascade-dump-simulator { text-align: center; background: #191919; padding: 24px; border-radius: 8px; border: 1px solid #282828;}
+
+    /* --- CHART SIMULATOR STYLES --- */
+    #chart-simulator { text-align: center; background: #191919; padding: 24px; border-radius: 8px; border: 1px solid #282828;}
+    .chart-container { position: relative; height: 250px; width: 100%; margin-top: 16px; }
     #start-sim-btn {
         background-color: var(--accent); color: #000; border: none; padding: 10px 20px; margin-top: 16px;
         border-radius: 6px; font-weight: 600; cursor: pointer; transition: background-color 0.2s, transform 0.2s;
     }
     #start-sim-btn:hover:not(:disabled) { background-color: #ffc72c; transform: scale(1.05); }
     #start-sim-btn:disabled { background-color: #555; color: #999; cursor: not-allowed; transform: scale(1); }
-    .sim-display { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; text-align: left; }
-    .sim-bar-container { width: 100%; height: 30px; background-color: #2a2a2a; border-radius: 6px; overflow: hidden; border: 1px solid #333; }
-    .sim-bar {
-        height: 100%; width: 100%;
-        background: linear-gradient(to right, #9eff9e, #34d399);
-        transition: width 1.2s cubic-bezier(0.25, 1, 0.5, 1);
-        display: flex; align-items: center; justify-content: flex-end;
-        font-size: 0.9em; color: #000; font-weight: 600;
-        padding-right: 10px;
-        box-sizing: border-box;
-    }
-    .sim-bar.draining { background: linear-gradient(to right, #ff6b7b, #e05068); color: #fff; }
-    .sim-label { font-size: 0.9em; color: #aaa; }
-    .sim-log { margin-top: 16px; min-height: 105px; background-color: #111; border-radius: 6px; padding: 12px; text-align: left; font-family: monospace; font-size: 0.9em; color: #aaa; overflow: hidden; }
-    .sim-log-entry { animation: logFadeIn 0.5s ease; border-bottom: 1px solid #222; padding-bottom: 6px; margin-bottom: 6px; white-space: pre-wrap; }
-    .sim-log-entry strong { color: #eee; }
-    @keyframes logFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    /* --- END OF SIMULATOR STYLES --- */
     
     @media (max-width: 900px) { .summary-block { grid-template-columns: 1fr; } .summary-market-stats { text-align: left; } }
     @media (max-width: 600px) { .summary-market-stats { grid-template-columns: repeat(2, 1fr); } .trend-indicator { grid-template-columns: repeat(2, 1fr); } }
@@ -152,6 +135,7 @@ class DFNPatrol extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.shadowRoot.appendChild(template.content.cloneNode(true));
     this.container = this.shadowRoot.querySelector('#report-container');
+    this.priceChart = null;
     this.copyIconSVG = `<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
     this.checkIconSVG = `<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9eff9e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
   }
@@ -173,71 +157,93 @@ class DFNPatrol extends HTMLElement {
     }).catch(err => { console.error('Failed to copy address: ', err); });
   }
 
+  initPriceChart() {
+    if (this.priceChart) {
+        this.priceChart.destroy();
+    }
+    const canvas = this.shadowRoot.querySelector('#price-chart-canvas');
+    const initialPrice = this.report?.market?.priceUsd;
+    if (!canvas || typeof initialPrice === 'undefined') return;
+    
+    const ctx = canvas.getContext('2d');
+    this.priceChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Current Price'],
+            datasets: [{
+                data: [initialPrice],
+                backgroundColor: ['#34d399'],
+                borderColor: ['#9eff9e'],
+                borderWidth: 1,
+                barPercentage: 0.5,
+                categoryPercentage: 1.0
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    ticks: {
+                        color: '#888',
+                        callback: function(value) {
+                             if (value === 0) return '$0';
+                             return '$' + (Number(value) < 0.00001 ? Number(value).toExponential(1) : Number(value).toPrecision(2));
+                        }
+                    },
+                    grid: { color: 'rgba(255,255,255,0.05)' }
+                },
+                x: {
+                    ticks: { color: '#888' },
+                    grid: { color: 'transparent' }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Price: $' + Number(context.raw).toPrecision(6);
+                        }
+                    }
+                }
+            }
+        }
+    });
+  }
+
   async runSimulation() {
       const btn = this.shadowRoot.querySelector('#start-sim-btn');
-      const log = this.shadowRoot.querySelector('#simulation-log');
-      const mcBar = this.shadowRoot.querySelector('.sim-bar');
-      const mcBarValue = this.shadowRoot.querySelector('.sim-bar-value');
-      
-      const drainScenarios = this.report.liquidityDrain;
-      const topHolders = this.report.distribution.topHolders;
-      if (!drainScenarios || drainScenarios.length === 0) {
-          log.innerHTML = "Not enough data for simulation.";
-          return;
-      }
-      
-      const initialMarketCap = this.report.market.marketCap;
-      if (!btn || !log || !mcBar || !mcBarValue || !initialMarketCap) return;
+      if (!this.priceChart || !this.report || !btn) return;
 
       btn.disabled = true;
       btn.textContent = 'Simulating...';
-      log.innerHTML = '';
+
+      // Reset chart to initial state before running
+      this.initPriceChart(); 
+      await new Promise(res => setTimeout(res, 500));
+
+      const initialPrice = this.report.market.priceUsd;
+      const drainScenarios = this.report.liquidityDrain;
       
-      const formatAsCurrency = (num) => `$${Number(num).toLocaleString('en-US', {maximumFractionDigits: 0})}`;
       const wait = (ms) => new Promise(res => setTimeout(res, ms));
 
-      const updateBar = (mc) => {
-          const barWidth = (mc / initialMarketCap) * 100;
-          mcBar.style.width = `${barWidth < 0 ? 0 : barWidth}%`;
-          mcBarValue.textContent = formatAsCurrency(mc);
-      };
-      
-      const logEvent = (message) => {
-          const entry = document.createElement('div');
-          entry.className = 'sim-log-entry';
-          entry.innerHTML = message;
-          log.prepend(entry);
-      };
-      
-      updateBar(initialMarketCap);
-      mcBar.classList.remove('draining');
-      logEvent(`Simulation started. Initial Market Cap: <strong>${formatAsCurrency(initialMarketCap)}</strong>`);
-      await wait(1500);
-
       for (const scenario of drainScenarios) {
-          mcBar.classList.add('draining');
+          await wait(1500);
+
+          const priceDropPercent = parseFloat(scenario.marketCapDropPercentage) / 100;
+          const newPrice = initialPrice * (1 - priceDropPercent);
           
-          let ownershipPercent = 0;
-          const match = scenario.group.match(/Top (\d+)/);
-          if (match && topHolders) {
-              const count = parseInt(match[1], 10);
-              if (topHolders.length >= count) {
-                  ownershipPercent = topHolders.slice(0, count).reduce((sum, h) => sum + parseFloat(h.percent), 0);
-              }
-          }
-          const ownershipText = ownershipPercent > 0 ? ` (owning ${ownershipPercent.toFixed(2)}% of supply)` : '';
-
-          logEvent(`Analyzing impact of <strong>${scenario.group}</strong>${ownershipText} selling...`);
-          await wait(2000);
-
-          updateBar(scenario.marketCapAfterSale);
-          logEvent(`→ Price would collapse by <strong style="color: #ff6b7b;">-${scenario.marketCapDropPercentage}%</strong>. New Market Cap: <strong>${formatAsCurrency(scenario.marketCapAfterSale)}</strong>`);
-          await wait(3000);
+          this.priceChart.data.labels.push(scenario.group.replace(' Holders', ''));
+          this.priceChart.data.datasets[0].data.push(newPrice);
+          this.priceChart.data.datasets[0].backgroundColor.push('#e05068');
+          this.priceChart.data.datasets[0].borderColor.push('#ff6b7b');
+          
+          this.priceChart.update();
       }
-      
-      logEvent(`<strong>SIMULATION END.</strong>`);
-      btn.disabled = false;
+
       btn.textContent = 'Run Simulation Again';
+      btn.disabled = false;
   }
 
   render() {
@@ -306,18 +312,15 @@ class DFNPatrol extends HTMLElement {
     const programmaticAccountsHTML = distribution.allLpAddresses && distribution.allLpAddresses.length > 0 ?
       `<details class="programmatic-accounts-details"><summary>Pools, CEX, etc.: ${distribution.allLpAddresses.length}</summary><ul class="programmatic-list">${distribution.allLpAddresses.map(addr => `<li><a href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${addr.slice(0, 10)}...${addr.slice(-4)}</a></li>`).join('')}</ul></details>` : '';
 
-    const cascadeSimulatorHTML = liquidityDrain && liquidityDrain.length > 0 && market.marketCap > 0 ? `
-        <div id="cascade-dump-simulator" class="full-width">
+    const chartSimulatorHTML = liquidityDrain && liquidityDrain.length > 0 && market.marketCap > 0 ? `
+        <div id="chart-simulator" class="full-width">
             <h3>💥 Price Collapse Drill</h3>
-            <div class="sim-display">
-                <div class="sim-label">Market Cap:</div>
-                <div class="sim-bar-container">
-                    <div class="sim-bar">
-                        <span class="sim-bar-value">$${formatNum(market.marketCap)}</span>
-                    </div>
-                </div>
+            <p style="max-width: 500px; margin: 0 auto 16px; color: #aaa; font-size: 0.9em;">
+                This simulation shows how the price would collapse based on sales from top holder groups.
+            </p>
+            <div class="chart-container">
+                <canvas id="price-chart-canvas"></canvas>
             </div>
-            <div id="simulation-log" class="sim-log">Press the button to simulate "what-if" scenarios.</div>
             <button id="start-sim-btn">Run Simulation</button>
         </div>` : '';
 
@@ -359,7 +362,7 @@ class DFNPatrol extends HTMLElement {
               </ul>
               ${programmaticAccountsHTML}
             </div>
-            ${cascadeSimulatorHTML}
+            ${chartSimulatorHTML}
         </div>
     `;
     
@@ -367,6 +370,7 @@ class DFNPatrol extends HTMLElement {
 
     this.shadowRoot.querySelector('.address-container')?.addEventListener('click', () => this.handleAddressCopy());
     this.shadowRoot.querySelector('#start-sim-btn')?.addEventListener('click', () => this.runSimulation());
+    this.initPriceChart();
   }
 }
 
