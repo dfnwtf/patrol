@@ -1,5 +1,5 @@
 // patrol.js
-console.log("[DFN Patrol] v4.9.9 initialized");
+console.log("[DFN Patrol] v5.0.0 initialized");
 let ws;
 
 function connectToWebSocket(token) {
@@ -67,8 +67,6 @@ document.querySelector("#token-search")?.addEventListener("submit", (e) => {
   
   const patrolBlock = document.getElementById('patrol-block');
   if (patrolBlock) {
-      // main.js script handles making the block visible.
-      // patrol.js script handles creating and appending the component.
       patrolBlock.appendChild(newPanel);
   }
   
@@ -80,8 +78,6 @@ document.querySelector("#token-search")?.addEventListener("submit", (e) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    // This listener handles if a token is embedded directly in the initial HTML,
-    // which is not the case for patrol.html anymore, but it's safe to keep.
     const initialPanel = document.querySelector("dfn-patrol");
     if (initialPanel && initialPanel.hasAttribute("embed")) {
         const initialToken = initialPanel.getAttribute("embed");
