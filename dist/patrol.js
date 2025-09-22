@@ -1,5 +1,5 @@
 // patrol.js
-console.log("[DFN Patrol] v4.9.2 initialized - WebSocket Handler");
+console.log("[DFN Patrol] v4.9.9 initialized");
 let ws;
 
 function connectToWebSocket(token) {
@@ -10,16 +10,8 @@ function connectToWebSocket(token) {
   }
 
   const scanButton = document.querySelector('#token-search button[type="submit"]');
-  const panel = document.querySelector("dfn-patrol");
 
   ws = new WebSocket(`wss://dfn.wtf/api/?embed=${token}`);
-  
-  // Передаем WebSocket соединение в компонент
-  if(panel) {
-      customElements.whenDefined("dfn-patrol").then(() => {
-        panel.setWebSocket(ws);
-      });
-  }
 
   const cleanup = () => {
       if (scanButton) {
@@ -28,20 +20,19 @@ function connectToWebSocket(token) {
       }
   };
 
-  // Этот обработчик теперь в основном нужен для первоначального отчета
   ws.addEventListener("message", (e) => {
       const data = JSON.parse(e.data);
-      // Первоначальный отчет по-прежнему устанавливается здесь
+      const panel = document.querySelector("dfn-patrol");
       if (panel && data.type === "report") {
           customElements.whenDefined("dfn-patrol").then(() => {
               panel.setReport(data.data);
           });
       }
-      // Остальные сообщения (precise_impact_data и т.д.) обрабатываются внутри самого компонента
   });
 
   ws.addEventListener("error", (e) => {
       console.error("WebSocket Error:", e);
+      const panel = document.querySelector("dfn-patrol");
       if (panel) {
           panel.setReport({ error: "Connection to analysis server failed." });
       }
@@ -59,6 +50,7 @@ document.querySelector("#token-search")?.addEventListener("submit", (e) => {
   const hiddenField = document.getElementById('hidden-mint-address');
 
   const token = (hiddenField ? hiddenField.value : visibleField.value).trim();
+
   if (!token) return;
 
   if(scanButton) {
@@ -68,14 +60,16 @@ document.querySelector("#token-search")?.addEventListener("submit", (e) => {
 
   const oldPanel = document.querySelector("dfn-patrol");
   if (oldPanel) oldPanel.remove();
-
+  
   const newPanel = document.createElement("dfn-patrol");
   newPanel.setAttribute("embed", token);
   newPanel.id = "patrol";
   
   const patrolBlock = document.getElementById('patrol-block');
-  if(patrolBlock) {
-    patrolBlock.appendChild(newPanel);
+  if (patrolBlock) {
+      // main.js script handles making the block visible.
+      // patrol.js script handles creating and appending the component.
+      patrolBlock.appendChild(newPanel);
   }
   
   if (hiddenField) {
@@ -86,6 +80,8 @@ document.querySelector("#token-search")?.addEventListener("submit", (e) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    // This listener handles if a token is embedded directly in the initial HTML,
+    // which is not the case for patrol.html anymore, but it's safe to keep.
     const initialPanel = document.querySelector("dfn-patrol");
     if (initialPanel && initialPanel.hasAttribute("embed")) {
         const initialToken = initialPanel.getAttribute("embed");
