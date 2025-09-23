@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v4.9.9 initialized - Candlestick Chart Simulation");
+console.log("[DFN Components] v5.0.0 initialized - Candlestick Chart Simulation with diagnostics");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -166,18 +166,27 @@ class DFNPatrol extends HTMLElement {
         this.priceChart.destroy();
     }
     const canvas = this.shadowRoot.querySelector('#price-chart-canvas');
-    const initialPrice = this.report?.market?.priceUsd;
-    if (!canvas || typeof initialPrice === 'undefined' || typeof Chart === 'undefined' || !Chart.FinancialController) {
-        if(canvas) canvas.parentElement.style.display = 'none';
+    const chartContainer = this.shadowRoot.querySelector('.chart-container');
+    if (!canvas || !chartContainer) return;
+
+    if (typeof Chart === 'undefined' || typeof Chart.FinancialController === 'undefined') {
+        console.error("Chart.js or the financial chart plugin is not loaded.");
+        chartContainer.innerHTML = `<div class="error" style="height: 100%; display: flex; align-items: center; justify-content: center;">Chart library failed to load. Please refresh.</div>`;
         return;
     }
     
+    const initialPrice = this.report?.market?.priceUsd;
+    if (typeof initialPrice === 'undefined') {
+        chartContainer.style.display = 'none';
+        return;
+    }
+
     const ctx = canvas.getContext('2d');
     
     const initialData = {
         x: Date.now() - (10 * 60 * 1000), // 10 minutes ago
         o: initialPrice,
-        h: initialPrice * 1.001,
+        h: initialPrice * 1.001, // Creates a tiny green body
         l: initialPrice * 0.999,
         c: initialPrice
     };
@@ -186,6 +195,7 @@ class DFNPatrol extends HTMLElement {
         type: 'candlestick',
         data: {
             datasets: [{
+                label: 'Price',
                 data: [initialData]
             }]
         },
@@ -199,11 +209,14 @@ class DFNPatrol extends HTMLElement {
                     ticks: { display: false }
                 },
                 y: {
-                    beginAtZero: false,
                     grid: { color: 'rgba(255,255,255,0.05)' },
                     ticks: { 
                         color: '#888',
-                        maxTicksLimit: 8
+                        maxTicksLimit: 8,
+                        callback: function(value) {
+                             if (value === 0) return '$0';
+                             return '$' + (Number(value) < 0.0001 ? Number(value).toExponential(2) : Number(value).toPrecision(3));
+                        }
                     }
                 }
             },
@@ -229,16 +242,18 @@ class DFNPatrol extends HTMLElement {
 
       btn.disabled = true;
       btn.textContent = 'Simulating...';
-      log.innerHTML = '';
-      log.style.display = 'block';
 
+      // Reset chart and log for a new simulation run
       this.initPriceChart(); 
       await new Promise(res => setTimeout(res, 100));
+      log.innerHTML = '';
+      log.style.display = 'block';
 
       const drainScenarios = this.report.liquidityDrain;
       let lastPrice = this.report.market.priceUsd;
       let lastTimestamp = this.priceChart.data.datasets[0].data[0].x;
       const initialPrice = this.report.market.priceUsd;
+      const initialMC = this.report.market.marketCap;
 
       const wait = (ms) => new Promise(res => setTimeout(res, ms));
 
@@ -250,11 +265,11 @@ class DFNPatrol extends HTMLElement {
       };
 
       for (const scenario of drainScenarios) {
-          await wait(2000);
+          await wait(1500);
 
-          const newPrice = initialPrice * (1 - (parseFloat(scenario.marketCapDropPercentage) / 100));
+          const newPrice = (scenario.marketCapAfterSale / initialMC) * initialPrice;
           
-          logEvent(`Simulating sale by <strong>${scenario.group}</strong>... Price drops.`);
+          logEvent(`Simulating sale by <strong>${scenario.group}</strong>...`);
           
           const newDataPoint = {
               x: lastTimestamp + (60 * 1000), // Add 1 minute for each candle
@@ -265,8 +280,12 @@ class DFNPatrol extends HTMLElement {
           };
           
           this.priceChart.data.datasets[0].data.push(newDataPoint);
-          this.priceChart.update();
+          this.priceChart.update('none'); // Update without animation to add data instantly
 
+          // A small delay to allow the new data point to be added before animating
+          await wait(50);
+          
+          this.priceChart.update(); // Now update with animation
           lastPrice = newPrice;
           lastTimestamp = newDataPoint.x;
       }
