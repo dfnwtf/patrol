@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.0.6 initialized - Stable Version with Fade-in and Autoscroll");
+console.log("[DFN Components] v5.0.7 initialized - Final Version with Render Event");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -32,8 +32,9 @@ template.innerHTML = `
       border-radius: 12px;
       border: 1px solid #333;
     }
+    /* Style for the report content itself to fade in */
     #report-container > *:not(.placeholder):not(.error) {
-        animation: contentFadeIn 0.5s 0.2s ease-in-out forwards;
+        animation: contentFadeIn 0.5s 0.1s ease-in-out forwards;
         opacity: 0;
     }
     @keyframes contentFadeIn {
