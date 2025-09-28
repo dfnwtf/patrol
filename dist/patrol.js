@@ -1,9 +1,8 @@
 // patrol.js
 console.log("[DFN Patrol] v5.0.9 initialized");
-
 let ws;
 
-function connectToWebSocket(token, panel) {
+function connectToWebSocket(token) {
   if (!token) return;
 
   if (ws && ws.readyState < 2) {
@@ -23,6 +22,7 @@ function connectToWebSocket(token, panel) {
 
   ws.addEventListener("message", (e) => {
       const data = JSON.parse(e.data);
+      const panel = document.querySelector("dfn-patrol");
       if (panel && data.type === "report") {
           customElements.whenDefined("dfn-patrol").then(() => {
               panel.setReport(data.data);
@@ -32,6 +32,7 @@ function connectToWebSocket(token, panel) {
 
   ws.addEventListener("error", (e) => {
       console.error("WebSocket Error:", e);
+      const panel = document.querySelector("dfn-patrol");
       if (panel) {
           panel.setReport({ error: "Connection to analysis server failed." });
       }
@@ -47,11 +48,12 @@ document.querySelector("#token-search")?.addEventListener("submit", (e) => {
   const scanButton = e.currentTarget.querySelector('button[type="submit"]');
   const visibleField = document.querySelector("#token-input");
   const hiddenField = document.getElementById('hidden-mint-address');
+
   const token = (hiddenField ? hiddenField.value : visibleField.value).trim();
 
   if (!token) return;
 
-  if (scanButton) {
+  if(scanButton) {
     scanButton.disabled = true;
     scanButton.textContent = 'Scanning...';
   }
@@ -72,5 +74,20 @@ document.querySelector("#token-search")?.addEventListener("submit", (e) => {
       hiddenField.remove();
   }
 
-  connectToWebSocket(token, newPanel);
+  connectToWebSocket(token);
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const initialPanel = document.querySelector("dfn-patrol");
+    if (initialPanel && initialPanel.hasAttribute("embed")) {
+        const initialToken = initialPanel.getAttribute("embed");
+        if (initialToken) {
+            const scanButton = document.querySelector('#token-search button[type="submit"]');
+            if(scanButton) {
+                scanButton.disabled = true;
+                scanButton.textContent = 'Scanning...';
+            }
+            connectToWebSocket(initialToken);
+        }
+    }
 });
