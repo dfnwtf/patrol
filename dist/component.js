@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.1.2 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.1.3 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -63,8 +63,8 @@ template.innerHTML = `
     a:hover { text-decoration: underline; }
 
     .summary-block {
-      display: flex; /* Changed to flex for alignment */
-      flex-wrap: wrap; /* Allows wrapping on smaller screens */
+      display: flex;
+      flex-wrap: wrap;
       gap: 16px 32px;
       padding: 24px;
       background: #191919;
@@ -77,16 +77,47 @@ template.innerHTML = `
         display: flex;
         align-items: center;
         gap: 16px;
-        flex-grow: 1; /* Allows this block to take up available space */
+        flex-grow: 1;
     }
     .token-logo { width: 48px; height: 48px; border-radius: 50%; background: #222; object-fit: cover; }
     .token-name-symbol h2 { font-size: 1.8rem; margin: 0; line-height: 1.1; color: #fff; }
     .token-name-symbol span { font-size: 1rem; color: #999; margin-top: 4px; display: block; }
 
-    .address-container { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-family: monospace; font-size: 0.9em; color: #888; cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: background-color 0.2s; }
+    .address-container { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; font-family: monospace; font-size: 0.9em; color: #888; cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: background-color 0.2s; }
     .address-container:hover { background-color: #252525; }
     .address-container .copy-icon { width: 14px; height: 14px; stroke: #888; transition: stroke 0.2s; }
     .address-container:hover .copy-icon { stroke: #eee; }
+
+    /* НОВЫЕ СТИЛИ ДЛЯ КНОПКИ SHARE */
+    .share-button {
+        background: none;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+        font-family: monospace;
+        font-size: 0.9em;
+        color: #888;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+    }
+    .share-button:hover {
+        background-color: #252525;
+        color: #eee;
+    }
+    .share-button .copy-icon {
+        width: 14px;
+        height: 14px;
+        stroke: #888;
+        transition: stroke 0.2s;
+    }
+    .share-button:hover .copy-icon {
+        stroke: #eee;
+    }
+    /* КОНЕЦ НОВЫХ СТИЛЕЙ */
 
     .summary-market-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 24px; text-align: right; }
     .stat-item { display: flex; flex-direction: column; }
@@ -96,39 +127,6 @@ template.innerHTML = `
     .stat-item span.text-bad, .stat-item .buys-sells .text-bad { color: #ff6b7b; }
     .stat-item .buys-sells { font-weight: 600; }
     
-    #share-report-btn {
-        background: none;
-        border: 1px solid #333;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0;
-        margin-left: auto; /* Pushes the button to the right */
-        transition: all 0.2s ease;
-    }
-    #share-report-btn:hover {
-        background-color: #2a2a2a;
-        border-color: var(--accent, #FFD447);
-    }
-    #share-report-btn svg {
-        width: 18px;
-        height: 18px;
-        stroke: #aaa;
-        transition: stroke 0.2s ease;
-    }
-    #share-report-btn:hover svg {
-        stroke: var(--accent, #FFD447);
-    }
-    .share-copied-msg {
-        color: var(--accent, #FFD447);
-        font-size: 0.9em;
-        font-weight: 500;
-    }
-
     .report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
     .report-grid > div { background: #191919; padding: 24px; border-radius: 8px; border: 1px solid #282828; }
     .full-width { grid-column: 1 / -1; }
@@ -190,7 +188,7 @@ template.innerHTML = `
             height: 96px !important;
         }
     }
-    @media (max-width: 900px) { .summary-market-stats { order: 3; width: 100%; text-align: left; } #share-report-btn { order: 2; } .summary-token-info { order: 1; } }
+    @media (max-width: 900px) { .summary-market-stats { order: 3; width: 100%; text-align: left; } .summary-token-info { order: 1; } }
     @media (max-width: 600px) { .summary-market-stats { grid-template-columns: repeat(2, 1fr); } .trend-indicator { grid-template-columns: repeat(2, 1fr); } }
   </style>
   <div id="report-container">
@@ -206,7 +204,6 @@ class DFNPatrol extends HTMLElement {
     this.container = this.shadowRoot.querySelector('#report-container');
     this.copyIconSVG = `<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
     this.checkIconSVG = `<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9eff9e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-    this.shareIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>`;
   }
   
   setReport(report) {
@@ -228,10 +225,11 @@ class DFNPatrol extends HTMLElement {
 
   handleShareCopy() {
     navigator.clipboard.writeText(window.location.href).then(() => {
-        const shareBtn = this.shadowRoot.querySelector('#share-report-btn');
+        const shareBtn = this.shadowRoot.querySelector('#share-button');
         if (shareBtn) {
-            shareBtn.innerHTML = `<span class="share-copied-msg">Copied!</span>`;
-            setTimeout(() => { shareBtn.innerHTML = this.shareIconSVG; }, 2000);
+            const originalContent = shareBtn.innerHTML;
+            shareBtn.innerHTML = `${this.checkIconSVG} <span class="copied-text">Copied!</span>`;
+            setTimeout(() => { shareBtn.innerHTML = originalContent; }, 2000);
         }
     }).catch(err => { console.error('Failed to copy link: ', err); });
   }
@@ -325,6 +323,8 @@ class DFNPatrol extends HTMLElement {
     }
     const addressHTML = tokenInfo.address ? `<div class="address-container" title="Copy Address: ${tokenInfo.address}">${this.copyIconSVG}<span>${truncatedAddress}</span></div>` : '';
 
+    const shareButtonHTML = tokenInfo.address ? `<button id="share-button" class="share-button" title="Copy report link">${this.copyIconSVG} <span>Share</span></button>` : '';
+
     const marketStatsHTML = `
         <div class="summary-market-stats">
             <div class="stat-item"><b>Price</b><span>${price}</span></div>
@@ -394,9 +394,9 @@ class DFNPatrol extends HTMLElement {
                     <h2>${sanitizeHTML(tokenInfo.name)}</h2>
                     <span>${sanitizeHTML(tokenInfo.symbol)}</span>
                     ${addressHTML}
+                    ${shareButtonHTML}
                 </div>
             </div>
-            <button id="share-report-btn" title="Copy report link">${this.shareIconSVG}</button>
             ${marketStatsHTML}
         </div>
         ${trendIndicatorHTML}
@@ -431,8 +431,8 @@ class DFNPatrol extends HTMLElement {
     this.container.innerHTML = `<div class="report-fade-in">${newContent}</div>`;
 
     this.shadowRoot.querySelector('.address-container')?.addEventListener('click', () => this.handleAddressCopy());
+    this.shadowRoot.querySelector('#share-button')?.addEventListener('click', () => this.handleShareCopy());
     this.shadowRoot.querySelector('#start-sim-btn')?.addEventListener('click', () => this.runSimulation());
-    this.shadowRoot.querySelector('#share-report-btn')?.addEventListener('click', () => this.handleShareCopy());
     
     this.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
