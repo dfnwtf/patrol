@@ -1,5 +1,5 @@
 // patrol.js
-console.log("[DFN Patrol] v5.1.1 initialized");
+console.log("[DFN Patrol] v5.1.2 initialized");
 let ws;
 
 function connectToWebSocket(token) {
@@ -53,6 +53,11 @@ document.querySelector("#token-search")?.addEventListener("submit", (e) => {
 
   if (!token) return;
 
+  // --- НОВАЯ ЛОГИКА: ОБНОВЛЕНИЕ URL БРАУЗЕРА ---
+  const newUrl = `/patrol/${token}`;
+  // Обновляем URL без перезагрузки страницы
+  history.pushState({token: token}, '', newUrl);
+
   if(scanButton) {
     scanButton.disabled = true;
     scanButton.textContent = 'Scanning...';
@@ -77,17 +82,11 @@ document.querySelector("#token-search")?.addEventListener("submit", (e) => {
   connectToWebSocket(token);
 });
 
+// Логика начальной загрузки со страницы patrol.html теперь полностью обрабатывается в main.js
+// Этот блок больше не нужен для авто-запуска, но оставляем его пустым на случай будущих доработок.
 document.addEventListener('DOMContentLoaded', () => {
-    const initialPanel = document.querySelector("dfn-patrol");
-    if (initialPanel && initialPanel.hasAttribute("embed")) {
-        const initialToken = initialPanel.getAttribute("embed");
-        if (initialToken) {
-            const scanButton = document.querySelector('#token-search button[type="submit"]');
-            if(scanButton) {
-                scanButton.disabled = true;
-                scanButton.textContent = 'Scanning...';
-            }
-            connectToWebSocket(initialToken);
-        }
+    const initialPanel = document.querySelector("dfn-patrol[embed]");
+    if (initialPanel) {
+        // Логика авто-сканирования при прямом URL уже обрабатывается в main.js
     }
 });
