@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.1.8 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.1.9 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -142,7 +142,7 @@ template.innerHTML = `
     .stat-item span.text-bad, .stat-item .buys-sells .text-bad { color: #ff6b7b; }
     .stat-item .buys-sells { font-weight: 600; }
     
-    /* СТИЛИ ДЛЯ TRUST SCORE */
+    /* ИСПРАВЛЕННЫЕ СТИЛИ ДЛЯ TRUST SCORE */
     .score-container {
         position: relative;
         width: 120px;
@@ -184,13 +184,12 @@ template.innerHTML = `
         color: #fff;
     }
     .score-label {
-        font-size: 0.75rem; /* Уменьшаем шрифт */
+        font-size: 0.75rem;
         color: #888;
         text-transform: uppercase;
         margin-top: -4px;
-        white-space: nowrap; /* Запрещаем перенос строки */
+        white-space: nowrap;
     }
-    /* КОНЕЦ СТИЛЕЙ */
     
     .report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
     .report-grid > div { background: #191919; padding: 24px; border-radius: 8px; border: 1px solid #282828; }
@@ -319,72 +318,72 @@ class DFNPatrol extends HTMLElement {
   }
 
   async runSimulation() {
-    const btn = this.shadowRoot.querySelector('#start-sim-btn');
-    const log = this.shadowRoot.querySelector('#simulation-log');
-    const mcBar = this.shadowRoot.querySelector('.sim-bar');
-    const mcBarValue = this.shadowRoot.querySelector('.sim-bar-value');
-    
-    const drainScenarios = this.report.liquidityDrain;
-    const topHolders = this.report.distribution.topHolders;
-    if (!drainScenarios || drainScenarios.length === 0) {
-        log.innerHTML = "Not enough data for simulation.";
-        return;
-    }
-    
-    const initialMarketCap = this.report.market.marketCap;
-    if (!btn || !log || !mcBar || !mcBarValue || !initialMarketCap) return;
+      const btn = this.shadowRoot.querySelector('#start-sim-btn');
+      const log = this.shadowRoot.querySelector('#simulation-log');
+      const mcBar = this.shadowRoot.querySelector('.sim-bar');
+      const mcBarValue = this.shadowRoot.querySelector('.sim-bar-value');
+      
+      const drainScenarios = this.report.liquidityDrain;
+      const topHolders = this.report.distribution.topHolders;
+      if (!drainScenarios || drainScenarios.length === 0) {
+          log.innerHTML = "Not enough data for simulation.";
+          return;
+      }
+      
+      const initialMarketCap = this.report.market.marketCap;
+      if (!btn || !log || !mcBar || !mcBarValue || !initialMarketCap) return;
 
-    btn.disabled = true;
-    btn.textContent = 'Simulating...';
-    log.innerHTML = '';
-    
-    const formatAsCurrency = (num) => `$${Number(num).toLocaleString('en-US', {maximumFractionDigits: 0})}`;
-    const wait = (ms) => new Promise(res => setTimeout(res, ms));
+      btn.disabled = true;
+      btn.textContent = 'Simulating...';
+      log.innerHTML = '';
+      
+      const formatAsCurrency = (num) => `$${Number(num).toLocaleString('en-US', {maximumFractionDigits: 0})}`;
+      const wait = (ms) => new Promise(res => setTimeout(res, ms));
 
-    const updateBar = (mc) => {
-        const barWidth = (mc / initialMarketCap) * 100;
-        mcBar.style.width = `${barWidth < 0 ? 0 : barWidth}%`;
-        mcBarValue.textContent = formatAsCurrency(mc);
-    };
-    
-    const logEvent = (message) => {
-        const entry = document.createElement('div');
-        entry.className = 'sim-log-entry';
-        entry.innerHTML = message;
-        log.prepend(entry);
-    };
-    
-    updateBar(initialMarketCap);
-    mcBar.classList.remove('draining');
-    logEvent(`Simulation started. Initial Market Cap: <strong>${formatAsCurrency(initialMarketCap)}</strong>`);
-    await wait(1500);
+      const updateBar = (mc) => {
+          const barWidth = (mc / initialMarketCap) * 100;
+          mcBar.style.width = `${barWidth < 0 ? 0 : barWidth}%`;
+          mcBarValue.textContent = formatAsCurrency(mc);
+      };
+      
+      const logEvent = (message) => {
+          const entry = document.createElement('div');
+          entry.className = 'sim-log-entry';
+          entry.innerHTML = message;
+          log.prepend(entry);
+      };
+      
+      updateBar(initialMarketCap);
+      mcBar.classList.remove('draining');
+      logEvent(`Simulation started. Initial Market Cap: <strong>${formatAsCurrency(initialMarketCap)}</strong>`);
+      await wait(1500);
 
-    for (const scenario of drainScenarios) {
-        mcBar.classList.add('draining');
-        
-        let ownershipPercent = 0;
-        const match = scenario.group.match(/Top (\d+)/);
-        if (match && topHolders) {
-            const count = parseInt(match[1], 10);
-            if (topHolders.length >= count) {
-                ownershipPercent = topHolders.slice(0, count).reduce((sum, h) => sum + parseFloat(h.percent), 0);
-            }
-        }
-        const ownershipText = ownershipPercent > 0 ? ` (owning ${ownershipPercent.toFixed(2)}% of supply)` : '';
+      for (const scenario of drainScenarios) {
+          mcBar.classList.add('draining');
+          
+          let ownershipPercent = 0;
+          const match = scenario.group.match(/Top (\d+)/);
+          if (match && topHolders) {
+              const count = parseInt(match[1], 10);
+              if (topHolders.length >= count) {
+                  ownershipPercent = topHolders.slice(0, count).reduce((sum, h) => sum + parseFloat(h.percent), 0);
+              }
+          }
+          const ownershipText = ownershipPercent > 0 ? ` (owning ${ownershipPercent.toFixed(2)}% of supply)` : '';
 
-        logEvent(`Analyzing impact of <strong>${scenario.group}</strong>${ownershipText} selling...`);
-        await wait(2000);
+          logEvent(`Analyzing impact of <strong>${scenario.group}</strong>${ownershipText} selling...`);
+          await wait(2000);
 
-        updateBar(scenario.marketCapAfterSale);
-        logEvent(`→ Price would collapse by <strong style="color: #ff6b7b;">-${scenario.marketCapDropPercentage}%</strong>. New Market Cap: <strong>${formatAsCurrency(scenario.marketCapAfterSale)}</strong>`);
-        await wait(3000);
-    }
-    
-    mcBar.classList.remove('draining');
-    logEvent(`<strong>SIMULATION END.</strong>`);
-    btn.disabled = false;
-    btn.textContent = 'Run Simulation Again';
-}
+          updateBar(scenario.marketCapAfterSale);
+          logEvent(`→ Price would collapse by <strong style="color: #ff6b7b;">-${scenario.marketCapDropPercentage}%</strong>. New Market Cap: <strong>${formatAsCurrency(scenario.marketCapAfterSale)}</strong>`);
+          await wait(3000);
+      }
+      
+      mcBar.classList.remove('draining');
+      logEvent(`<strong>SIMULATION END.</strong>`);
+      btn.disabled = false;
+      btn.textContent = 'Run Simulation Again';
+  }
 
 
   render() {
@@ -441,21 +440,46 @@ class DFNPatrol extends HTMLElement {
     const priceChange = market?.priceChange || {};
     const trendIndicatorHTML = `
       <div class="trend-indicator">
-        </div>
+        <div class="trend-item"><b>5 MIN</b><div class="${priceChange.m5 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.m5?.toFixed(2) ?? '0.00'}%</div></div>
+        <div class="trend-item"><b>1 HOUR</b><div class="${priceChange.h1 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.h1?.toFixed(2) ?? '0.00'}%</div></div>
+        <div class="trend-item"><b>6 HOURS</b><div class="${priceChange.h6 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.h6?.toFixed(2) ?? '0.00'}%</div></div>
+        <div class="trend-item"><b>24 HOURS</b><div class="${priceChange.h24 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.h24?.toFixed(2) ?? '0.00'}%</div></div>
+      </div>
     `;
 
     const socialsHTML = socials && socials.length > 0 ? `
         <div class="full-width">
             <h3>🔗 Socials</h3>
+            <div class="socials-list">
+                ${socials.map(social => {
+                    try {
+                        const link = social.url;
+                        if(!link) return '';
+                        const label = social.label || social.type.charAt(0).toUpperCase() + social.type.slice(1);
+                        return `<a href="${sanitizeUrl(link)}" target="_blank" rel="noopener nofollow">${sanitizeHTML(label)}</a>`;
+                    } catch(e) { return ''; }
+                }).join('')}
             </div>
+        </div>
     ` : '';
     
     const programmaticAccountsHTML = distribution.allLpAddresses && distribution.allLpAddresses.length > 0 ?
-      `<details></details>` : '';
+      `<details class="programmatic-accounts-details"><summary>Pools, CEX, etc.: ${distribution.allLpAddresses.length}</summary><ul class="programmatic-list">${distribution.allLpAddresses.map(addr => `<li><a href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${addr.slice(0, 10)}...${addr.slice(-4)}</a></li>`).join('')}</ul></details>` : '';
 
     const cascadeSimulatorHTML = liquidityDrain && liquidityDrain.length > 0 && market.marketCap > 0 ? `
         <div id="cascade-dump-simulator" class="full-width">
-            </div>` : '';
+            <h3>💥 Price Collapse Drill</h3>
+            <div class="sim-display">
+                <div class="sim-label">Market Cap:</div>
+                <div class="sim-bar-container">
+                    <div class="sim-bar">
+                        <span class="sim-bar-value">$${formatNum(market.marketCap)}</span>
+                    </div>
+                </div>
+            </div>
+            <div id="simulation-log" class="sim-log">Press the button to simulate "what-if" scenarios.</div>
+            <button id="start-sim-btn">Run Simulation</button>
+        </div>` : '';
 
 
     const newContent = `
@@ -480,7 +504,7 @@ class DFNPatrol extends HTMLElement {
               <ul>
                 ${security.launchpad ? `<li class="ok">Launched on a trusted platform: ${sanitizeHTML(security.launchpad)}.</li>` : ''}
                 ${security.hackerFound ? `<li class="bad">${sanitizeHTML(security.hackerFound)}</li>` : ''}
-                ${'holderConcentration' in security && security.holderConcentration > 0 ? `<li class="${security.holderConcentration > 20 ? (security.holderConcentration > 30 ? 'bad' : 'warn') : 'ok'}">Top 10 holders own ${security.holderConcentration.toFixed(2)}%.</li>` : ''}
+                ${'holderConcentration' in security ? `<li class="${security.holderConcentration > 20 ? (security.holderConcentration > 30 ? 'bad' : 'warn') : 'ok'}">Top 10 holders own ${security.holderConcentration.toFixed(2)}%.</li>` : ''}
                 ${security.isCto ? `<li class="warn">Community Takeover</li>` : ''}
                 ${security.lpStatus ? `<li class="${security.lpStatus === 'Burned' || security.lpStatus === 'Locked/Burned' ? 'ok' : 'bad'}">Liquidity is ${security.lpStatus}.</li>` : '<li>Liquidity status is Unknown.</li>'}
                 ${'isMutable' in security ? `<li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>` : ''}
