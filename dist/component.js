@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.2.4 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.2.5 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -78,7 +78,7 @@ template.innerHTML = `
         align-items: center;
         gap: 16px;
         flex-grow: 1;
-        min-width: 0; /* <-- ИСПРАВЛЕНИЕ 1 */
+        min-width: 0;
     }
     .token-logo { 
         width: 48px; 
@@ -88,18 +88,18 @@ template.innerHTML = `
         object-fit: cover; 
         flex-shrink: 0; 
     }
+    /* ИСПРАВЛЕНИЕ ЗДЕСЬ */
     .token-name-symbol {
-        min-width: 0; /* <-- ИСПРАВЛЕНИЕ 2 */
+        overflow: hidden; /* 1. Скрываем все, что выходит за рамки этого блока */
     }
     .token-name-symbol h2 {
         font-size: 1.8rem;
         margin: 0;
         line-height: 1.1;
         color: #fff;
-        /* <-- ИСПРАВЛЕНИЕ 3 --> */
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        white-space: nowrap;     /* 2. Запрещаем перенос текста */
+        text-overflow: ellipsis; /* 3. Добавляем многоточие */
+        overflow: hidden;        /* 4. Дублируем overflow для надежности */
     }
     .token-name-symbol span { font-size: 1rem; color: #999; margin-top: 4px; display: block; }
 
