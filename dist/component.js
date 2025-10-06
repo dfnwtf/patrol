@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.2.9 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.3.0 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -89,8 +89,8 @@ template.innerHTML = `
         flex-shrink: 0; 
     }
     .token-name-symbol {
-        min-width: 0;
         overflow: hidden;
+        min-width: 0;
     }
     .token-name-symbol h2 {
         font-size: 1.8rem;
@@ -268,27 +268,32 @@ template.innerHTML = `
 
     /* --- ОКОНЧАТЕЛЬНОЕ ИСПРАВЛЕНИЕ АДАПТИВНОСТИ --- */
     @media (max-width: 850px) {
+      .summary-token-info {
+        flex-basis: 100%; /* Занимает всю ширину, если не помещается */
+        min-width: 280px;  /* Минимальная ширина, чтобы текст не сжимался слишком сильно */
+      }
+      .summary-market-stats {
+        flex-basis: 100%; /* Всегда переносится на новую строку */
+        text-align: left;
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .score-container {
+        margin: 10px auto; /* Центрируем, если перенесся на новую строку */
+      }
+    }
+    
+    @media (max-width: 450px) {
         .summary-block {
+            /* На самых маленьких экранах делаем все в один столбец для порядка */
             flex-direction: column;
-            align-items: stretch;
+            align-items: center;
         }
-        .summary-token-info {
-            order: 1;
-        }
-        .score-container {
-            order: 2;
-            margin: 20px auto 0;
-        }
-        .summary-market-stats { 
-            order: 3;
-            text-align: left;
-            grid-template-columns: repeat(2, 1fr);
-        }
+        .summary-token-info { text-align: center; flex-direction: column; }
+        .token-name-symbol { text-align: center; }
+        .address-container, .share-button { margin-left: auto; margin-right: auto; }
+        .summary-market-stats { text-align: center; }
     }
 
-    @media (max-width: 600px) { 
-        .trend-indicator { grid-template-columns: repeat(2, 1fr); } 
-    }
   </style>
   <div id="report-container">
     <div class="placeholder">Generating token health report...</div>
