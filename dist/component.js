@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.3.6 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.3.7 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -62,37 +62,29 @@ template.innerHTML = `
     a { color: var(--accent, #FFD447); text-decoration: none; font-weight: 500; }
     a:hover { text-decoration: underline; }
 
+    /* --- ОКОНЧАТЕЛЬНАЯ ВЕРСТКА ВЕРХНЕГО БЛОКА --- */
     .summary-block {
-      display: grid;
-      grid-template-columns: 1fr auto; 
-      grid-template-rows: auto auto; 
-      gap: 16px 24px;
+      display: flex;
+      flex-direction: column; /* Главный блок - колонка */
+      gap: 24px;
       padding: 24px;
       background: #191919;
       border-radius: 8px;
       border: 1px solid #282828;
       margin-bottom: 24px;
+    }
+    .summary-header {
+      display: flex; /* Это строка для инфо и оценки */
+      gap: 24px;
       align-items: center;
     }
     .summary-token-info {
         display: flex;
         align-items: center;
         gap: 16px;
+        flex-grow: 1; /* Растягиваем блок с информацией */
         min-width: 0; 
     }
-    .score-container {
-        grid-column: 2 / 3;
-        grid-row: 1 / 2;
-    }
-    .summary-market-stats { 
-        grid-column: 1 / -1;
-        grid-row: 2 / 3;
-        display: grid; 
-        grid-template-columns: repeat(3, 1fr); 
-        gap: 16px 24px; 
-        text-align: right;
-    }
-
     .token-logo { 
         width: 48px; 
         height: 48px; 
@@ -102,6 +94,7 @@ template.innerHTML = `
         flex-shrink: 0; 
     }
     .token-name-symbol {
+        min-width: 0;
         overflow: hidden;
     }
     .token-name-symbol h2 {
@@ -165,7 +158,8 @@ template.innerHTML = `
     .copied-text {
         color: var(--accent, #FFD447);
     }
-    
+
+    .summary-market-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 24px; text-align: right; }
     .stat-item { display: flex; flex-direction: column; }
     .stat-item b { font-size: 0.9rem; color: #888; font-weight: 500; margin-bottom: 4px; text-transform: uppercase; }
     .stat-item span { font-size: 1.2rem; font-weight: 600; color: #fff; }
@@ -177,7 +171,7 @@ template.innerHTML = `
         position: relative;
         width: 120px;
         height: 120px;
-        flex-shrink: 0;
+        flex-shrink: 0; /* Запрещаем сжиматься */
     }
     .score-svg {
         width: 100%;
@@ -276,25 +270,27 @@ template.innerHTML = `
       to   { opacity: 1; }
     }
 
-    @media (max-width: 800px) {
-        .summary-block {
-            grid-template-columns: 1fr;
-            justify-items: center;
+    /* МЕДИА-ЗАПРОСЫ ДЛЯ АДАПТИВНОСТИ */
+    @media (max-width: 950px) {
+        .summary-market-stats { 
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    @media (max-width: 768px) {
+        .summary-header {
+            flex-direction: column; /* На мобильных header становится колонкой */
+            align-items: center;
         }
         .summary-token-info {
-            grid-column: 1 / -1;
-            flex-direction: column;
-            text-align: center;
+             flex-direction: column;
+             text-align: center;
         }
         .score-container {
-            grid-column: 1 / -1;
-            grid-row: 2 / 3;
             margin-left: 0;
+            margin-top: 20px;
         }
         .summary-market-stats {
-            grid-template-columns: repeat(2, 1fr);
             text-align: left;
-            width: 100%;
         }
     }
   </style>
@@ -446,10 +442,7 @@ class DFNPatrol extends HTMLElement {
 
     const { tokenInfo, security, distribution, market, socials, liquidityDrain } = this.report;
     const formatNum = (num) => num ? Number(num).toLocaleString('en-US', {maximumFractionDigits: 0}) : 'N/A';
-    
-    // ИСПРАВЛЕНИЕ: Безопасное получение priceChange
     const priceChange = market?.priceChange || {};
-
     const priceChangeColor = priceChange.h24 >= 0 ? 'text-ok' : 'text-bad';
     const price = !market?.priceUsd ? 'N/A' : (Number(market.priceUsd) < 0.000001 ? `$${Number(market.priceUsd).toExponential(2)}` : `$${Number(market.priceUsd).toLocaleString('en-US', {maximumFractionDigits: 8})}`);
     
@@ -472,7 +465,7 @@ class DFNPatrol extends HTMLElement {
             </div>
         </div>
     ` : '';
-
+    
     const marketStatsHTML = `
         <div class="summary-market-stats">
             <div class="stat-item"><b>Price</b><span>${price}</span></div>
@@ -534,7 +527,8 @@ class DFNPatrol extends HTMLElement {
 
 
     const newContent = `
-        <div class="summary-block">
+      <div class="summary-block">
+        <div class="summary-header">
             <div class="summary-token-info">
                 ${tokenInfo.logoUrl ? `<img src="${sanitizeUrl(tokenInfo.logoUrl)}" alt="${sanitizeHTML(tokenInfo.symbol)} logo" class="token-logo">` : `<div class="token-logo"></div>`}
                 <div class="token-name-symbol">
@@ -545,10 +539,11 @@ class DFNPatrol extends HTMLElement {
                 </div>
             </div>
             ${scoreHTML}
-            ${marketStatsHTML}
         </div>
-        ${trendIndicatorHTML}
-        <div class="report-grid">
+        ${marketStatsHTML}
+      </div>
+      ${trendIndicatorHTML}
+      <div class="report-grid">
             ${socialsHTML}
             <div>
               <h3>🛡️ Security Flags</h3>
