@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.4.0 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.4.1 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -62,50 +62,25 @@ template.innerHTML = `
     a { color: var(--accent, #FFD447); text-decoration: none; font-weight: 500; }
     a:hover { text-decoration: underline; }
 
-    /* --- ОКОНЧАТЕЛЬНАЯ ВЕРСТКА ВЕРХНЕГО БЛОКА --- */
     .summary-block {
       display: flex;
-      flex-direction: column;
-      gap: 24px;
+      flex-wrap: wrap;
+      gap: 16px 32px;
       padding: 24px;
       background: #191919;
       border-radius: 8px;
       border: 1px solid #282828;
       margin-bottom: 24px;
-    }
-    .summary-header {
-      display: flex;
-      gap: 24px;
       align-items: center;
     }
     .summary-token-info {
         display: flex;
         align-items: center;
         gap: 16px;
-        flex-grow: 1; 
-        min-width: 0; 
+        flex-grow: 1;
     }
-    .token-logo { 
-        width: 48px; 
-        height: 48px; 
-        border-radius: 50%; 
-        background: #222; 
-        object-fit: cover; 
-        flex-shrink: 0; 
-    }
-    .token-name-symbol {
-        min-width: 0;
-        overflow: hidden;
-    }
-    .token-name-symbol h2 {
-        font-size: 1.8rem;
-        margin: 0;
-        line-height: 1.1;
-        color: #fff;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
+    .token-logo { width: 48px; height: 48px; border-radius: 50%; background: #222; object-fit: cover; }
+    .token-name-symbol h2 { font-size: 1.8rem; margin: 0; line-height: 1.1; color: #fff; }
     .token-name-symbol span { font-size: 1rem; color: #999; margin-top: 4px; display: block; }
 
     .address-container { 
@@ -159,7 +134,7 @@ template.innerHTML = `
         color: var(--accent, #FFD447);
     }
 
-    .summary-market-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 16px 24px; text-align: left; }
+    .summary-market-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 24px; text-align: right; }
     .stat-item { display: flex; flex-direction: column; }
     .stat-item b { font-size: 0.9rem; color: #888; font-weight: 500; margin-bottom: 4px; text-transform: uppercase; }
     .stat-item span { font-size: 1.2rem; font-weight: 600; color: #fff; }
@@ -171,7 +146,7 @@ template.innerHTML = `
         position: relative;
         width: 120px;
         height: 120px;
-        flex-shrink: 0;
+        margin-left: auto;
     }
     .score-svg {
         width: 100%;
@@ -270,30 +245,9 @@ template.innerHTML = `
       to   { opacity: 1; }
     }
 
-    /* МЕДИА-ЗАПРОСЫ */
-    @media (max-width: 768px) {
-        .summary-header {
-            flex-direction: column; 
-            align-items: center;
-        }
-        .summary-token-info {
-             flex-direction: column;
-             text-align: center;
-        }
-        .score-container {
-            margin-left: 0;
-            margin-top: 20px;
-        }
-        .summary-market-stats {
-            text-align: left;
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
-    @media (max-width: 480px) {
-        .summary-market-stats {
-            grid-template-columns: 1fr;
-        }
-    }
+    @media (min-width: 901px) { .token-logo { width: 96px !important; height: 96px !important; } }
+    @media (max-width: 900px) { .summary-market-stats { order: 3; width: 100%; text-align: left; } .summary-token-info { order: 1; } .score-container { order: 2; margin-left: 0; margin-top: 20px; } }
+    @media (max-width: 600px) { .summary-market-stats { grid-template-columns: repeat(2, 1fr); } .trend-indicator { grid-template-columns: repeat(2, 1fr); } }
   </style>
   <div id="report-container">
     <div class="placeholder">Generating token health report...</div>
@@ -443,8 +397,7 @@ class DFNPatrol extends HTMLElement {
 
     const { tokenInfo, security, distribution, market, socials, liquidityDrain } = this.report;
     const formatNum = (num) => num ? Number(num).toLocaleString('en-US', {maximumFractionDigits: 0}) : 'N/A';
-    const priceChange = market?.priceChange || {};
-    const priceChangeColor = priceChange.h24 >= 0 ? 'text-ok' : 'text-bad';
+    const priceChangeColor = market?.priceChange?.h24 >= 0 ? 'text-ok' : 'text-bad';
     const price = !market?.priceUsd ? 'N/A' : (Number(market.priceUsd) < 0.000001 ? `$${Number(market.priceUsd).toExponential(2)}` : `$${Number(market.priceUsd).toLocaleString('en-US', {maximumFractionDigits: 8})}`);
     
     let truncatedAddress = '';
@@ -466,11 +419,11 @@ class DFNPatrol extends HTMLElement {
             </div>
         </div>
     ` : '';
-    
+
     const marketStatsHTML = `
         <div class="summary-market-stats">
             <div class="stat-item"><b>Price</b><span>${price}</span></div>
-            <div class="stat-item"><b>24h Change</b><span class="${priceChangeColor}">${priceChange.h24?.toFixed(2) || '0.00'}%</span></div>
+            <div class="stat-item"><b>24h Change</b><span class="${priceChangeColor}">${market?.priceChange?.h24?.toFixed(2) || '0.00'}%</span></div>
             <div class="stat-item"><b>24h Volume</b><span>$${formatNum(market?.volume24h)}</span></div>
             <div class="stat-item"><b>Market Cap</b><span>$${formatNum(market?.marketCap)}</span></div>
             <div class="stat-item"><b>Liquidity</b><span>$${formatNum(market?.liquidity)}</span></div>
@@ -483,6 +436,7 @@ class DFNPatrol extends HTMLElement {
         </div>
     `;
 
+    const priceChange = market?.priceChange || {};
     const trendIndicatorHTML = `
       <div class="trend-indicator">
         <div class="trend-item"><b>5 MIN</b><div class="${priceChange.m5 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.m5?.toFixed(2) ?? '0.00'}%</div></div>
@@ -529,18 +483,16 @@ class DFNPatrol extends HTMLElement {
 
     const newContent = `
         <div class="summary-block">
-            <div class="summary-header">
-                <div class="summary-token-info">
-                    ${tokenInfo.logoUrl ? `<img src="${sanitizeUrl(tokenInfo.logoUrl)}" alt="${sanitizeHTML(tokenInfo.symbol)} logo" class="token-logo">` : `<div class="token-logo"></div>`}
-                    <div class="token-name-symbol">
-                        <h2>${sanitizeHTML(tokenInfo.name)}</h2>
-                        <span>${sanitizeHTML(tokenInfo.symbol)}</span>
-                        ${addressHTML}
-                        ${shareButtonHTML}
-                    </div>
+             <div class="summary-token-info">
+                ${tokenInfo.logoUrl ? `<img src="${sanitizeUrl(tokenInfo.logoUrl)}" alt="${sanitizeHTML(tokenInfo.symbol)} logo" class="token-logo">` : `<div class="token-logo"></div>`}
+                <div class="token-name-symbol">
+                    <h2>${sanitizeHTML(tokenInfo.name)}</h2>
+                    <span>${sanitizeHTML(tokenInfo.symbol)}</span>
+                    ${addressHTML}
+                    ${shareButtonHTML}
                 </div>
-                ${scoreHTML}
-            </div>
+             </div>
+            ${scoreHTML}
             ${marketStatsHTML}
         </div>
         ${trendIndicatorHTML}
