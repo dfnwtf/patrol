@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.3.9 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v5.4.0 initialized - Final Hybrid Simulation");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -62,11 +62,10 @@ template.innerHTML = `
     a { color: var(--accent, #FFD447); text-decoration: none; font-weight: 500; }
     a:hover { text-decoration: underline; }
 
-    /* --- ОКОНЧАТЕЛЬНАЯ ВЕРСТКА НА CSS GRID --- */
+    /* --- ОКОНЧАТЕЛЬНАЯ ВЕРСТКА ВЕРХНЕГО БЛОКА --- */
     .summary-block {
-      display: grid;
-      /* Две колонки: первая растягивается, вторая по контенту */
-      grid-template-columns: 1fr auto; 
+      display: flex;
+      flex-direction: column;
       gap: 24px;
       padding: 24px;
       background: #191919;
@@ -74,23 +73,18 @@ template.innerHTML = `
       border: 1px solid #282828;
       margin-bottom: 24px;
     }
+    .summary-header {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
     .summary-token-info {
         display: flex;
         align-items: center;
         gap: 16px;
+        flex-grow: 1; 
         min-width: 0; 
     }
-    .score-container {
-      justify-self: end; /* Прижимаем к правому краю колонки */
-    }
-    .summary-market-stats { 
-        grid-column: 1 / -1; /* Растягиваем на все колонки, создавая новую строку */
-        display: grid; 
-        grid-template-columns: repeat(3, 1fr); 
-        gap: 16px 24px; 
-        text-align: right;
-    }
-
     .token-logo { 
         width: 48px; 
         height: 48px; 
@@ -164,7 +158,8 @@ template.innerHTML = `
     .copied-text {
         color: var(--accent, #FFD447);
     }
-    
+
+    .summary-market-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 16px 24px; text-align: left; }
     .stat-item { display: flex; flex-direction: column; }
     .stat-item b { font-size: 0.9rem; color: #888; font-weight: 500; margin-bottom: 4px; text-transform: uppercase; }
     .stat-item span { font-size: 1.2rem; font-weight: 600; color: #fff; }
@@ -275,31 +270,28 @@ template.innerHTML = `
       to   { opacity: 1; }
     }
 
-    @media (max-width: 800px) {
-        .summary-block {
-            grid-template-columns: 1fr; /* Переключаемся на одну колонку */
-            justify-items: center; /* Центрируем все по горизонтали */
+    /* МЕДИА-ЗАПРОСЫ */
+    @media (max-width: 768px) {
+        .summary-header {
+            flex-direction: column; 
+            align-items: center;
         }
         .summary-token-info {
-            grid-column: 1 / -1;
-            flex-direction: column;
-            text-align: center;
+             flex-direction: column;
+             text-align: center;
         }
         .score-container {
-            grid-column: 1 / -1;
-            grid-row: 2 / 3; /* Явно указываем вторую строку */
-            justify-self: center; /* Дополнительно центрируем */
+            margin-left: 0;
+            margin-top: 20px;
         }
         .summary-market-stats {
-            grid-row: 3 / 4; /* Явно указываем третью строку */
-            grid-template-columns: repeat(2, 1fr);
             text-align: left;
-            width: 100%;
+            grid-template-columns: repeat(2, 1fr);
         }
     }
     @media (max-width: 480px) {
         .summary-market-stats {
-            grid-template-columns: 1fr; /* На самых маленьких экранах - одна колонка для статов */
+            grid-template-columns: 1fr;
         }
     }
   </style>
@@ -537,16 +529,18 @@ class DFNPatrol extends HTMLElement {
 
     const newContent = `
         <div class="summary-block">
-            <div class="summary-token-info">
-                ${tokenInfo.logoUrl ? `<img src="${sanitizeUrl(tokenInfo.logoUrl)}" alt="${sanitizeHTML(tokenInfo.symbol)} logo" class="token-logo">` : `<div class="token-logo"></div>`}
-                <div class="token-name-symbol">
-                    <h2>${sanitizeHTML(tokenInfo.name)}</h2>
-                    <span>${sanitizeHTML(tokenInfo.symbol)}</span>
-                    ${addressHTML}
-                    ${shareButtonHTML}
+            <div class="summary-header">
+                <div class="summary-token-info">
+                    ${tokenInfo.logoUrl ? `<img src="${sanitizeUrl(tokenInfo.logoUrl)}" alt="${sanitizeHTML(tokenInfo.symbol)} logo" class="token-logo">` : `<div class="token-logo"></div>`}
+                    <div class="token-name-symbol">
+                        <h2>${sanitizeHTML(tokenInfo.name)}</h2>
+                        <span>${sanitizeHTML(tokenInfo.symbol)}</span>
+                        ${addressHTML}
+                        ${shareButtonHTML}
+                    </div>
                 </div>
+                ${scoreHTML}
             </div>
-            ${scoreHTML}
             ${marketStatsHTML}
         </div>
         ${trendIndicatorHTML}
@@ -581,7 +575,6 @@ class DFNPatrol extends HTMLElement {
         </div>
     `;
     
-    // Вставляем все содержимое в report-container
     this.container.innerHTML = `<div class="report-fade-in">${newContent}</div>`;
 
     this.shadowRoot.querySelector('.address-container')?.addEventListener('click', () => this.handleAddressCopy());
