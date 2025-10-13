@@ -55,3 +55,61 @@ We use a modern Web Component for a simple and secure integration. Installation 
 Place the following `<script>` tag just before the closing `</body>` tag in your HTML file. This only needs to be done once per page.
 ```html
 <script src="[https://dfn.wtf/badge.js](https://dfn.wtf/badge.js)" defer></script>
+
+Step 2: Place the Widget Element
+Paste this custom HTML element where you want the widget to appear in your site's layout.
+
+HTML
+
+<dfn-trust-badge token="YOUR_TOKEN_ADDRESS_HERE"></dfn-trust-badge>
+Remember to replace YOUR_TOKEN_ADDRESS_HERE with your project's Solana token address.
+
+🔧 Troubleshooting & Content Security Policy (CSP)
+If the widget doesn't appear on your page, it is most likely being blocked by a Content Security Policy (CSP) on your server. This is a standard security feature built into modern websites, not a bug in the widget.
+
+The Fix: You need to explicitly allow your website to load and execute the widget script from our domain and allow it to make API calls. This is done by adding https://dfn.wtf to the script-src and connect-src directives in your site's CSP header.
+
+Configuration Examples
+Here are examples for common server setups. Choose the one that applies to your project.
+
+1. HTML Meta Tag (for static sites)
+
+Add the following <meta> tag to the <head> section of your HTML file:
+
+HTML
+
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' [https://dfn.wtf](https://dfn.wtf); connect-src 'self' [https://dfn.wtf](https://dfn.wtf);">
+2. NGINX
+
+In your nginx.conf file, inside your server or location block, add the following header:
+
+Nginx
+
+add_header Content-Security-Policy "script-src 'self' [https://dfn.wtf](https://dfn.wtf); connect-src 'self' [https://dfn.wtf](https://dfn.wtf);";
+3. Apache
+
+Add the following line to your .htaccess file:
+
+Apache
+
+Header set Content-Security-Policy "script-src 'self' [https://dfn.wtf](https://dfn.wtf); connect-src 'self' [https://dfn.wtf](https://dfn.wtf);"
+4. Node.js (with Express & Helmet)
+
+If you're using the helmet middleware for security, configure it like this:
+
+JavaScript
+
+const helmet = require('helmet');
+
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "script-src": ["'self'", "[https://dfn.wtf](https://dfn.wtf)"],
+      "connect-src": ["'self'", "[https://dfn.wtf](https://dfn.wtf)"],
+    },
+  })
+);
+Note: If you already have a CSP, you will need to merge our domains with your existing directives, not replace them.
+
+Powered by the Department of Financial Nonsense
