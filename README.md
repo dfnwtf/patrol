@@ -7,8 +7,7 @@
 
 <p align="center">
   <strong>A free, instant security scanner and risk analysis tool for Solana tokens.</strong>
-  <br />
-  <br />
+  <br /><br />
   <a href="https://dfn.wtf/patrol">
     <img src="https://img.shields.io/badge/service-online-success.svg" alt="Service Status">
   </a>
@@ -26,99 +25,64 @@
 
 **Nonsense Patrol** is a comprehensive token analysis service developed by the Department of Financial Nonsense. Our mission is to bring clarity to a chaotic ecosystem by providing traders and investors with the tools they need to perform quick and effective due diligence on Solana tokens.
 
-The scanner combines on-chain data, market statistics, and security checks to generate a single, easy-to-understand **Trust Score**, helping users identify potential risks before they invest.
-
-### 🛡️ Key Analysis Features
-
-Nonsense Patrol evaluates tokens across several key vectors to determine its Trust Score:
-
-* **Smart Contract Security** – Checks for critical contract-level risks, such as whether the mint authority has been renounced, if a freeze authority exists, or if the token's metadata is mutable.  
-* **Liquidity Health** – Determines if the token's liquidity pool (LP) is burned, locked, or remains unlocked (a major red flag).  
-* **Holder Distribution** – Analyzes the concentration of top holders (whales) after filtering out exchange and protocol-owned wallets to reveal the true ownership structure.  
-* **Threat Intelligence** – Scans the token creator's wallet and top holder wallets against a database of known hackers and scammers.  
-* **Price Impact Simulation** – Simulates the potential market cap collapse if the largest holders were to sell their tokens, giving insight into the token's stability.
-
 ---
 
 ### 🚀 Showcase Your Trust Score
 
-Are you a project developer and confident in your token's security? You can display your DFN Trust Score directly on your website using our official widget. It's a simple way to build community trust and show that you're committed to transparency.
+You can display your DFN Trust Score directly on your website using our official widget. The badge has a transparent background and is available in two themes to ensure it looks great on any site.
 
-**Widget Demo:**  
-![DFN Trust Score Badge Example](https://dfn.wtf/badge_demo.png)
+### How to Add the Widget
 
-### How to Add the Widget to Your Site
+Installation is a two‑step process:
 
-We use a modern Web Component for a simple and secure integration. Installation is a two-step process:
+#### **Step 1: Add the Widget Script**
 
-#### Step 1: Add the Widget Script
-
-Place the following `<script>` tag just before the closing `</body>` tag in your HTML file. This only needs to be done once per page.
+Place the following `<script>` tag just before the closing `</body>` tag in your HTML file:
 
 ```html
 <script src="https://dfn.wtf/badge.js" defer></script>
 ```
 
-#### Step 2: Place the Widget Element
+#### **Step 2: Place the Widget Element**
 
-Paste this custom HTML element where you want the widget to appear in your site's layout.
+Paste this custom HTML element where you want the badge to appear. Use the `theme` attribute to match your site's background.
+
+*For **dark** backgrounds (light text):*
 
 ```html
-<dfn-trust-badge token="YOUR_TOKEN_ADDRESS_HERE"></dfn-trust-badge>
+<dfn-trust-badge token="YOUR_TOKEN_ADDRESS_HERE" theme="dark"></dfn-trust-badge>
 ```
 
-Remember to replace `YOUR_TOKEN_ADDRESS_HERE` with your project's Solana token address.
+*For **light** backgrounds (dark text):*
+
+```html
+<dfn-trust-badge token="YOUR_TOKEN_ADDRESS_HERE" theme="light"></dfn-trust-badge>
+```
+
+> Replace `YOUR_TOKEN_ADDRESS_HERE` with your project's Solana token address.
+
+---
+
+### ⚙️ Customization Options
+
+| Attribute | Required | Description | Options |
+|-----------|----------|-------------|---------|
+| `token`   | ✅       | The Solana address of the token to analyze. | *Any valid SPL address* |
+| `theme`   | ❌       | Sets the badge text color scheme. | `dark` *(default)* / `light` |
 
 ---
 
 ### 🔧 Troubleshooting & Content Security Policy (CSP)
 
-If the widget doesn't appear on your page, it is most likely being blocked by a Content Security Policy (CSP) on your server. This is a standard security feature built into modern websites, not a bug in the widget.
+If the badge doesn't appear, it's likely blocked by your site's **Content Security Policy (CSP)**.
 
-**The Fix:** Explicitly allow your website to load and execute the widget script from our domain and allow it to make API calls. This is done by adding `https://dfn.wtf` to the `script-src` and `connect-src` directives in your site's CSP header.
+**Fix:** Add `https://dfn.wtf` to both `script-src` and `connect-src` directives.
 
-#### Configuration Examples
-
-Choose the one that applies to your project.
-
-1. **HTML Meta Tag (for static sites)**
-
-   ```html
-   <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://dfn.wtf; connect-src 'self' https://dfn.wtf;">
-   ```
-
-2. **NGINX**
-
-   ```nginx
-   add_header Content-Security-Policy "script-src 'self' https://dfn.wtf; connect-src 'self' https://dfn.wtf;";
-   ```
-
-3. **Apache**
-
-   ```apache
-   Header set Content-Security-Policy "script-src 'self' https://dfn.wtf; connect-src 'self' https://dfn.wtf;"
-   ```
-
-4. **Node.js (Express + Helmet)**
-
-   ```js
-   const helmet = require('helmet');
-
-   app.use(
-     helmet.contentSecurityPolicy({
-       directives: {
-         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-         "script-src": ["'self'", "https://dfn.wtf"],
-         "connect-src": ["'self'", "https://dfn.wtf"],
-       },
-     })
-   );
-   ```
-
-> **Note:** If you already have a CSP, merge our domain with your existing directives instead of replacing them.
+_Examples for meta‑tags, NGINX, Apache, and Express/Helmet are identical to the full documentation._
 
 ---
 
 <p align="center">
-  Powered by the <a href="https://dfn.wtf">Department of Financial Nonsense</a>
+  Powered by the <a href="https://dfn.wtf">Department of Financial Nonsense</a><br/>
+  <a href="https://dfn.wtf">Website</a> | <a href="https://x.com/IDK_DFN">Twitter</a>
 </p>
