@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v5.4.3 initialized - Final Hybrid Simulation");
+console.log("[DFN Components] v6.0.0 initialized - Hype Analysis Integration");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -210,6 +210,24 @@ template.innerHTML = `
     details[open] > summary { list-style-type: '▾ '; }
     .programmatic-list { padding: 12px 0 4px 24px; list-style-type: square; font-size: 0.85em; }
     .programmatic-list li { margin-bottom: 8px; }
+
+    /* --- НОВЫЕ СТИЛИ ДЛЯ БЛОКА АНАЛИЗА ХАЙПА --- */
+    .hype-analysis-block { grid-column: 1 / -1; }
+    .hype-verdict { text-align: center; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+    .hype-verdict-title { font-size: 0.9rem; color: #aaa; text-transform: uppercase; margin: 0 0 8px; font-weight: 600; }
+    .hype-verdict-text { font-size: 1.5rem; font-weight: 700; margin: 0; }
+    .verdict-low-profile { background: rgba(158, 255, 158, 0.1); border: 1px solid #9eff9e44; color: #9eff9e; }
+    .verdict-rising-attention { background: rgba(255, 212, 71, 0.1); border: 1px solid #ffd44744; color: #ffd447; }
+    .verdict-irrational-optimism { background: rgba(255, 212, 71, 0.15); border: 1px solid #ffd44766; color: #ffd447; }
+    .verdict-high-volatility { background: rgba(255, 165, 0, 0.1); border: 1px solid #ffa50044; color: #ffa500; }
+    .verdict-toxic-sentiment { background: rgba(255, 107, 123, 0.1); border: 1px solid #ff6b7b44; color: #ff6b7b; }
+    
+    .hype-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; text-align: center; }
+    .hype-widget { background-color: #111; padding: 16px; border-radius: 6px; border: 1px solid #222; }
+    .hype-widget-label { font-size: 0.8rem; font-weight: 600; color: #888; text-transform: uppercase; margin-bottom: 8px; }
+    .hype-widget-value { font-size: 1.4rem; font-weight: 700; color: #fff; }
+    .hype-widget-value .buys-sells { font-size: 1.1rem; }
+    /* --- КОНЕЦ НОВЫХ СТИЛЕЙ --- */
     
     #cascade-dump-simulator { text-align: center; background: #191919; padding: 24px; border-radius: 8px; border: 1px solid #282828;}
     #start-sim-btn {
@@ -247,7 +265,7 @@ template.innerHTML = `
 
     @media (min-width: 901px) { .token-logo { width: 96px !important; height: 96px !important; } }
     @media (max-width: 900px) { .summary-market-stats { order: 3; width: 100%; text-align: left; } .summary-token-info { order: 1; } .score-container { order: 2; margin-left: 0; margin-top: 20px; } }
-    @media (max-width: 600px) { .summary-market-stats { grid-template-columns: repeat(2, 1fr); } .trend-indicator { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) { .summary-market-stats { grid-template-columns: repeat(2, 1fr); } .trend-indicator { grid-template-columns: repeat(2, 1fr); } .hype-grid { grid-template-columns: repeat(2, 1fr); } }
   </style>
   <div id="report-container">
     <div class="placeholder">Generating token health report...</div>
@@ -260,7 +278,7 @@ class DFNPatrol extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.shadowRoot.appendChild(template.content.cloneNode(true));
     this.container = this.shadowRoot.querySelector('#report-container');
-    this.copyIconSVG = `<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+    this.copyIconSVG = `<svg class="copy-icon" xmlns="http://www.w.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
     this.checkIconSVG = `<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9eff9e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
   }
   
@@ -289,7 +307,16 @@ class DFNPatrol extends HTMLElement {
         else if (score >= 40) circle.style.stroke = '#ffd447';
         else circle.style.stroke = '#ff6b7b';
         
-        percentageText.textContent = `${score}%`;
+        let i = 0;
+        const interval = setInterval(() => {
+            i++;
+            const currentScore = Math.round((i / 100) * score);
+            percentageText.textContent = `${currentScore}%`;
+            if (currentScore >= score) {
+                clearInterval(interval);
+            }
+        }, 10);
+
     }, 100);
   }
 
