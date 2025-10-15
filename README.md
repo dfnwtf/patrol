@@ -123,8 +123,6 @@ _Note: If you already have a CSP, merge these domains with your existing directi
 
 ---
 
-### 📜 License
-
 Distributed under the MIT License. See <a href="https://opensource.org/license/mit">LICENSE</a> for full text.
 
 ---
