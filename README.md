@@ -55,7 +55,7 @@ It ships with a transparent background and two color themes so it looks sharp on
 
 We ship a modern **Web Component** for quick, secure integration. Two easy steps:
 
-#### Step 1 — Add the Widget Script
+#### Step 1 - Add the Widget Script
 
 Insert this just before `</body>` (only once per page):
 
@@ -63,7 +63,7 @@ Insert this just before `</body>` (only once per page):
 <script src="https://dfn.wtf/badge.js" defer></script>
 ```
 
-#### Step 2 — Place the Widget Element
+#### Step 2 - Place the Widget Element
 
 Add the custom element where you want the badge to appear.  
 Choose `theme="dark"` for dark backgrounds (light text) or `theme="light"` for light backgrounds (dark text).
