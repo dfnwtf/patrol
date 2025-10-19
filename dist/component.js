@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v6.0.4 initialized - Final Hype Features");
+console.log("[DFN Components] v6.0.5 initialized - Final Hype Layout");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -239,9 +239,12 @@ template.innerHTML = `
     .sentiment-neutral { color: #aaa; }
     .sentiment-negative { color: #ff6b7b; }
 
-    .network-breakdown { font-size: 0.9em; color: #aaa; text-align: left; padding: 0 10px; }
-    .network-breakdown div:not(:last-child) { margin-bottom: 4px; }
-    .network-breakdown strong { color: #fff; }
+    .breakdown-container { margin-top: 20px; }
+    .breakdown-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .breakdown-label { width: 100px; font-size: 0.9em; color: #aaa; text-align: right; }
+    .breakdown-bar-bg { flex-grow: 1; background-color: #222; border-radius: 4px; height: 20px; }
+    .breakdown-bar-fg { height: 100%; background-color: var(--accent); border-radius: 4px; transition: width 0.5s ease-out; }
+    .breakdown-value { font-size: 0.9em; font-weight: bold; min-width: 50px; text-align: left;}
 
     .recent-posts-container { margin-top: 20px; }
     .post-card { background-color: #111; border: 1px solid #222; border-radius: 6px; padding: 14px; margin-bottom: 12px; font-size: 0.9em; text-align: left; }
@@ -250,7 +253,7 @@ template.innerHTML = `
     .post-author-info { display: flex; flex-direction: column; }
     .post-author-info a { color: #eee; font-weight: bold; }
     .post-author-info span { color: #888; font-size: 0.85em; }
-    .post-body { color: #ccc; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; }
+    .post-body { color: #ccc; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; max-height: 100px; overflow: hidden; }
     .post-body a { color: #58a6ff; }
     .post-footer { margin-top: 12px; font-size: 0.85em; color: #888; }
     
@@ -561,7 +564,23 @@ class DFNPatrol extends HTMLElement {
             return `${Math.round((value / total) * 100)}%`;
         };
         
-        const networkBreakdownHTML = hype.networkBreakdown ? Object.entries(hype.networkBreakdown).map(([key, value]) => `<div>${key.charAt(0).toUpperCase() + key.slice(1)}: <strong>${formatBigNum(value)}</strong></div>`).join('') : '';
+        const networkBreakdownData = hype.networkBreakdown ? Object.entries(hype.networkBreakdown) : [];
+        const totalInteractions = networkBreakdownData.reduce((sum, [, value]) => sum + value, 0);
+
+        const networkBreakdownHTML = totalInteractions > 0 ? `
+            <div class="breakdown-container">
+                <h4>Network Breakdown</h4>
+                ${networkBreakdownData.map(([key, value]) => `
+                    <div class="breakdown-item">
+                        <div class="breakdown-label">${key.charAt(0).toUpperCase() + key.slice(1).replace('-post','')}</div>
+                        <div class="breakdown-bar-bg">
+                            <div class="breakdown-bar-fg" style="width: ${(value / totalInteractions) * 100}%;"></div>
+                        </div>
+                        <div class="breakdown-value">${formatBigNum(value)}</div>
+                    </div>
+                `).join('')}
+            </div>
+        ` : '';
         
         const recentPostsHTML = hype.recentPosts && hype.recentPosts.length > 0 ? `
             <div class="recent-posts-container">
@@ -610,20 +629,12 @@ class DFNPatrol extends HTMLElement {
                         <div class="hype-widget-label">Momentum Score</div>
                         <div class="hype-widget-value">${hype.momentumScore || 'N/A'}</div>
                     </div>
-                    <div class="hype-widget" title="Breakdown of interactions by social network.">
-                        <div class="hype-widget-label">Network Breakdown</div>
-                        <div class="hype-widget-value network-breakdown">${networkBreakdownHTML}</div>
-                    </div>
-                    <div class="hype-widget" title="Total number of social media posts about this token in the last 24 hours.">
-                        <div class="hype-widget-label">Posts (24h)</div>
-                        <div class="hype-widget-value">${formatBigNum(hype.posts)}</div>
-                    </div>
                 </div>
+                ${networkBreakdownHTML}
                 ${recentPostsHTML}
             </div>
         `;
     }
-
 
     const programmaticAccountsHTML = distribution.allLpAddresses && distribution.allLpAddresses.length > 0 ?
       `<details class="programmatic-accounts-details"><summary>Pools, CEX, etc.: ${distribution.allLpAddresses.length}</summary><ul class="programmatic-list">${distribution.allLpAddresses.map(addr => `<li><a href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${addr.slice(0, 10)}...${addr.slice(-4)}</a></li>`).join('')}</ul></details>` : '';
