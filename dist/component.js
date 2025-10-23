@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v6.1.0 initialized - Final Hype Layout with Tooltips");
+console.log("[DFN Components] v6.1.1 initialized - Final Hype Layout with Tooltips");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -101,7 +101,7 @@ template.innerHTML = `
         cursor: pointer; 
         padding: 4px 8px; 
         border-radius: 4px; 
-        transition: background-color 0.2s; 
+        transition: background-color: 0.2s; 
         width: fit-content;
     }
     .address-container:hover { background-color: #252525; }
@@ -306,7 +306,7 @@ class DFNPatrol extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.shadowRoot.appendChild(template.content.cloneNode(true));
     this.container = this.shadowRoot.querySelector('#report-container');
-    this.copyIconSVG = `<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>`;
+    this.copyIconSVG = `<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>`;
     this.checkIconSVG = `<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9eff9e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
   }
   
@@ -681,9 +681,10 @@ class DFNPatrol extends HTMLElement {
                 ${security.hackerFound ? `<li class="bad">${sanitizeHTML(security.hackerFound)}</li>` : ''}
                 
                 ${'holderConcentration' in security ? `<li class="${security.holderConcentration > 25 ? 'bad' : (security.holderConcentration > 10 ? 'warn' : 'ok')}">Top 10 holders own ${security.holderConcentration.toFixed(2)}%.</li>` : ''}
-                ${security.isCto ? `<li class="ok">Community Takeover</li>` : ''}
                 
-                ${security.isSponsored ? `<li class="warn">Token is using a sponsored placement on DexScreener.</li>` : ''}
+                // --- ИЗМЕНЕНИЕ: Отображаем все флаги, полученные с API ---
+                ${security.isCto ? `<li class="ok">Community Takeover</li>` : ''}
+                ${security.hasActiveAd ? `<li class="warn">Token has an active ad campaign on DexScreener.</li>` : ''}
                 ${security.isDexVerified ? `<li class="ok">Token info on DexScreener is verified by the team.</li>` : ''}
                 ${!security.isDexVerified && !security.launchpad ? `<li class="warn">Token info on DexScreener has not been updated by the team.</li>` : ''}
 
