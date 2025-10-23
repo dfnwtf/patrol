@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v6.0.9 initialized - Final Hype Layout with Tooltips");
+console.log("[DFN Components] v6.1.0 initialized - Final Hype Layout with Tooltips");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -683,8 +683,7 @@ class DFNPatrol extends HTMLElement {
                 ${'holderConcentration' in security ? `<li class="${security.holderConcentration > 25 ? 'bad' : (security.holderConcentration > 10 ? 'warn' : 'ok')}">Top 10 holders own ${security.holderConcentration.toFixed(2)}%.</li>` : ''}
                 ${security.isCto ? `<li class="ok">Community Takeover</li>` : ''}
                 
-                // ИЗМЕНЕНИЕ: Добавляем флаги для верификации и рекламы
-                ${security.isSponsored ? `<li class="warn">This token is a sponsored placement on DexScreener.</li>` : ''}
+                ${security.isSponsored ? `<li class="warn">Token is using a sponsored placement on DexScreener.</li>` : ''}
                 ${security.isDexVerified ? `<li class="ok">Token info on DexScreener is verified by the team.</li>` : ''}
                 ${!security.isDexVerified && !security.launchpad ? `<li class="warn">Token info on DexScreener has not been updated by the team.</li>` : ''}
 
