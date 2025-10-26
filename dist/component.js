@@ -679,13 +679,12 @@ class DFNPatrol extends HTMLElement {
               <ul>
                 ${security.launchpad ? `<li class="ok">Launched on a trusted platform: ${sanitizeHTML(security.launchpad)}.</li>` : ''}
                 ${security.hackerFound ? `<li class="bad">${sanitizeHTML(security.hackerFound)}</li>` : ''}
-                
                 ${'holderConcentration' in security ? `<li class="${security.holderConcentration > 25 ? 'bad' : (security.holderConcentration > 10 ? 'warn' : 'ok')}">Top 10 holders own ${security.holderConcentration.toFixed(2)}%.</li>` : ''}
                 
                 ${security.hasActiveAd ? `<li class="ok">DEX AD Paid</li>` : ''}
                 ${security.isCto ? `<li class="ok">Community Takeover</li>` : ''}
                 ${security.isDexVerified ? `<li class="ok">DEX Paid</li>` : ''}
-                ${!security.isDexVerified && !security.launchpad ? `<li class="bad">DEX Not Paid</li>` : ''}
+                ${!security.isDexVerified ? `<li class="bad">DEX Not Paid</li>` : ''}
 
                 ${security.lpStatus ? `<li class="${security.lpStatus === 'Burned' || security.lpStatus === 'Locked/Burned' ? 'ok' : 'bad'}">Liquidity is ${security.lpStatus}.</li>` : '<li>Liquidity status is Unknown.</li>'}
                 ${'isMutable' in security ? `<li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>` : ''}
