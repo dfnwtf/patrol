@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v6.1.4 initialized - Final Hype Layout with Tooltips");
+console.log("[DFN Components] v6.1.5 initialized - Final Hype Layout with Tooltips");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -642,7 +642,7 @@ class DFNPatrol extends HTMLElement {
 
     const cascadeSimulatorHTML = liquidityDrain && liquidityDrain.length > 0 && market.marketCap > 0 ? `
         <div id="cascade-dump-simulator" class="full-width">
-            <h3>💥 Price Collapse Drill</h3>
+            <h3>💥Dump Simuulation</h3>
             <div class="sim-display">
                 <div class="sim-label">Market Cap:</div>
                 <div class="sim-bar-container">
