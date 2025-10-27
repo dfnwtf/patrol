@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] v6.1.5 initialized - Final Hype Layout with Tooltips");
+console.log("[DFN Components] v6.1.6 initialized - Final Hype Layout with Tooltips");
 
 function sanitizeHTML(str) {
     if (!str) return '';
