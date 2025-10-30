@@ -1,5 +1,5 @@
 // component.js
-console.log("[DFN Components] beta-v1.2 initialized");
+console.log("[DFN Components] beta-v1.3 initialized");
 
 function sanitizeHTML(str) {
     if (!str) return '';
@@ -304,7 +304,18 @@ template.innerHTML = `
     border-top: 1px solid #282828;
     padding-top: 24px;
 }
-    
+    /* --- clusters --- */
+.clusters-block { margin-top: 16px; }
+.clusters-list { list-style: none; padding-left: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.cluster-item { border: 1px solid #2a2a2a; border-radius: 10px; padding: 10px 12px; background: #121212; }
+.cluster-head { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; color: #ddd; margin-bottom: 6px; }
+.cluster-confidence { padding: 2px 8px; border-radius: 999px; border: 1px solid #333; font-size: 0.8rem; opacity: 0.9; }
+.cluster-reasons code { background: #1a1a1a; border: 1px solid #2d2d2d; border-radius: 6px; padding: 2px 6px; margin-left: 6px; font-size: 0.75rem; }
+.cluster-addrs { list-style: none; padding-left: 0; display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
+.cluster-addrs li a { color: #9fd3ff; text-decoration: none; border-bottom: 1px dotted #2a6fa8; }
+.cluster-addrs li a:hover { text-decoration: underline; }
+.mini-disclaimer { margin-top: 8px; font-size: 0.75rem; color: #888; }
+
   </style>
   <div id="report-container">
     <div class="placeholder">Generating token health report...</div>
@@ -651,6 +662,36 @@ class DFNPatrol extends HTMLElement {
     const programmaticAccountsHTML = distribution.allLpAddresses && distribution.allLpAddresses.length > 0 ?
       `<details class="programmatic-accounts-details"><summary>Pools, CEX, etc.: ${distribution.allLpAddresses.length}</summary><ul class="programmatic-list">${distribution.allLpAddresses.map(addr => `<li><a href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${addr.slice(0, 10)}...${addr.slice(-4)}</a></li>`).join('')}</ul></details>` : '';
 
+// --- NEW: Clusters (beta) ---
+const clusters = (this.report && Array.isArray(this.report.clusters)) ? this.report.clusters : [];
+const clustersHTML = `
+  <div class="clusters-block">
+    <h3>🧩 Clusters (beta)</h3>
+    ${clusters.length ? `
+      <ul class="clusters-list">
+        ${clusters.map((c, idx) => `
+          <li class="cluster-item">
+            <div class="cluster-head">
+              <strong>#${idx+1}</strong>
+              <span class="cluster-confidence">Confidence: ${c.confidence}%</span>
+              ${c.reasons ? `<span class="cluster-reasons">
+                ${Object.keys(c.reasons).map(k => `<code>${k}</code>`).slice(0,3).join(' ')}
+              </span>` : ''}
+            </div>
+            <ul class="cluster-addrs">
+              ${c.addresses.map(a => `
+                <li><a href="https://solscan.io/account/${a}" target="_blank" rel="noopener">${a.slice(0,6)}...${a.slice(-4)}</a></li>
+              `).join('')}
+            </ul>
+          </li>
+        `).join('')}
+      </ul>
+    ` : `<div class="placeholder">No significant clusters detected.</div>`}
+    <div class="mini-disclaimer">Heuristic grouping only — treat as hints, not proof.</div>
+  </div>
+`;
+
+      
     const cascadeSimulatorHTML = liquidityDrain && liquidityDrain.length > 0 && market.marketCap > 0 ? `
         <div id="cascade-dump-simulator" class="full-width">
             <h3>💥Dump Simulation</h3>
@@ -665,23 +706,6 @@ class DFNPatrol extends HTMLElement {
             <div id="simulation-log" class="sim-log">Press the button to simulate "what-if" scenarios.</div>
             <button id="start-sim-btn">Run Simulation</button>
         </div>` : '';
-
-    
-// --- Wallet Clusters (new) ---
-let clustersHTML = '';
-try {
-    const clusters = (this.report && this.report.clusters) ? this.report.clusters : null;
-    const items = clusters && Array.isArray(clusters.items) ? clusters.items : [];
-    if (items.length > 0) {
-        const list = items.map(c => {
-            const addrs = Array.isArray(c.addresses) ? c.addresses.slice(0, 10) : [];
-            const links = addrs.map(a => a && a.addr ? `<a href="https://solscan.io/account/${a.addr}" target="_blank" rel="noopener">${a.addr.slice(0,6)}...${a.addr.slice(-4)}</a>` : '').join(' • ');
-            const label = (c.label || 'unknown').replace(/_/g, ' ');
-            return `<li><strong>${sanitizeHTML(c.id || '')}</strong> — ${sanitizeHTML(label)} <span style="color:#888">(${c.size||0} addrs, weight ${Math.round((Number(c.weight||0))*100)}%)</span><br>${links || '—'}</li>`;
-        }).join('');
-        clustersHTML = `<div class="full-width"><h3>🧩 Wallet Clusters</h3><ul>${list}</ul></div>`;
-    }
-} catch(e) { console.warn('Clusters render error:', e); }
 
     const disclaimerHTML = `<div class="disclaimer">Disclaimer: This report is generated automatically for informational purposes only and does not constitute financial advice. The data is provided 'as is' without warranties of any kind. Always conduct your own research (DYOR) before making any investment decisions. The Department of Financial Nonsense is not liable for any financial losses.</div>`;
 
@@ -730,8 +754,8 @@ try {
                       : '<li>No significant individual holders found.</li>'}
               </ul>
               ${programmaticAccountsHTML}
+              ${clustersHTML} 
             </div>
-            ${clustersHTML}
             ${cascadeSimulatorHTML}
         </div>
         ${disclaimerHTML}
