@@ -1,849 +1,555 @@
-// component.js
-console.log("[DFN Components] beta-v1.4 initialized");
+// component.js — DFN Patrol UI v2
+console.log("[DFN Components] beta-v1.5 initialized");
 
+/* ---------- helpers ---------- */
 function sanitizeHTML(str) {
-    if (!str) return '';
-    if (typeof DOMPurify === 'undefined') return str;
-    return DOMPurify.sanitize(str.toString());
+  if (!str) return '';
+  if (typeof DOMPurify === 'undefined') return str;
+  return DOMPurify.sanitize(str.toString());
 }
-
 function sanitizeUrl(url) {
-    if (typeof url !== 'string' || !url) {
-        return '#';
-    }
-    try {
-        const u = new URL(url);
-        if (u.protocol === 'http:' || u.protocol === 'https:' || u.protocol === 'tg:') {
-            return u.href;
-        }
-    } catch (e) {}
-    return '#';
+  if (typeof url !== 'string' || !url) return '#';
+  try {
+    const u = new URL(url);
+    if (u.protocol === 'http:' || u.protocol === 'https:' || u.protocol === 'tg:') return u.href;
+  } catch (e) {}
+  return '#';
+}
+function msToAgeDays(ms) {
+  if (!ms || ms <= 0) return 0;
+  const days = Math.floor((Date.now() - ms) / 86400000);
+  return Math.max(0, days);
+}
+function verdictFromScore(score) {
+  if (score >= 85) return { text: 'Reliable', tone: 'ok' };
+  if (score >= 70) return { text: 'Sound', tone: 'ok' };
+  if (score >= 55) return { text: 'Caution', tone: 'warn' };
+  if (score >= 40) return { text: 'Risky', tone: 'warn' };
+  return { text: 'High Risk', tone: 'bad' };
 }
 
+/* ---------- template ---------- */
 const template = document.createElement('template');
 template.innerHTML = `
   <style>
     :host {
-      display: block;
-      font-family: sans-serif;
-      background-color: #111;
-      color: #eee;
-      padding: 24px;
-      border-radius: 12px;
-      border: 1px solid #333;
-    }
-    h3, h4 {
-      margin: 24px 0 16px;
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: var(--accent, #FFD447);
-      border-top: 1px solid #333;
-      padding-top: 24px;
-    }
-    h3:first-of-type {
-      margin-top: 0;
-      padding-top: 0;
-      border-top: none;
-    }
-    h4 {
-        font-size: 1rem;
-        color: #ccc;
-        border-top: none;
-        padding-top: 0;
-        margin-top: 0;
-    }
-    ul { list-style: none; padding-left: 0; font-size: 0.95rem; margin-top: 8px; }
-    li { margin-bottom: 10px; line-height: 1.5; display: flex; align-items: center; word-break: break-word; color: #aaa; }
-    
-    .placeholder, .error { text-align: center; padding: 40px; font-size: 1.1em; color: #888; }
-    .error { color: #ff6b7b; }
-    
-    .ok::before, .bad::before, .warn::before { content: '✓'; margin-right: 10px; font-weight: bold; font-size: 1.1em; }
-    .ok { color: #9eff9e; }
-    .bad { color: #ff6b7b; }
-    .bad::before { content: '🔴'; }
-    .ok::before { content: '✅'; }
-    .warn { color: #ffd447; }
-    .warn::before { content: '🟡'; }
-    
-    a { color: var(--accent, #FFD447); text-decoration: none; font-weight: 500; }
-    a:hover { text-decoration: underline; }
+      --bg: #0e0e0f;
+      --panel: #151516;
+      --panel-2: #1a1a1b;
+      --muted: #a9a9ad;
+      --text: #f2f2f3;
+      --line: #262628;
+      --accent: #FFD447;
+      --ok: #9eff9e;
+      --bad: #ff6b7b;
+      --warn: #ffd447;
+      --link: #9fd3ff;
 
-    .summary-block {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 16px 32px;
-      padding: 24px;
-      background: #191919;
-      border-radius: 8px;
-      border: 1px solid #282828;
-      margin-bottom: 24px;
-      align-items: center;
-    }
-    .summary-token-info {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        flex-grow: 1;
-    }
-    .token-logo { width: 48px; height: 48px; border-radius: 50%; background: #222; object-fit: cover; }
-    .token-name-symbol h2 { font-size: 1.8rem; margin: 0; line-height: 1.1; color: #fff; }
-    .token-name-symbol span { font-size: 1rem; color: #999; margin-top: 4px; display: block; }
-
-    .address-container { 
-        display: flex; 
-        align-items: center; 
-        gap: 8px; 
-        margin-top: 12px;
-        font-family: monospace; 
-        font-size: 0.9em; 
-        color: #888; 
-        cursor: pointer; 
-        padding: 4px 8px; 
-        border-radius: 4px; 
-        transition: background-color: 0.2s; 
-        width: fit-content;
-    }
-    .address-container:hover { background-color: #252525; }
-    .address-container .copy-icon { width: 14px; height: 14px; stroke: #888; transition: stroke 0.2s; }
-    .address-container:hover .copy-icon { stroke: #eee; }
-
-    .share-button {
-        background: none;
-        border: none;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-top: 8px;
-        font-family: monospace;
-        font-size: 0.9em;
-        color: #888;
-        cursor: pointer;
-        padding: 4px 8px;
-        border-radius: 4px;
-        transition: background-color: 0.2s;
-        width: fit-content;
-    }
-    .share-button:hover {
-        background-color: #252525;
-        color: #eee;
-    }
-    .share-button .copy-icon {
-        width: 14px;
-        height: 14px;
-        stroke: #888;
-        transition: stroke 0.2s;
-    }
-    .share-button:hover .copy-icon {
-        stroke: #eee;
-    }
-    .copied-text {
-        color: var(--accent, #FFD447);
+      display:block; background:var(--bg); color:var(--text);
+      border:1px solid var(--line); border-radius:16px; padding:20px;
+      font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
     }
 
-    .summary-market-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 24px; text-align: right; }
-    .stat-item { display: flex; flex-direction: column; }
-    .stat-item b { font-size: 0.9rem; color: #888; font-weight: 500; margin-bottom: 4px; text-transform: uppercase; }
-    .stat-item span { font-size: 1.2rem; font-weight: 600; color: #fff; }
-    .stat-item span.text-ok, .stat-item .buys-sells .text-ok { color: #9eff9e; }
-    .stat-item span.text-bad, .stat-item .buys-sells .text-bad { color: #ff6b7b; }
-    .stat-item .buys-sells { font-weight: 600; }
-    
-    .score-container {
-        position: relative;
-        width: 120px;
-        height: 120px;
-        margin-left: auto;
-    }
-    .score-svg {
-        width: 100%;
-        height: 100%;
-        transform: rotate(-90deg);
-    }
-    .score-circle-bg {
-        fill: none;
-        stroke: #2a2a2a;
-        stroke-width: 10;
-    }
-    .score-circle-fg {
-        fill: none;
-        stroke: #ff6b7b;
-        stroke-width: 10;
-        stroke-linecap: round;
-        transition: stroke-dashoffset 1s ease-out, stroke 0.5s ease;
-    }
-    .score-text-container {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-    }
-    .score-percentage {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #fff;
-    }
-    .score-label {
-        font-size: 0.6rem;
-        color: #888;
-        text-transform: uppercase;
-        margin-top: -4px;
-        white-space: nowrap;
-    }
-    
-    .report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
-    .report-grid > div { background: #191919; padding: 24px; border-radius: 8px; border: 1px solid #282828; }
-    .full-width { grid-column: 1 / -1; }
-    .socials-list { display: flex; flex-wrap: wrap; gap: 10px; list-style: none; padding: 0; margin: 0; }
-    .socials-list a { display: inline-block; padding: 8px 18px; background: #252525; border: 1px solid #333; border-radius: 20px; font-size: 0.9rem; font-weight: 500; text-decoration: none; color: #ddd; transition: all 0.2s ease; }
-    .socials-list a:hover { background-color: #333; color: #fff; border-color: #444; }
+    /* typography */
+    h2 { margin:0; font-size:1.6rem; letter-spacing: .2px; }
+    h3 { margin:16px 0 12px; font-size:1.05rem; color:var(--accent); font-weight:700; }
+    h4 { margin:0 0 10px; font-size:.95rem; color:#cfcfd2; }
 
-    .trend-indicator { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background-color: #282828; border: 1px solid #282828; border-radius: 8px; overflow: hidden; margin-bottom: 24px; }
-    .trend-item { background-color: #191919; padding: 16px 12px; text-align: center; }
-    .trend-item b { font-size: 0.75rem; color: #888; font-weight: 600; text-transform: uppercase; }
-    .trend-item div { font-size: 1.5rem; font-weight: 700; margin-top: 8px; color: #fff; }
-    .trend-item div.text-ok { color: #9eff9e; }
-    .trend-item div.text-bad { color: #ff6b7b; }
-    
-    details.programmatic-accounts-details { margin-top: 16px; }
-    summary { cursor: pointer; font-size: 0.9em; color: #888; outline: none; list-style-type: '▸ '; transition: color 0.2s ease; }
-    summary:hover { color: #bbb; }
-    details[open] > summary { list-style-type: '▾ '; }
-    .programmatic-list { padding: 12px 0 4px 24px; list-style-type: square; font-size: 0.85em; }
-    .programmatic-list li { margin-bottom: 8px; }
-    
-    .hype-analysis-block { grid-column: 1 / -1; }
-    .hype-verdict { text-align: center; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-    .hype-verdict-title { font-size: 0.9rem; color: #aaa; text-transform: uppercase; margin: 0 0 8px; font-weight: 600; }
-    .hype-verdict-text { font-size: 1.5rem; font-weight: 700; margin: 0; }
-    .verdict-low-profile { background: rgba(158, 255, 158, 0.1); border: 1px solid #9eff9e44; color: #9eff9e; }
-    .verdict-rising-attention { background: rgba(255, 212, 71, 0.1); border: 1px solid #ffd44744; color: #ffd447; }
-    .verdict-irrational-optimism { background: rgba(255, 212, 71, 0.15); border: 1px solid #ffd44766; color: #ffd447; }
-    .verdict-toxic-sentiment { background: rgba(255, 107, 123, 0.1); border: 1px solid #ff6b7b44; color: #ff6b7b; }
-    
-    .hype-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; text-align: center; }
-    .hype-widget { background-color: #111; padding: 16px; border-radius: 6px; border: 1px solid #222; }
-    .hype-widget-label { font-size: 0.8rem; font-weight: 600; color: #888; text-transform: uppercase; margin-bottom: 8px; }
-    .hype-widget-value { font-size: 1.4rem; font-weight: 700; color: #fff; }
-    
-    .sentiment-breakdown { display: flex; justify-content: space-around; align-items: center; font-size: 1.1rem; }
-    .sentiment-item { display: flex; flex-direction: column; align-items: center; }
-    .sentiment-item span:first-child { font-size: 0.8rem; }
-    .sentiment-positive { color: #9eff9e; }
-    .sentiment-neutral { color: #aaa; }
-    .sentiment-negative { color: #ff6b7b; }
+    a { color:var(--accent); text-decoration:none; }
+    a:hover { text-decoration:underline; }
 
-    .breakdown-container { margin-top: 20px; }
-    .breakdown-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-    .breakdown-label { width: 100px; font-size: 0.9em; color: #aaa; text-align: right; }
-    .breakdown-bar-bg { flex-grow: 1; background-color: #222; border-radius: 4px; height: 20px; }
-    .breakdown-bar-fg { height: 100%; background-color: var(--accent); border-radius: 4px; transition: width 0.5s ease-out; }
-    .breakdown-value { font-size: 0.9em; font-weight: bold; min-width: 50px; text-align: left;}
+    .muted { color:var(--muted); }
+    .ok { color:var(--ok); } .bad { color:var(--bad); } .warn { color:var(--warn); }
 
-    .recent-posts-container { margin-top: 20px; }
-    .post-card { background-color: #111; border: 1px solid #222; border-radius: 6px; padding: 14px; margin-bottom: 12px; font-size: 0.9em; text-align: left; }
-    .post-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-    .post-header img { width: 32px; height: 32px; border-radius: 50%; }
-    .post-author-info { display: flex; flex-direction: column; }
-    .post-author-info a { color: #eee; font-weight: bold; }
-    .post-author-info span { color: #888; font-size: 0.85em; }
-    .post-body { color: #ccc; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; max-height: 100px; overflow: hidden; }
-    .post-body a { color: #58a6ff; }
-    .post-footer { margin-top: 12px; font-size: 0.85em; color: #888; }
-    
-    #cascade-dump-simulator { text-align: center; background: #191919; padding: 24px; border-radius: 8px; border: 1px solid #282828;}
-    #start-sim-btn {
-        background-color: var(--accent); color: #000; border: none; padding: 10px 20px; margin-top: 16px;
-        border-radius: 6px; font-weight: 600; cursor: pointer; transition: background-color 0.2s, transform 0.2s;
+    /* hero */
+    .hero {
+      display:grid; grid-template-columns: 1fr auto; gap:20px;
+      background:linear-gradient(180deg, #111 0%, #0d0d0f 100%);
+      border:1px solid var(--line); border-radius:14px; padding:16px 16px 18px;
     }
-    #start-sim-btn:hover:not(:disabled) { background-color: #ffc72c; transform: scale(1.05); }
-    #start-sim-btn:disabled { background-color: #555; color: #999; cursor: not-allowed; transform: scale(1); }
-    .sim-display { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; text-align: left; }
-    .sim-bar-container { width: 100%; height: 30px; background-color: #2a2a2a; border-radius: 6px; overflow: hidden; border: 1px solid #333; }
-    .sim-bar {
-        height: 100%; width: 100%;
-        background: linear-gradient(to right, #9eff9e, #34d399);
-        transition: width 1.2s cubic-bezier(0.25, 1, 0.5, 1);
-        display: flex; align-items: center; justify-content: flex-end;
-        font-size: 0.9em; color: #000; font-weight: 600;
-        padding-right: 10px;
-        box-sizing: border-box;
+    .hero-left { display:flex; gap:14px; align-items:center; min-width:0; }
+    .logo { width:64px; height:64px; border-radius:12px; object-fit:cover; background:#1c1c1f; border:1px solid #222; }
+    .token-meta { min-width:0; }
+    .symbol { font-size:.95rem; color:#c9c9cc; margin-top:2px; }
+    .row-actions { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+
+    .addr-pill, .share-pill {
+      display:inline-flex; align-items:center; gap:8px;
+      padding:6px 10px; border-radius:10px; border:1px solid var(--line); background:#141416;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size:.85rem; color:#cfd0d4; cursor:pointer;
     }
-    .sim-bar.draining { background: linear-gradient(to right, #ff6b7b, #e05068); color: #fff; }
-    .sim-label { font-size: 0.9em; color: #aaa; }
-    .sim-log { margin-top: 16px; min-height: 105px; background-color: #111; border-radius: 6px; padding: 12px; text-align: left; font-family: monospace; font-size: 0.9em; color: #aaa; overflow: hidden; }
-    .sim-log-entry { animation: logFadeIn 0.5s ease; border-bottom: 1px solid #222; padding-bottom: 6px; margin-bottom: 6px; white-space: pre-wrap; }
-    .sim-log-entry strong { color: #eee; }
-    @keyframes logFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    
-    .report-fade-in {
-      animation: reportFadeInAnimation 0.5s ease-in-out;
+    .addr-pill:hover, .share-pill:hover { background:#18181b; }
+
+    .score {
+      position:relative; width:120px; height:120px;
+      align-self:center;
+    }
+    .score svg { width:100%; height:100%; transform:rotate(-90deg); }
+    .ring-bg { stroke:#232326; stroke-width:10; fill:none; }
+    .ring-fg { stroke:#ff6b7b; stroke-width:10; fill:none; stroke-linecap:round; transition:stroke-dashoffset 1s ease, stroke .4s; }
+    .score-txt { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+    .score-val { font-size:1.9rem; font-weight:800; }
+    .score-label { font-size:.68rem; color:#b5b5b8; text-transform:uppercase; margin-top:-2px; }
+    .score-verdict { margin-top:6px; font-size:.85rem; font-weight:700; }
+    .score-verdict.ok { color:var(--ok); }
+    .score-verdict.warn { color:var(--warn); }
+    .score-verdict.bad { color:var(--bad); }
+
+    /* belt KPIs */
+    .belt {
+      margin-top:14px; display:flex; gap:10px; overflow:auto; padding-bottom:2px;
+      scrollbar-width:thin;
+    }
+    .kpi { min-width:140px; flex:0 0 auto; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+    .kpi b { display:block; font-size:.72rem; color:#aeb0b7; letter-spacing:.3px; text-transform:uppercase; }
+    .kpi span { display:block; margin-top:6px; font-weight:700; font-size:1.05rem; }
+
+    /* pills row (risks) */
+    .pills {
+      display:flex; gap:8px; flex-wrap:wrap; margin-top:14px;
+    }
+    .pill {
+      display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px;
+      background:#131314; border:1px solid #232326; color:#d0d1d6; font-size:.85rem; white-space:nowrap;
+    }
+    .pill.ok { border-color:#1f3921; color:#b8f0b8; }
+    .pill.bad { border-color:#3b1f25; color:#ff8f9d; }
+    .pill.warn { border-color:#3d3216; color:#ffe299; }
+
+    /* tabs */
+    .tabs { display:flex; gap:8px; margin:18px 2px 10px; border-bottom:1px solid var(--line); }
+    .tab {
+      padding:10px 14px; border:1px solid var(--line); border-bottom:none; border-radius:8px 8px 0 0;
+      background:var(--panel-2); color:#d7d8dc; font-weight:600; cursor:pointer; user-select:none;
+    }
+    .tab[aria-selected="true"] { background:#202023; color:#fff; }
+    .tabpanels { background:var(--panel); border:1px solid var(--line); border-radius:0 12px 12px 12px; padding:16px; }
+
+    /* grids */
+    .grid { display:grid; gap:16px; }
+    .grid-2 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+
+    /* trend */
+    .trend { display:grid; grid-template-columns: repeat(4, 1fr); gap:1px; background:#222; border:1px solid #222; border-radius:10px; overflow:hidden; }
+    .trend > div { background:#151516; padding:14px 10px; text-align:center; }
+    .trend b { display:block; font-size:.72rem; color:#aeb0b7; text-transform:uppercase; }
+    .trend span { display:block; margin-top:6px; font-weight:800; font-size:1.2rem; }
+    .trend .ok { color:var(--ok); } .trend .bad { color:var(--bad); }
+
+    /* socials */
+    .chips { display:flex; flex-wrap:wrap; gap:8px; }
+    .chip { padding:8px 14px; background:#141416; border:1px solid #26262a; border-radius:999px; color:#ddd; font-weight:600; }
+
+    /* lists */
+    ul.clean { list-style:none; padding:0; margin:0; }
+    ul.clean li { margin:8px 0; color:#cfd0d4; word-break:break-word; }
+
+    /* clusters (compact) */
+    .clusters { display:grid; gap:12px; }
+    .cl-item { border:1px solid var(--line); border-radius:12px; background:#121214; }
+    .cl-item details { overflow:hidden; border-radius:12px; }
+    .cl-item summary { display:grid; grid-template-columns:1fr auto; align-items:center; gap:10px; padding:10px 12px; cursor:pointer; list-style:none; }
+    .cl-item summary::-webkit-details-marker{ display:none; }
+    .cl-title { display:flex; align-items:center; gap:10px; min-width:0; }
+    .cl-index { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:999px; background:#1a1a1c; border:1px solid #2a2a2e; font-weight:800; font-size:.9rem; }
+    .cl-meta { display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .cl-chip { background:#1a1a1c; border:1px solid #2a2a2e; border-radius:999px; padding:3px 8px; font-size:.75rem; color:#ccc; white-space:nowrap; }
+    .cl-conf { font-variant-numeric:tabular-nums; white-space:nowrap; border:1px solid #333; border-radius:999px; padding:2px 10px; font-size:.85rem; color:#ddd; }
+    .cl-supply { border:1px solid #333; border-radius:8px; padding:2px 8px; color:#bbb; font-size:.85rem; white-space:nowrap; }
+    .cl-body { padding:8px 12px 12px; border-top:1px solid #202022; }
+    .cl-addrs { display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:8px; list-style:none; padding:0; margin:0; }
+    .cl-addrs a { color:var(--link); text-decoration:none; border-bottom:1px dotted #2a6fa8; overflow:hidden; text-overflow:ellipsis; display:block; }
+    .cl-addrs a:hover { text-decoration:underline; }
+
+    @media (max-width: 720px) {
+      .hero { grid-template-columns: 1fr; }
+      .score { margin-left:auto; }
+      .trend { grid-template-columns: repeat(2, 1fr); }
+      .cl-addrs { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
     }
 
-    @keyframes reportFadeInAnimation {
-      from { opacity: 0; }
-      to   { opacity: 1; }
-    }
+    .placeholder, .error { text-align:center; padding:40px; color:#8a8a8f; }
+    .error { color:var(--bad); }
 
-    @media (min-width: 901px) { .token-logo { width: 96px !important; height: 96px !important; } }
-    @media (max-width: 900px) { .summary-market-stats { order: 3; width: 100%; text-align: left; } .summary-token-info { order: 1; } .score-container { order: 2; margin-left: 0; margin-top: 20px; } }
-    @media (max-width: 600px) { .summary-market-stats { grid-template-columns: repeat(2, 1fr); } .trend-indicator { grid-template-columns: repeat(2, 1fr); } .hype-grid { grid-template-columns: repeat(2, 1fr); } }
-    
     .disclaimer {
-    font-size: 0.8em;
-    color: #888;
-    text-align: center;
-    margin-top: 32px;
-    padding: 0 16px;
-    border-top: 1px solid #282828;
-    padding-top: 24px;
-}
-   /* --- clusters (improved) --- */
-.clusters-block { margin-top: 16px; }
-.clusters-list { list-style: none; padding-left: 0; margin: 0; display: grid; gap: 12px; }
-.cluster-item { border: 1px solid #2a2a2a; border-radius: 12px; background: #121212; }
-
-.cluster-item details { border-radius: 12px; overflow: hidden; }
-.cluster-item summary {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  cursor: pointer;
-  list-style: none;
-}
-.cluster-item summary::-webkit-details-marker { display: none; }
-
-.cluster-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.cluster-index {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 28px; height: 28px; border-radius: 999px;
-  background: #1a1a1a; border: 1px solid #2d2d2d; font-weight: 700; font-size: 0.9rem;
-}
-.cluster-meta { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.cluster-count { font-size: 0.85rem; color: #bbb; }
-
-.cluster-confidence {
-  white-space: nowrap; /* не ломаемся по буквам */
-  font-variant-numeric: tabular-nums;
-  padding: 2px 10px; border-radius: 999px; border: 1px solid #333; font-size: 0.85rem; color: #ddd;
-}
-
-/* чипы причин */
-.cluster-reasons { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
-.cluster-chip {
-  background: #1a1a1a; border: 1px solid #2d2d2d; border-radius: 999px;
-  padding: 3px 8px; font-size: 0.75rem; color: #ccc; white-space: nowrap;
-}
-
-/* контент */
-.cluster-body { padding: 8px 14px 12px; border-top: 1px solid #202020; }
-.cluster-addrs {
-  list-style: none; padding-left: 0; margin: 0;
-  display: grid; gap: 8px;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-}
-.cluster-addrs a {
-  display: block; text-decoration: none; color: #9fd3ff;
-  border-bottom: 1px dotted #2a6fa8; overflow: hidden; text-overflow: ellipsis;
-}
-.cluster-addrs a:hover { text-decoration: underline; }
-
-/* мобильная адаптация */
-@media (max-width: 640px) {
-  .cluster-item summary { grid-template-columns: 1fr; gap: 8px; }
-  .cluster-reasons { justify-content: flex-start; }
-  .cluster-addrs { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
-  .cluster-confidence { font-size: 0.8rem; padding: 2px 8px; }
-}
-
-.pill { 
-  display:inline-block; 
-  padding: 4px 8px; 
-  border:1px solid #333; 
-  border-radius:8px; 
-  font-size:.85em; 
-  color:#ccc; 
-  white-space:nowrap;
-}
-.pill-supply { border-color:#444; color:#aaa; }
+      margin-top:20px; padding-top:18px; border-top:1px solid var(--line);
+      color:#9a9aa0; font-size:.82rem; text-align:center;
+    }
   </style>
-  <div id="report-container">
-    <div class="placeholder">Generating token health report...</div>
+
+  <div id="wrap">
+    <div id="root"></div>
   </div>
 `;
 
 class DFNPatrol extends HTMLElement {
   constructor() {
     super();
-    this.attachShadow({ mode: "open" });
+    this.attachShadow({ mode:"open" });
     this.shadowRoot.appendChild(template.content.cloneNode(true));
-    this.container = this.shadowRoot.querySelector('#report-container');
-    this.copyIconSVG = `<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>`;
-    this.checkIconSVG = `<svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="#9eff9e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+    this.root = this.shadowRoot.querySelector('#root');
+    this.copyIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c9cad0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>`;
+    this.checkIcon = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9eff9e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
   }
-  
+
   setReport(report) {
     this.report = report;
     this.render();
-    if (report && typeof report.trustScore !== 'undefined') {
-        this.updateScore(report.trustScore);
-    }
+    if (report && typeof report.trustScore !== 'undefined') this.updateScore(report.trustScore);
   }
 
   updateScore(score) {
-    const circle = this.shadowRoot.querySelector('.score-circle-fg');
-    const percentageText = this.shadowRoot.querySelector('.score-percentage');
-    if (!circle || !percentageText) return;
+    const ring = this.shadowRoot.querySelector('.ring-fg');
+    const txt = this.shadowRoot.querySelector('.score-val');
+    if (!ring || !txt) return;
 
-    const radius = circle.r.baseVal.value;
-    const circumference = 2 * Math.PI * radius;
-    
+    const r = ring.r.baseVal.value || 54;
+    const C = 2 * Math.PI * r;
+    ring.style.strokeDasharray = `${C} ${C}`;
+
     setTimeout(() => {
-        const offset = circumference - (score / 100) * circumference;
-        circle.style.strokeDasharray = `${circumference} ${circumference}`;
-        circle.style.strokeDashoffset = offset;
+      const off = C - (score / 100) * C;
+      ring.style.strokeDashoffset = off;
+      ring.style.stroke = (score >= 75) ? '#9eff9e' : (score >= 40 ? '#ffd447' : '#ff6b7b');
 
-        if (score >= 75) circle.style.stroke = '#9eff9e';
-        else if (score >= 40) circle.style.stroke = '#ffd447';
-        else circle.style.stroke = '#ff6b7b';
-        
-        const initialScoreText = percentageText.textContent;
-        const initialScore = parseInt(initialScoreText.replace('%','')) || 0;
-        const duration = 1000;
-        const startTime = performance.now();
-
-        const animate = (currentTime) => {
-            const elapsedTime = currentTime - startTime;
-            if (elapsedTime > duration) {
-                percentageText.textContent = `${score}%`;
-                return;
-            }
-            const progress = elapsedTime / duration;
-            const currentAnimatedScore = Math.round(initialScore + (score - initialScore) * progress);
-            percentageText.textContent = `${currentAnimatedScore}%`;
-            requestAnimationFrame(animate);
-        };
-        requestAnimationFrame(animate);
-
-    }, 100);
+      const start = parseInt(txt.textContent.replace('%','')) || 0;
+      const dur = 900; const t0 = performance.now();
+      const animate = (t) => {
+        const k = Math.min(1, (t - t0) / dur);
+        txt.textContent = `${Math.round(start + (score - start) * k)}%`;
+        if (k < 1) requestAnimationFrame(animate);
+      };
+      requestAnimationFrame(animate);
+    }, 80);
   }
 
-  handleAddressCopy() {
-    if (!this.report?.tokenInfo?.address) return;
-    navigator.clipboard.writeText(this.report.tokenInfo.address).then(() => {
-        const addrContainer = this.shadowRoot.querySelector('.address-container');
-        if (addrContainer) {
-            const originalText = addrContainer.querySelector('span').textContent;
-            addrContainer.innerHTML = `${this.checkIconSVG} <span>Copied!</span>`;
-            setTimeout(() => { addrContainer.innerHTML = `${this.copyIconSVG} <span>${originalText}</span>`; }, 1500);
-        }
-    }).catch(err => { console.error('Failed to copy address: ', err); });
+  copyAddress(addrEl, addr) {
+    navigator.clipboard.writeText(addr).then(() => {
+      const prev = addrEl.innerHTML;
+      addrEl.innerHTML = `${this.checkIcon}<span>Copied</span>`;
+      setTimeout(()=> addrEl.innerHTML = prev, 1400);
+    });
+  }
+  copyShare(btnEl, url) {
+    navigator.clipboard.writeText(url).then(() => {
+      const prev = btnEl.innerHTML;
+      btnEl.innerHTML = `${this.checkIcon}<span>Link copied</span>`;
+      setTimeout(()=> btnEl.innerHTML = prev, 1600);
+    });
   }
 
-  handleShareCopy() {
-    navigator.clipboard.writeText(window.location.href).then(() => {
-        const shareBtn = this.shadowRoot.querySelector('#share-button');
-        if (shareBtn) {
-            const originalContent = shareBtn.innerHTML;
-            shareBtn.innerHTML = `${this.checkIconSVG} <span class="copied-text">Copied!</span>`;
-            setTimeout(() => { shareBtn.innerHTML = originalContent; }, 2000);
-        }
-    }).catch(err => { console.error('Failed to copy link: ', err); });
-  }
-
+  /* ---------- simulation ---------- */
   async runSimulation() {
-    const btn = this.shadowRoot.querySelector('#start-sim-btn');
-    const log = this.shadowRoot.querySelector('#simulation-log');
-    const mcBar = this.shadowRoot.querySelector('.sim-bar');
-    const mcBarValue = this.shadowRoot.querySelector('.sim-bar-value');
-    
-    const drainScenarios = this.report.liquidityDrain;
-    const topHolders = this.report.distribution.topHolders;
-    if (!drainScenarios || drainScenarios.length === 0) {
-        log.innerHTML = "Not enough data for simulation.";
-        return;
+    const btn = this.shadowRoot.querySelector('#sim-btn');
+    const log = this.shadowRoot.querySelector('#sim-log');
+    const bar = this.shadowRoot.querySelector('#sim-bar');
+    const val = this.shadowRoot.querySelector('#sim-val');
+    const sc = this.report?.liquidityDrain;
+    const th = this.report?.distribution?.topHolders;
+    const mc0 = this.report?.market?.marketCap;
+    if (!btn || !log || !bar || !val || !Array.isArray(sc) || !mc0) return;
+
+    const fmt$ = n => `$${Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+    const wait = ms => new Promise(r=>setTimeout(r, ms));
+    const logLine = html => { const d = document.createElement('div'); d.innerHTML = html; log.prepend(d); };
+    const setBar = mc => { const w = Math.max(0, (mc / mc0) * 100); bar.style.width = `${w}%`; val.textContent = fmt$(mc); };
+
+    btn.disabled = true; btn.textContent = 'Simulating…';
+    log.innerHTML=''; setBar(mc0); await wait(900);
+
+    for (const s of sc) {
+      let ownPct = 0;
+      const m = s.group.match(/Top (\d+)/);
+      if (m && th) {
+        const n = +m[1];
+        ownPct = th.slice(0,n).reduce((sum,h)=>sum+parseFloat(h.percent||0), 0);
+      }
+      logLine(`Analyzing: <b>${s.group}</b>${ownPct?` (own ${ownPct.toFixed(2)}%)`:''}…`);
+      await wait(1200);
+      setBar(s.marketCapAfterSale);
+      logLine(`→ Price drop <b class="bad">-${s.marketCapDropPercentage}%</b>, new MC: <b>${fmt$(s.marketCapAfterSale)}</b>`);
+      await wait(1600);
     }
-    
-    const initialMarketCap = this.report.market.marketCap;
-    if (!btn || !log || !mcBar || !mcBarValue || !initialMarketCap) return;
-
-    btn.disabled = true;
-    btn.textContent = 'Simulating...';
-    log.innerHTML = '';
-    
-    const formatAsCurrency = (num) => `$${Number(num).toLocaleString('en-US', {maximumFractionDigits: 0})}`;
-    const wait = (ms) => new Promise(res => setTimeout(res, ms));
-
-    const updateBar = (mc) => {
-        const barWidth = (mc / initialMarketCap) * 100;
-        mcBar.style.width = `${barWidth < 0 ? 0 : barWidth}%`;
-        mcBarValue.textContent = formatAsCurrency(mc);
-    };
-    
-    const logEvent = (message) => {
-        const entry = document.createElement('div');
-        entry.className = 'sim-log-entry';
-        entry.innerHTML = message;
-        log.prepend(entry);
-    };
-    
-    updateBar(initialMarketCap);
-    mcBar.classList.remove('draining');
-    logEvent(`Simulation started. Initial Market Cap: <strong>${formatAsCurrency(initialMarketCap)}</strong>`);
-    await wait(1500);
-
-    for (const scenario of drainScenarios) {
-        mcBar.classList.add('draining');
-        
-        let ownershipPercent = 0;
-        const match = scenario.group.match(/Top (\d+)/);
-        if (match && topHolders) {
-            const count = parseInt(match[1], 10);
-            if (topHolders.length >= count) {
-                ownershipPercent = topHolders.slice(0, count).reduce((sum, h) => sum + parseFloat(h.percent), 0);
-            }
-        }
-        const ownershipText = ownershipPercent > 0 ? ` (owning ${ownershipPercent.toFixed(2)}% of supply)` : '';
-
-        logEvent(`Analyzing impact of <strong>${scenario.group}</strong>${ownershipText} selling...`);
-        await wait(2000);
-
-        updateBar(scenario.marketCapAfterSale);
-        logEvent(`→ Price would collapse by <strong style="color: #ff6b7b;">-${scenario.marketCapDropPercentage}%</strong>. New Market Cap: <strong>${formatAsCurrency(scenario.marketCapAfterSale)}</strong>`);
-        await wait(3000);
-    }
-    
-    mcBar.classList.remove('draining');
-    logEvent(`<strong>SIMULATION END.</strong>`);
-    btn.disabled = false;
-    btn.textContent = 'Run Simulation Again';
+    logLine('<b>SIMULATION END</b>');
+    btn.disabled=false; btn.textContent='Run Simulation';
   }
-
 
   render() {
-    if (!this.report) {
-        this.container.innerHTML = `<div class="placeholder">Generating token health report...</div>`;
-        return;
-    }
-    if (this.report.error) {
-       this.container.innerHTML = `<div class="error">${sanitizeHTML(this.report.error)}</div>`;
-       return;
-    }
+    const report = this.report;
+    if (!report) { this.root.innerHTML = `<div class="placeholder">Generating token health report...</div>`; return; }
+    if (report.error) { this.root.innerHTML = `<div class="error">${sanitizeHTML(report.error)}</div>`; return; }
 
-    const { tokenInfo, security, distribution, market, socials, liquidityDrain, hype } = this.report;
-    
-    const displayName = tokenInfo.name && tokenInfo.name.length > 10 
-        ? `${tokenInfo.name.substring(0, 7)}...` 
-        : tokenInfo.name;
+    const { tokenInfo, security, distribution, market, socials, liquidityDrain, hype, clusterSummary } = report;
+    const logo = tokenInfo?.logoUrl ? `<img class="logo" src="${sanitizeUrl(tokenInfo.logoUrl)}" alt="${sanitizeHTML(tokenInfo.symbol)} logo">` : `<div class="logo"></div>`;
+    const displayName = tokenInfo?.name && tokenInfo.name.length > 14 ? `${tokenInfo.name.slice(0,11)}…` : (tokenInfo?.name || 'Token');
+    const symbol = sanitizeHTML(tokenInfo?.symbol || '');
+    const addr = tokenInfo?.address || '';
+    const addrShort = addr ? `${addr.slice(0,4)}…${addr.slice(-4)}` : '';
+    const price = (market?.priceUsd==null) ? 'N/A'
+      : (Number(market.priceUsd) < 0.000001
+        ? `$${Number(market.priceUsd).toExponential(2)}`
+        : `$${Number(market.priceUsd).toLocaleString('en-US', { maximumFractionDigits: 8 })}`);
+    const fmt = (n) => n ? Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 }) : 'N/A';
+    const ch = market?.priceChange || {};
+    const ageDays = market?.pairCreatedAt ? msToAgeDays(market.pairCreatedAt) : (clusterSummary?.ageDays || 0);
+    const ts = typeof report.trustScore === 'number' ? report.trustScore : 0;
+    const verdict = verdictFromScore(ts);
 
-    const formatNum = (num) => num ? Number(num).toLocaleString('en-US', {maximumFractionDigits: 0}) : 'N/A';
-    const priceChangeColor = market?.priceChange?.h24 >= 0 ? 'text-ok' : 'text-bad';
-    const price = !market?.priceUsd ? 'N/A' : (Number(market.priceUsd) < 0.000001 ? `$${Number(market.priceUsd).toExponential(2)}` : `$${Number(market.priceUsd).toLocaleString('en-US', {maximumFractionDigits: 8})}`);
-    
-    let truncatedAddress = '';
-    if(tokenInfo.address) {
-        truncatedAddress = `${tokenInfo.address.slice(0, 4)}...${tokenInfo.address.slice(-4)}`;
-    }
-    const addressHTML = tokenInfo.address ? `<div class="address-container" title="Copy Address: ${tokenInfo.address}">${this.copyIconSVG}<span>${truncatedAddress}</span></div>` : '';
-    const shareButtonHTML = tokenInfo.address ? `<button id="share-button" class="share-button" title="Copy report link">${this.copyIconSVG} <span>Share</span></button>` : '';
-    
-    const scoreHTML = typeof this.report.trustScore !== 'undefined' ? `
-        <div class="score-container">
-            <svg class="score-svg" viewBox="0 0 120 120">
-                <circle class="score-circle-bg" cx="60" cy="60" r="54" />
-                <circle class="score-circle-fg" cx="60" cy="60" r="54" style="stroke-dasharray: 339.292; stroke-dashoffset: 339.292;" />
-            </svg>
-            <div class="score-text-container">
-                <div class="score-percentage">0%</div>
-                <div class="score-label">Trust Score</div>
+    /* hero */
+    const heroHTML = `
+      <div class="hero">
+        <div class="hero-left">
+          ${logo}
+          <div class="token-meta">
+            <h2>${sanitizeHTML(displayName)}</h2>
+            <div class="symbol">${symbol}</div>
+            <div class="row-actions">
+              ${addr ? `<button class="addr-pill" id="copy-addr">${this.copyIcon}<span>${addrShort}</span></button>` : ''}
+              <button class="share-pill" id="copy-share">${this.copyIcon}<span>Share</span></button>
             </div>
+          </div>
         </div>
-    ` : '';
-
-    const marketStatsHTML = `
-        <div class="summary-market-stats">
-            <div class="stat-item"><b>Price</b><span>${price}</span></div>
-            <div class="stat-item"><b>24h Change</b><span class="${priceChangeColor}">${market?.priceChange?.h24?.toFixed(2) || '0.00'}%</span></div>
-            <div class="stat-item"><b>24h Volume</b><span>$${formatNum(market?.volume24h)}</span></div>
-            <div class="stat-item"><b>Market Cap</b><span>$${formatNum(market?.marketCap)}</span></div>
-            <div class="stat-item"><b>Liquidity</b><span>$${formatNum(market?.liquidity)}</span></div>
-            <div class="stat-item">
-                <b>24h TXNs</b>
-                <span class="buys-sells">
-                    <span class="text-ok">${market?.txns24h?.buys || 0}</span> / <span class="text-bad">${market?.txns24h?.sells || 0}</span>
-                </span>
-            </div>
+        <div class="score">
+          <svg viewBox="0 0 120 120">
+            <circle class="ring-bg" cx="60" cy="60" r="54"></circle>
+            <circle class="ring-fg" cx="60" cy="60" r="54" style="stroke-dasharray:339.292; stroke-dashoffset:339.292"></circle>
+          </svg>
+          <div class="score-txt">
+            <div class="score-val">0%</div>
+            <div class="score-label">Trust Score</div>
+            <div class="score-verdict ${verdict.tone}">${verdict.text}</div>
+          </div>
         </div>
-    `;
-
-    const priceChange = market?.priceChange || {};
-    const trendIndicatorHTML = `
-      <div class="trend-indicator">
-        <div class="trend-item"><b>5 MIN</b><div class="${priceChange.m5 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.m5?.toFixed(2) ?? '0.00'}%</div></div>
-        <div class="trend-item"><b>1 HOUR</b><div class="${priceChange.h1 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.h1?.toFixed(2) ?? '0.00'}%</div></div>
-        <div class="trend-item"><b>6 HOURS</b><div class="${priceChange.h6 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.h6?.toFixed(2) ?? '0.00'}%</div></div>
-        <div class="trend-item"><b>24 HOURS</b><div class="${priceChange.h24 >= 0 ? 'text-ok' : 'text-bad'}">${priceChange.h24?.toFixed(2) ?? '0.00'}%</div></div>
       </div>
     `;
 
-    const socialsHTML = socials && socials.length > 0 ? `
-        <div class="full-width">
-            <h3>🔗 Socials</h3>
-            <div class="socials-list">
-                ${socials.map(social => {
-                    try {
-                        const link = social.url;
-                        if(!link) return '';
-                        const label = social.label || social.type.charAt(0).toUpperCase() + social.type.slice(1);
-                        return `<a href="${sanitizeUrl(link)}" target="_blank" rel="noopener nofollow">${sanitizeHTML(label)}</a>`;
-                    } catch(e) { return ''; }
-                }).join('')}
-            </div>
-        </div>
-    ` : '';
-    
-    let hypeAnalysisHTML = '';
-    if (hype && hype.id) {
-        
-        let verdict = { text: 'N/A', class: '' };
-        const sentiment = hype.sentiment;
-        const volume = hype.socialVolume;
-
-        if (sentiment && typeof sentiment.total !== 'undefined') {
-            const positivePercent = sentiment.total > 0 ? (sentiment.positive / sentiment.total) * 100 : 0;
-            const negativePercent = sentiment.total > 0 ? (sentiment.negative / sentiment.total) * 100 : 0;
-
-            if (negativePercent > 40) {
-                verdict = { text: 'Toxic Sentiment', class: 'verdict-toxic-sentiment' };
-            } else if (volume > 50000 && positivePercent > 60) {
-                verdict = { text: 'Irrational Optimism', class: 'verdict-irrational-optimism' };
-            } else if (volume > 10000) {
-                verdict = { text: 'Rising Attention', class: 'verdict-rising-attention' };
-            } else {
-                 verdict = { text: 'Low Profile', class: 'verdict-low-profile' };
-            }
-        }
-        
-        const formatBigNum = (num) => {
-            if (num === null || typeof num === 'undefined') return 'N/A';
-            if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
-            if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`;
-            return num.toLocaleString('en-US');
-        };
-        
-        const getSentimentPercent = (value, total) => {
-            if (total === null || typeof total === 'undefined' || total === 0) return '0%';
-            return `${Math.round((value / total) * 100)}%`;
-        };
-        
-        const networkBreakdownData = hype.networkBreakdown ? Object.entries(hype.networkBreakdown) : [];
-        const totalInteractions = networkBreakdownData.reduce((sum, [, value]) => sum + value, 0);
-
-        const networkBreakdownHTML = totalInteractions > 0 ? `
-            <div class="breakdown-container">
-                <h4>Network Breakdown</h4>
-                ${networkBreakdownData.map(([key, value]) => `
-                    <div class="breakdown-item">
-                        <div class="breakdown-label">${key.charAt(0).toUpperCase() + key.slice(1).replace('-post','')}</div>
-                        <div class="breakdown-bar-bg">
-                            <div class="breakdown-bar-fg" style="width: ${(value / totalInteractions) * 100}%;"></div>
-                        </div>
-                        <div class="breakdown-value">${formatBigNum(value)}</div>
-                    </div>
-                `).join('')}
-            </div>
-        ` : '';
-        
-        const recentPostsHTML = hype.recentPosts && hype.recentPosts.length > 0 ? `
-            <div class="recent-posts-container">
-                <h4>Top Social Posts</h4>
-                ${hype.recentPosts.map(post => `
-                    <div class="post-card">
-                        <div class="post-header">
-                            <img src="${sanitizeUrl(post.profile_image)}" alt="author profile">
-                            <div class="post-author-info">
-                                <a href="${sanitizeUrl(post.url)}" target="_blank" rel="noopener">${sanitizeHTML(post.display_name)}</a>
-                                <span>@${sanitizeHTML(post.user_name)}</span>
-                            </div>
-                        </div>
-                        <div class="post-body">${sanitizeHTML(post.body).replace(/#\w+/g, '<strong>$&</strong>').replace(/@\w+/g, '<strong>$&</strong>')}</div>
-                        <div class="post-footer">${new Date(post.time * 1000).toLocaleString()} • Interactions: ${formatBigNum(post.interactions)}</div>
-                    </div>
-                `).join('')}
-            </div>
-        ` : '';
-
-        hypeAnalysisHTML = `
-            <div class="hype-analysis-block">
-                <h3>🌪️ Hype & Resonance Analysis</h3>
-                <div class="hype-verdict ${verdict.class}" title="Our summary verdict on the token's current social sentiment and activity level.">
-                    <div class="hype-verdict-title">Overall Hype Index</div>
-                    <div class="hype-verdict-text">${verdict.text}</div>
-                </div>
-                <div class="hype-grid">
-                    <div class="hype-widget" title="The total number of likes, comments, replies, and shares on posts about this token in the last 24 hours.">
-                        <div class="hype-widget-label">Social Interactions (24h)</div>
-                        <div class="hype-widget-value">${formatBigNum(hype.socialVolume)}</div>
-                    </div>
-                    <div class="hype-widget" title="The percentage of positive, neutral, and negative interactions about this token.">
-                        <div class="hype-widget-label">Sentiment Breakdown</div>
-                        <div class="hype-widget-value sentiment-breakdown">
-                           <div class="sentiment-item sentiment-positive"><span>Pos</span>${getSentimentPercent(hype.sentiment.positive, hype.sentiment.total)}</div>
-                           <div class="sentiment-item sentiment-neutral"><span>Neu</span>${getSentimentPercent(hype.sentiment.neutral, hype.sentiment.total)}</div>
-                           <div class="sentiment-item sentiment-negative"><span>Neg</span>${getSentimentPercent(hype.sentiment.negative, hype.sentiment.total)}</div>
-                        </div>
-                    </div>
-                    <div class="hype-widget" title="The number of unique social media authors who created posts about this token in the last 24 hours.">
-                        <div class="hype-widget-label">Contributors (24h)</div>
-                        <div class="hype-widget-value">${formatBigNum(hype.contributors)}</div>
-                    </div>
-                    <div class="hype-widget" title="A combined score (1-100) that analyzes price, social volume, and sentiment to gauge the 'sanity' of the current hype.">
-                        <div class="hype-widget-label">Momentum Score</div>
-                        <div class="hype-widget-value">${hype.momentumScore || 'N/A'}</div>
-                    </div>
-                </div>
-                ${networkBreakdownHTML}
-                ${recentPostsHTML}
-            </div>
-        `;
-    }
-
-
-    const programmaticAccountsHTML = distribution.allLpAddresses && distribution.allLpAddresses.length > 0 ?
-      `<details class="programmatic-accounts-details"><summary>Pools, CEX, etc.: ${distribution.allLpAddresses.length}</summary><ul class="programmatic-list">${distribution.allLpAddresses.map(addr => `<li><a href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${addr.slice(0, 10)}...${addr.slice(-4)}</a></li>`).join('')}</ul></details>` : '';
-
-// --- NEW: Clusters (beta) ---
-const clusters = (this.report && Array.isArray(this.report.clusters)) ? this.report.clusters : [];
-
-const clustersHTML = `
-  <div class="clusters-block">
-    <h3>🧩 Clusters (beta)</h3>
-    ${clusters.length ? `
-      <ul class="clusters-list">
-        ${clusters.map((c, idx) => {
-          const reasons = (c.reasons ? Object.keys(c.reasons) : []).slice(0, 4);
-          return `
-            <li class="cluster-item">
-              <details>
-                <summary>
-                  <div class="cluster-title">
-                    <span class="cluster-index">${idx+1}</span>
-                    <div class="cluster-meta">
-                      <span class="cluster-count">${c.addresses.length} addr</span>
-                      <span class="cluster-confidence">Conf. ${c.confidence}%</span>
-                      <span class="pill pill-supply">≈ ${typeof c.supplyPct !== 'undefined' ? Number(c.supplyPct).toFixed(2) : '0.00'}%</span>
-                    </div>
-                  </div>
-                  <div class="cluster-reasons">
-                    ${reasons.map(r => `<span class="cluster-chip">${r.replace(/-/g,' ')}</span>`).join('')}
-                  </div>
-                </summary>
-                <div class="cluster-body">
-                  <ul class="cluster-addrs">
-                    ${c.addresses.map(a => `
-                      <li><a href="https://solscan.io/account/${a}" target="_blank" rel="noopener">${a}</a></li>
-                    `).join('')}
-                  </ul>
-                </div>
-              </details>
-            </li>
-          `;
-        }).join('')}
-      </ul>
-    ` : `<div class="placeholder">No significant clusters detected.</div>`}
-    <div class="mini-disclaimer">Heuristic grouping only — treat as hints, not proof.</div>
-  </div>
-`;
-
-
-      
-    const cascadeSimulatorHTML = liquidityDrain && liquidityDrain.length > 0 && market.marketCap > 0 ? `
-        <div id="cascade-dump-simulator" class="full-width">
-            <h3>💥Dump Simulation</h3>
-            <div class="sim-display">
-                <div class="sim-label">Market Cap:</div>
-                <div class="sim-bar-container">
-                    <div class="sim-bar">
-                        <span class="sim-bar-value">$${formatNum(market.marketCap)}</span>
-                    </div>
-                </div>
-            </div>
-            <div id="simulation-log" class="sim-log">Press the button to simulate "what-if" scenarios.</div>
-            <button id="start-sim-btn">Run Simulation</button>
-        </div>` : '';
-
-    const disclaimerHTML = `<div class="disclaimer">Disclaimer: This report is generated automatically for informational purposes only and does not constitute financial advice. The data is provided 'as is' without warranties of any kind. Always conduct your own research (DYOR) before making any investment decisions. The Department of Financial Nonsense is not liable for any financial losses.</div>`;
-
-    const newContent = `
-        <div class="summary-block">
-             <div class="summary-token-info">
-                ${tokenInfo.logoUrl ? `<img src="${sanitizeUrl(tokenInfo.logoUrl)}" alt="${sanitizeHTML(tokenInfo.symbol)} logo" class="token-logo">` : `<div class="token-logo"></div>`}
-                <div class="token-name-symbol">
-                    <h2>${sanitizeHTML(displayName)}</h2>
-                    <span>${sanitizeHTML(tokenInfo.symbol)}</span>
-                    ${addressHTML}
-                    ${shareButtonHTML}
-                </div>
-             </div>
-            ${scoreHTML}
-            ${marketStatsHTML}
-        </div>
-        ${trendIndicatorHTML}
-        <div class="report-grid">
-            ${socialsHTML}
-            ${hypeAnalysisHTML}
-            <div>
-              <h3>🛡️ Security Flags</h3>
-              <ul>
-                ${security.launchpad ? `<li class="ok">Launched on a trusted platform: ${sanitizeHTML(security.launchpad)}.</li>` : ''}
-                ${security.hackerFound ? `<li class="bad">${sanitizeHTML(security.hackerFound)}</li>` : ''}
-                ${'holderConcentration' in security ? `<li class="${security.holderConcentration > 25 ? 'bad' : (security.holderConcentration > 10 ? 'warn' : 'ok')}">Top 10 holders own ${security.holderConcentration.toFixed(2)}%.</li>` : ''}
-                
-                ${security.hasActiveAd ? `<li class="ok">DEX AD Paid</li>` : ''}
-                ${security.isCto ? `<li class="ok">Community Takeover</li>` : ''}
-                ${security.isDexVerified ? `<li class="ok">DEX Paid</li>` : ''}
-                ${!security.isDexVerified ? `<li class="bad">DEX Not Paid</li>` : ''}
-
-                ${security.lpStatus ? `<li class="${security.lpStatus === 'Burned' || security.lpStatus === 'Locked/Burned' ? 'ok' : 'bad'}">Liquidity is ${security.lpStatus}.</li>` : '<li>Liquidity status is Unknown.</li>'}
-                ${'isMutable' in security ? `<li class="${!security.isMutable ? 'ok' : 'bad'}">${!security.isMutable ? 'Metadata is immutable.' : 'Dev can change token info.'}</li>` : ''}
-                ${'freezeAuthorityEnabled' in security ? `<li class="${!security.freezeAuthorityEnabled ? 'ok' : 'bad'}">${!security.freezeAuthorityEnabled ? 'Freeze authority is disabled.' : 'Freeze authority is enabled.'}</li>` : ''}
-                ${'mintRenounced' in security ? `<li class="${security.mintRenounced ? 'ok' : 'bad'}">${security.mintRenounced ? 'Mint authority is renounced.' : 'Dev can mint more tokens.'}</li>` : ''}
-                ${'transferTax' in security ? `<li class="warn">Token has a transfer tax: ${security.transferTax}%.</li>` : ('noTransferTax' in security ? '<li class="ok">No transfer tax.</li>' : '')}
-              </ul>
-            </div>
-            <div>
-              <h3>💰 Top 10 Holders</h3>
-              <ul>
-                  ${distribution.topHolders && distribution.topHolders.length > 0
-                      ? distribution.topHolders.map(h => `<li><a href="https://solscan.io/account/${h.address}" target="_blank" rel="noopener">${h.address.slice(0,6)}...${h.address.slice(-4)}</a>&nbsp;(${h.percent}%)</li>`).join('') 
-                      : '<li>No significant individual holders found.</li>'}
-              </ul>
-              ${programmaticAccountsHTML}
-              ${clustersHTML} 
-            </div>
-            ${cascadeSimulatorHTML}
-        </div>
-        ${disclaimerHTML}
+    /* belt KPIs */
+    const kpisHTML = `
+      <div class="belt">
+        <div class="kpi"><b>Price</b><span>${price}</span></div>
+        <div class="kpi"><b>24h Change</b><span class="${(ch.h24??0)>=0?'ok':'bad'}">${(ch.h24??0).toFixed(2)}%</span></div>
+        <div class="kpi"><b>24h Volume</b><span>$${fmt(market?.volume24h)}</span></div>
+        <div class="kpi"><b>Market Cap</b><span>$${fmt(market?.marketCap)}</span></div>
+        <div class="kpi"><b>Liquidity</b><span>$${fmt(market?.liquidity)}</span></div>
+        <div class="kpi"><b>24h TXNs</b><span><span class="ok">${market?.txns24h?.buys||0}</span> / <span class="bad">${market?.txns24h?.sells||0}</span></span></div>
+        <div class="kpi"><b>Age</b><span>${ageDays?`${ageDays} d`:'N/A'}</span></div>
+      </div>
     `;
-    
-    this.container.innerHTML = `<div class="report-fade-in">${newContent}</div>`;
 
-    this.shadowRoot.querySelector('.address-container')?.addEventListener('click', () => this.handleAddressCopy());
-    this.shadowRoot.querySelector('#share-button')?.addEventListener('click', () => this.handleShareCopy());
-    this.shadowRoot.querySelector('#start-sim-btn')?.addEventListener('click', () => this.runSimulation());
-    
-    this.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    /* risk pills */
+    const pills = [];
+    if (security?.launchpad) pills.push({ t:`Launchpad: ${sanitizeHTML(security.launchpad)}`, cls:'ok' });
+    if (security?.hackerFound) pills.push({ t:sanitizeHTML(security.hackerFound), cls:'bad' });
+    if ('holderConcentration' in security) {
+      const pct = Number(security.holderConcentration||0).toFixed(2);
+      const cls = (security.holderConcentration>25)?'bad':(security.holderConcentration>10?'warn':'ok');
+      pills.push({ t:`Top10: ${pct}%`, cls });
+    }
+    if (security?.isDexVerified) pills.push({ t:'DEX Paid', cls:'ok' });
+    else pills.push({ t:'DEX Not Paid', cls:'bad' });
+    if (security?.isCto) pills.push({ t:'Community Takeover', cls:'ok' });
+    if (security?.lpStatus) {
+      const cls = (security.lpStatus==='Burned'||security.lpStatus==='Locked/Burned')?'ok':'bad';
+      pills.push({ t:`LP: ${security.lpStatus}`, cls });
+    }
+    if ('isMutable' in security) pills.push({ t:(!security.isMutable?'Immutable':'Mutable'), cls:(!security.isMutable?'ok':'bad') });
+    if ('freezeAuthorityEnabled' in security) pills.push({ t:(!security.freezeAuthorityEnabled?'No Freeze':'Freeze On'), cls:(!security.freezeAuthorityEnabled?'ok':'bad') });
+    if ('mintRenounced' in security) pills.push({ t:(security.mintRenounced?'Mint Renounced':'Mint Active'), cls:(security.mintRenounced?'ok':'bad') });
+    if ('transferTax' in security) pills.push({ t:`Tax: ${security.transferTax}%`, cls:'warn' });
+    else if ('noTransferTax' in security) pills.push({ t:`No Transfer Tax`, cls:'ok' });
+
+    const pillsHTML = `
+      <div class="pills">
+        ${pills.map(p=>`<span class="pill ${p.cls}">${p.t}</span>`).join('')}
+      </div>
+    `;
+
+    /* tabs header */
+    const tabsHTML = `
+      <div class="tabs" role="tablist">
+        <div class="tab" role="tab" aria-selected="true"  data-tab="overview">Overview</div>
+        <div class="tab" role="tab" aria-selected="false" data-tab="holders">Holders & Clusters</div>
+        <div class="tab" role="tab" aria-selected="false" data-tab="sim">Simulation</div>
+      </div>
+      <div class="tabpanels">
+        <section id="panel-overview" role="tabpanel">${this.renderOverviewTab(ch, socials, hype)}</section>
+        <section id="panel-holders" role="tabpanel" hidden>${this.renderHoldersTab(distribution, report.clusters)}</section>
+        <section id="panel-sim" role="tabpanel" hidden>${this.renderSimTab(liquidityDrain, market)}</section>
+      </div>
+      <div class="disclaimer">Disclaimer: This report is automated and for informational purposes only. Always DYOR.</div>
+    `;
+
+    this.root.innerHTML = `
+      ${heroHTML}
+      ${kpisHTML}
+      ${pillsHTML}
+      ${tabsHTML}
+    `;
+
+    // listeners
+    const addrBtn = this.shadowRoot.querySelector('#copy-addr');
+    if (addrBtn && addr) addrBtn.addEventListener('click', ()=> this.copyAddress(addrBtn, addr));
+    const shareBtn = this.shadowRoot.querySelector('#copy-share');
+    if (shareBtn) shareBtn.addEventListener('click', ()=> this.copyShare(shareBtn, window.location.href));
+
+    // tabs
+    const tabs = Array.from(this.shadowRoot.querySelectorAll('.tab'));
+    const show = (name) => {
+      tabs.forEach(t => t.setAttribute('aria-selected', t.dataset.tab===name ? 'true' : 'false'));
+      this.shadowRoot.querySelector('#panel-overview').hidden = name!=='overview';
+      this.shadowRoot.querySelector('#panel-holders').hidden  = name!=='holders';
+      this.shadowRoot.querySelector('#panel-sim').hidden      = name!=='sim';
+    };
+    tabs.forEach(t => t.addEventListener('click', ()=> show(t.dataset.tab)));
+
+    // sim
+    const simBtn = this.shadowRoot.querySelector('#sim-btn');
+    if (simBtn) simBtn.addEventListener('click', ()=> this.runSimulation());
+  }
+
+  renderOverviewTab(priceChange, socials, hype) {
+    const pct = (v)=> (v==null? '0.00' : Number(v).toFixed(2)) + '%';
+    const trendHTML = `
+      <div class="trend">
+        <div><b>5 MIN</b><span class="${(priceChange.m5??0)>=0?'ok':'bad'}">${pct(priceChange.m5)}</span></div>
+        <div><b>1 HOUR</b><span class="${(priceChange.h1??0)>=0?'ok':'bad'}">${pct(priceChange.h1)}</span></div>
+        <div><b>6 HOURS</b><span class="${(priceChange.h6??0)>=0?'ok':'bad'}">${pct(priceChange.h6)}</span></div>
+        <div><b>24 HOURS</b><span class="${(priceChange.h24??0)>=0?'ok':'bad'}">${pct(priceChange.h24)}</span></div>
+      </div>
+    `;
+    const socialsHTML = Array.isArray(socials) && socials.length
+      ? `<div class="chips">${socials.map(s=>{
+           const label = sanitizeHTML(s.label || (s.type? s.type[0].toUpperCase()+s.type.slice(1) : 'Link'));
+           return s.url ? `<a class="chip" href="${sanitizeUrl(s.url)}" target="_blank" rel="noopener nofollow">${label}</a>` : '';
+         }).join('')}</div>` : `<div class="muted">No socials detected.</div>`;
+    const hypeHTML = this.renderHype(hype);
+    return `
+      <div class="grid grid-2">
+        <div>
+          <h3>📈 Price Trend</h3>
+          ${trendHTML}
+        </div>
+        <div>
+          <h3>🔗 Socials</h3>
+          ${socialsHTML}
+        </div>
+        ${hypeHTML}
+      </div>
+    `;
+  }
+
+  renderHype(hype) {
+    if (!hype || !hype.id) return '';
+    const formatBig = (n)=>{
+      if (n==null) return 'N/A';
+      if (n>=1_000_000) return (n/1_000_000).toFixed(1)+'M';
+      if (n>=1_000) return (n/1_000).toFixed(1)+'K';
+      return String(n);
+    };
+    const tot = hype?.sentiment?.total || 0;
+    const p = tot? Math.round((hype.sentiment.positive/tot)*100):0;
+    const ne= tot? Math.round((hype.sentiment.neutral/tot)*100):0;
+    const n = tot? Math.round((hype.sentiment.negative/tot)*100):0;
+    return `
+      <div class="full hype">
+        <h3>🌪️ Hype & Resonance</h3>
+        <div class="grid grid-3">
+          <div class="kpi"><b>Social Interactions (24h)</b><span>${formatBig(hype.socialVolume)}</span></div>
+          <div class="kpi"><b>Contributors (24h)</b><span>${formatBig(hype.contributors)}</span></div>
+          <div class="kpi"><b>Momentum Score</b><span>${hype.momentumScore || 'N/A'}</span></div>
+        </div>
+        <div style="margin-top:12px;" class="chips">
+          <span class="chip">Pos ${p}%</span>
+          <span class="chip">Neu ${ne}%</span>
+          <span class="chip">Neg ${n}%</span>
+        </div>
+      </div>
+    `;
+  }
+
+  renderHoldersTab(distribution, clusters) {
+    const topH = (distribution?.topHolders||[]).map(h=>`
+      <li><a href="https://solscan.io/account/${h.address}" target="_blank" rel="noopener">${h.address.slice(0,6)}…${h.address.slice(-4)}</a> (${h.percent}%)</li>
+    `).join('') || '<li class="muted">No significant individual holders found.</li>';
+
+    const pools = (distribution?.allLpAddresses||[]).map(a=>`
+      <li><a href="https://solscan.io/account/${a}" target="_blank" rel="noopener">${a.slice(0,10)}…${a.slice(-4)}</a></li>
+    `).join('');
+
+    const clustersHTML = this.renderClusters(clusters);
+
+    return `
+      <div class="grid grid-2">
+        <div>
+          <h3>💰 Top 10 Holders</h3>
+          <ul class="clean">${topH}</ul>
+          ${pools?`<h4 style="margin-top:14px;">Pools / CEX / Programmatic</h4><ul class="clean">${pools}</ul>`:''}
+        </div>
+        <div>
+          <h3>🧩 Clusters (beta)</h3>
+          ${clustersHTML}
+        </div>
+      </div>
+    `;
+  }
+
+  renderClusters(clusters) {
+    const arr = Array.isArray(clusters)? clusters : [];
+    if (!arr.length) return `<div class="muted">No significant clusters detected.</div>`;
+    const html = arr.map((c, i)=>{
+      const reasons = (c.reasons? Object.keys(c.reasons):[]).slice(0,4);
+      const conf = Number(c.confidence||0);
+      const pct = (typeof c.supplyPct!=='undefined')? Number(c.supplyPct).toFixed(2) : '0.00';
+      return `
+        <div class="cl-item">
+          <details ${i===0?'open':''}>
+            <summary>
+              <div class="cl-title">
+                <span class="cl-index">${i+1}</span>
+                <div class="cl-meta">
+                  <span class="cl-chip">${c.addresses.length} addr</span>
+                  <span class="cl-conf">Conf. ${conf}%</span>
+                  <span class="cl-supply">≈ ${pct}%</span>
+                </div>
+              </div>
+              <div class="cl-meta">
+                ${reasons.map(r=>`<span class="cl-chip">${r.replace(/-/g,' ')}</span>`).join('')}
+              </div>
+            </summary>
+            <div class="cl-body">
+              <ul class="cl-addrs">
+                ${c.addresses.map(a=>`<li><a href="https://solscan.io/account/${a}" target="_blank" rel="noopener">${a}</a></li>`).join('')}
+              </ul>
+            </div>
+          </details>
+        </div>
+      `;
+    }).join('');
+    return `<div class="clusters">${html}</div>`;
+  }
+
+  renderSimTab(liquidityDrain, market) {
+    if (!Array.isArray(liquidityDrain) || !liquidityDrain.length || !market?.marketCap)
+      return `<div class="muted">Not enough data for simulation.</div>`;
+    return `
+      <div>
+        <h3>💥 Dump Simulation</h3>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="background:#1e1e21; border:1px solid #2a2a30; border-radius:10px; overflow:hidden;">
+            <div id="sim-bar" style="height:30px; width:100%; background:linear-gradient(to right, #9eff9e, #34d399); display:flex; align-items:center; justify-content:flex-end; padding:0 10px; font-weight:700; color:#001;">
+              <span id="sim-val">$${Number(market.marketCap).toLocaleString('en-US')}</span>
+            </div>
+          </div>
+          <div id="sim-log" style="min-height:90px; background:#121214; border:1px solid #26262a; border-radius:10px; padding:10px; font-family:ui-monospace, monospace; color:#bfc0c6;"></div>
+          <button id="sim-btn" class="tab" style="border-radius:10px;">Run Simulation</button>
+        </div>
+      </div>
+    `;
   }
 }
 
-if (!customElements.get("dfn-patrol")) {
-  customElements.define("dfn-patrol", DFNPatrol);
+if (!customElements.get('dfn-patrol')) {
+  customElements.define('dfn-patrol', DFNPatrol);
 }
