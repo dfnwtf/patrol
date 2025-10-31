@@ -364,7 +364,16 @@ template.innerHTML = `
   .cluster-confidence { font-size: 0.8rem; padding: 2px 8px; }
 }
 
-
+.pill { 
+  display:inline-block; 
+  padding: 4px 8px; 
+  border:1px solid #333; 
+  border-radius:8px; 
+  font-size:.85em; 
+  color:#ccc; 
+  white-space:nowrap;
+}
+.pill-supply { border-color:#444; color:#aaa; }
   </style>
   <div id="report-container">
     <div class="placeholder">Generating token health report...</div>
@@ -730,6 +739,7 @@ const clustersHTML = `
                     <div class="cluster-meta">
                       <span class="cluster-count">${c.addresses.length} addr</span>
                       <span class="cluster-confidence">Conf. ${c.confidence}%</span>
+                      <span class="pill pill-supply">≈ ${typeof c.supplyPct !== 'undefined' ? Number(c.supplyPct).toFixed(2) : '0.00'}%</span>
                     </div>
                   </div>
                   <div class="cluster-reasons">
