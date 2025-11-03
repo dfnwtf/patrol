@@ -1,4 +1,4 @@
-console.log("[DFN Components] beta-v1.8 initialized");
+console.log("[DFN Components] beta-v1.9 initialized");
 
 /* ---------------- helpers ---------------- */
 function sanitizeHTML(str) {
