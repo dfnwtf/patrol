@@ -1,4 +1,4 @@
-console.log("[DFN Components] beta-v2.0 initialized");
+console.log("[DFN Components] beta-v2.1 initialized");
 
 /* ---------------- helpers ---------------- */
 function sanitizeHTML(str) {
@@ -359,21 +359,33 @@ class DFNPatrol extends HTMLElement {
 
     const txns = market?.txns24h || {};
 
-    // risk chips
-    const chips = [];
-    if (security?.launchpad) chips.push({ t:`Launchpad: ${security.launchpad}`, cls:"ok" });
-    if (security?.hackerFound) chips.push({ t:`${security.hackerFound}`, cls:"bad" });
-    if ("holderConcentration" in security){
-      const hc = Number(security.holderConcentration || 0);
-      chips.push({ t:`Top10 ${h c.toFixed(2)}%`.replace(" ",""), cls: hc>25?"bad":(hc>10?"warn":"ok") });
-    }
-    if (security?.isDexVerified) chips.push({ t:"DEX Paid", cls:"ok" }); else chips.push({ t:"DEX Not Paid", cls:"bad" });
-    if (security?.isCto) chips.push({ t:"Community Takeover", cls:"ok" });
-    if (security?.lpStatus) chips.push({ t:`LP: ${security.lpStatus}`, cls: (security.lpStatus==="Burned"||security.lpStatus==="Locked/Burned")?"ok":"bad" });
-    if ("isMutable" in security) chips.push({ t: security.isMutable? "Mutable meta" : "Immutable meta", cls: security.isMutable? "bad":"ok" });
-    if ("freezeAuthorityEnabled" in security) chips.push({ t: security.freezeAuthorityEnabled? "Freeze on" : "No freeze", cls: security.freezeAuthorityEnabled? "bad":"ok" });
-    if ("mintRenounced" in security) chips.push({ t: security.mintRenounced? "Mint renounced" : "Mint active", cls: security.mintRenounced? "ok":"bad" });
-    if ("transferTax" in security) chips.push({ t:`Tax ${security.transferTax}%`, cls:"warn" }); else if ("noTransferTax" in security) chips.push({ t:"No transfer tax", cls:"ok" });
+   // risk chips
+const chips = [];
+if (security?.launchpad) chips.push({ t:`Launchpad: ${security.launchpad}`, cls:"ok" });
+if (security?.hackerFound) chips.push({ t:`${security.hackerFound}`, cls:"bad" });
+
+if ("holderConcentration" in security){
+  const hc = Number(security.holderConcentration || 0);
+  chips.push({
+    t: `Top10 ${hc.toFixed(2)}%`,
+    cls: hc > 25 ? "bad" : (hc > 10 ? "warn" : "ok")
+  });
+}
+
+if (security?.isDexVerified) chips.push({ t:"DEX Paid", cls:"ok" });
+else chips.push({ t:"DEX Not Paid", cls:"bad" });
+
+if (security?.isCto) chips.push({ t:"Community Takeover", cls:"ok" });
+if (security?.lpStatus) chips.push({
+  t:`LP: ${security.lpStatus}`,
+  cls: (security.lpStatus === "Burned" || security.lpStatus === "Locked/Burned") ? "ok" : "bad"
+});
+if ("isMutable" in security) chips.push({ t: security.isMutable ? "Mutable meta" : "Immutable meta", cls: security.isMutable ? "bad" : "ok" });
+if ("freezeAuthorityEnabled" in security) chips.push({ t: security.freezeAuthorityEnabled ? "Freeze on" : "No freeze", cls: security.freezeAuthorityEnabled ? "bad" : "ok" });
+if ("mintRenounced" in security) chips.push({ t: security.mintRenounced ? "Mint renounced" : "Mint active", cls: security.mintRenounced ? "ok" : "bad" });
+if ("transferTax" in security) chips.push({ t:`Tax ${security.transferTax}%`, cls:"warn" });
+else if ("noTransferTax" in security) chips.push({ t:"No transfer tax", cls:"ok" });
+
 
     const hcPct = Number(security?.holderConcentration || 0);
     const top10Width = Math.max(0, Math.min(100, hcPct));
