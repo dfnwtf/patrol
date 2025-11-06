@@ -1,4 +1,4 @@
-console.log("[DFN Components] beta-v2.2 initialized");
+console.log("[DFN Components] beta-v2.3 initialized");
 
 /* ---------------- helpers ---------------- */
 function sanitizeHTML(str) {
@@ -213,22 +213,40 @@ template.innerHTML = `
 
     .kcube{ background:var(--panel-2); border:1px solid var(--line); border-radius:12px; padding:14px; text-align:center; }
 
-    .sim{ display:flex; flex-direction:column; gap:12px; }
-    .simbar{
-  position:relative; height:30px;
-  background:#1e2026; border:1px solid #2a2d36; border-radius:10px; overflow:hidden;
+    /* Dump Simulation — bar + floating cap */
+.sim{ display:flex; flex-direction:column; gap:12px; }
+
+.simbar{
+  position:relative; height:14px;
+  background:#1e2026; border:1px solid #2a2d36; border-radius:10px;
+  overflow:hidden;
 }
 .sim-fill{
   position:absolute; left:0; top:0; bottom:0; width:100%;
   background:linear-gradient(90deg, #9eff9e, #34d399);
-  transition: width 1s cubic-bezier(.25,1,.5,1);
+  transition: width 800ms cubic-bezier(.25,1,.5,1);
 }
-.sim-label{
-  position:absolute; top:50%; transform:translateY(-50%);
-  font-weight:800; white-space:nowrap; pointer-events:none;
-  padding:2px 6px; border-radius:6px;
-  color:#0b0c0f; background:rgba(255,255,255,0.85);  /* читаемо на малой ширине */
+
+/* подпись с ценником — всегда в видимой зоне, центр по "носикам" */
+.sim-cap{
+  position:absolute; bottom:100%; transform:translateX(-50%); /* центр по X */
+  left:0; margin-bottom:8px;
+  white-space:nowrap; font-weight:800; font-size:.92rem;
+  color:#e9ecf4; background:#0f1218; border:1px solid #2a2d36; border-radius:8px;
+  padding:4px 8px; pointer-events:none;
+  box-shadow:0 2px 12px rgba(0,0,0,.35);
 }
+.sim-cap::after{
+  content:""; position:absolute; left:50%; transform:translateX(-50%);
+  top:100%; width:0; height:0; border:6px solid transparent;
+  border-top-color:#2a2d36;  /* каёмка */
+}
+.sim-cap::before{
+  content:""; position:absolute; left:50%; transform:translateX(-50%);
+  top:calc(100% - 1px); width:0; height:0; border:5px solid transparent;
+  border-top-color:#0f1218;   /* заливка "носика" */
+}
+
 
     .simlog{ min-height:90px; background:#121319; border:1px dashed #2a2d36; border-radius:10px; padding:10px; font-family:ui-monospace,monospace; color:#bfc3cc; }
     .sbtn{ align-self:flex-start; padding:10px 14px; border-radius:10px; border:1px solid var(--line); background:#20232b; color:#e9ecf4; font-weight:800; cursor:pointer; }
@@ -299,62 +317,79 @@ class DFNPatrol extends HTMLElement {
   }
 
   runSimulation(){
-    const log     = this.shadowRoot.querySelector(".simlog");
-const barWrap = this.shadowRoot.querySelector(".simbar");
-const bar     = this.shadowRoot.querySelector(".sim-fill");
-const label   = this.shadowRoot.querySelector(".sim-label");
+  const log     = this.shadowRoot.querySelector(".simlog");
+  const barWrap = this.shadowRoot.querySelector(".simbar");
+  const bar     = this.shadowRoot.querySelector(".sim-fill");
+  const cap     = this.shadowRoot.querySelector(".sim-cap");
+  if (!log || !bar || !cap || !barWrap) return;
 
-    if (!log || !bar) return;
+  const data = this.report?.liquidityDrain || [];
+  const mc0  = Number(this.report?.market?.marketCap || 0);
+  const th   = this.report?.distribution?.topHolders || [];
+  const fmt$ = (n)=> `$${fmtNum(n)}`;
+  const wait = (ms)=> new Promise(r=>setTimeout(r, ms));
 
-    const data = this.report?.liquidityDrain || [];
-    const mc0  = this.report?.market?.marketCap || 0;
-    const th   = this.report?.distribution?.topHolders || [];
-    const fmt$ = (n)=> `$${fmtNum(n)}`;
-    const wait = (ms)=> new Promise(r=>setTimeout(r, ms));
+  let lastMC = mc0;
 
-    const setBar = (mc)=>{
-  const ratio = mc0 ? Math.max(0, mc / mc0) : 0;
-  bar.style.width = (ratio * 100) + "%";
-  label.textContent = `$${fmtNum(mc)}`;
+  // выставляем ширину полосы и позицию "капсулы" над текущей точкой
+  const setBar = (mc)=>{
+    lastMC = Number(mc) || 0;
+    const wrapW = barWrap.clientWidth || 1;
+    const ratio = mc0 ? Math.max(0, Math.min(1, lastMC / mc0)) : 0;
+    bar.style.width = (ratio * 100) + "%";
 
-  // Позиционируем подпись так, чтобы она не «вылезала» за границы
-  const wrapW = barWrap.clientWidth;
-  const labW  = label.offsetWidth;
-  const fillW = Math.round(wrapW * ratio);
+    // позиция по X в пикселях в пределах контейнера
+    const x = wrapW * ratio;
 
-  // пытаемся держать подпись внутри зелёной части; если она слишком узкая — прижимаем к левому внутреннему отступу
-  const left = Math.max(8, Math.min(fillW - labW - 8, wrapW - labW - 8));
-  label.style.left = left + "px";
-};
+    // ширина самой капсулы
+    const capW = cap.offsetWidth || 80;
+    const pad  = 8;
 
-    const logLine = (html)=>{
-      const d = document.createElement("div");
-      d.innerHTML = html;
-      log.prepend(d);
-    };
+    // держим капсулу в видимой зоне, центрируя по "носикам"
+    const clampedX = Math.max(capW/2 + pad, Math.min(wrapW - capW/2 - pad, x));
+    cap.style.left = clampedX + "px";
+    cap.textContent = fmt$(lastMC);
+  };
 
-    log.innerHTML = "";
-    setBar(mc0);
+  // лог вверху — последние события сверху
+  const logLine = (html)=>{
+    const d = document.createElement("div");
+    d.innerHTML = html;
+    log.prepend(d);
+  };
 
-    (async ()=>{
-      for (const s of data){
-        let ownPct = 0;
-        const m = s.group.match(/Top (\d+)/);
-        if (m){
-          const n = +m[1];
-          ownPct = th.slice(0,n).reduce((a,h)=> a + parseFloat(h.percent||0), 0);
-        }
-        logLine(`Analyzing <b>${s.group}</b>${ownPct?` (own ${ownPct.toFixed(2)}%)`:``}…`);
-        await wait(600);
-        setBar(s.marketCapAfterSale);
-        logLine(`→ Price impact <b style="color:var(--bad)">-${s.marketCapDropPercentage}%</b>. New MC: <b>${fmt$(
-          s.marketCapAfterSale
-        )}</b>`);
-        await wait(900);
-      }
-      logLine("<b>SIMULATION END</b>");
-    })();
+  // первый кадр
+  log.innerHTML = "";
+  setBar(mc0);
+
+  // пересчёт при ресайзе экрана
+  if (!this._simResizeBound){
+    this._simResizeBound = ()=> setBar(lastMC);
+    window.addEventListener("resize", this._simResizeBound, { passive:true });
   }
+
+  (async ()=>{
+    for (const s of data){
+      // оцениваем долю владения для подписи (как раньше)
+      let ownPct = 0;
+      const m = (s.group||"").match(/Top (\d+)/);
+      if (m){
+        const n = +m[1];
+        ownPct = th.slice(0,n).reduce((a,h)=> a + parseFloat(h.percent||0), 0);
+      }
+      logLine(`Analyzing <b>${s.group}</b>${ownPct?` (own ${ownPct.toFixed(2)}%)`:``}…`);
+      await wait(600);
+
+      setBar(s.marketCapAfterSale);
+      logLine(`→ Price impact <b style="color:var(--bad)">-${s.marketCapDropPercentage}%</b>. New MC: <b>${fmt$(
+        s.marketCapAfterSale
+      )}</b>`);
+      await wait(900);
+    }
+    logLine("<b>SIMULATION END</b>");
+  })();
+}
+
 
   render(){
     const report = this.report;
@@ -577,10 +612,11 @@ else if ("noTransferTax" in security) chips.push({ t:"No transfer tax", cls:"ok"
         <section class="section">
           <h3>💥 Dump Simulation</h3>
          <div class="sim">
-  <div class="simbar">
-    <div class="sim-fill" style="width:100%"></div>
-    <div class="sim-label">$${fmtNum(market.marketCap)}</div>
-  </div>
+ <div class="simbar">
+  <div class="sim-fill" style="width:100%"></div>
+  <div class="sim-cap">$${fmtNum(market.marketCap)}</div>
+</div>
+
   <div class="simlog">Press the button to simulate scenarios.</div>
   <button class="sbtn" id="sim-btn">Run Simulation</button>
 </div>
