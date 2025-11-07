@@ -1,4 +1,4 @@
-console.log("[DFN Components] beta-v2.4 initialized");
+console.log("[DFN Components] beta-v2.5 initialized");
 
 /* ---------------- helpers ---------------- */
 function sanitizeHTML(str) {
@@ -403,16 +403,28 @@ class DFNPatrol extends HTMLElement {
     // текст в самой капсуле уже вставлен в шаблоне — дополнительная установка не требуется
   }
 
-  /* ---------- АВТОСКРОЛЛ К ОТЧЁТУ ПОСЛЕ ПОЯВЛЕНИЯ ---------- */
-  _autoScrollToReportOnce(offsetPx = 72){
-    if (this._didAutoScroll) return;
-    const rep = this.shadowRoot?.querySelector(".report");
-    if (!rep) return;
-    this._didAutoScroll = true;
+ // --- Автоскролл к шапке отчёта (hero), 1 раз ---
+_autoScrollToReportOnce(customOffset) {
+  // динамический отступ: на мобилке чуть меньше
+  const isMobile = window.matchMedia("(max-width: 640px)").matches;
+  const offsetPx = (typeof customOffset === "number")
+    ? customOffset
+    : (isMobile ? 16 : 28); // ← если всё ещё высоко/низко — подправь эти числа
 
-    const top = this.getBoundingClientRect().top + window.scrollY - offsetPx;
-    window.scrollTo({ top, behavior: "smooth" });
-  }
+  if (this._didAutoScroll) return;
+
+  // целимся не в корень .report, а в .hero внутри него
+  const hero = this.shadowRoot?.querySelector(".report .hero");
+  const targetEl = hero || this.shadowRoot?.querySelector(".report");
+  if (!targetEl) return;
+
+  this._didAutoScroll = true;
+
+  // абсолютная позиция цели относительно документа
+  const targetTop = targetEl.getBoundingClientRect().top + window.scrollY - offsetPx;
+  window.scrollTo({ top: targetTop, behavior: "smooth" });
+}
+
 
   /* ---------- RENDER ---------- */
   render(){
@@ -663,7 +675,7 @@ class DFNPatrol extends HTMLElement {
         reportEl.style.transform = "";
 
         // 1) автоскролл к отчёту (не к плашке)
-        setTimeout(() => this._autoScrollToReportOnce(80), 50);
+       setTimeout(() => this._autoScrollToReportOnce(), 50);
 
         // 2) инициализация позиции ценника на шкале до запуска симуляции
         this._initSimBarPosition();
