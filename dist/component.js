@@ -1,4 +1,4 @@
-console.log("[DFN Components] beta-v2.8 initialized");
+console.log("[DFN Components] beta-v2.9 initialized");
 
 /* ---------------- helpers ---------------- */
 function sanitizeHTML(str) {
@@ -266,47 +266,6 @@ template.innerHTML = `
       .trend{ grid-template-columns:repeat(2,1fr); }
       .kpi span{ font-size:1rem; }
     }
-/* --- Socials (responsive) --- */
-.row-socials{ margin-top:10px; }
-.socials-wrap{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-
-.social-chip{
-  display:inline-flex; align-items:center; gap:8px;
-  padding:6px 10px; border:1px solid var(--line);
-  border-radius:999px; background:#15171c; color:#ccd0da;
-  font-size:.85rem; text-decoration:none; line-height:1;
-  max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
-.social-chip:hover{ background:#191c22; }
-
-@media (max-width: 360px){
-  .social-chip, .social-more-btn { font-size:.8rem; }
-}
-
-/* More dropdown */
-.social-more{ position:relative; }
-.social-more-btn{
-  padding:6px 10px; border:1px dashed var(--line);
-  border-radius:999px; background:#111318; color:#9aa0aa;
-  font-size:.85rem; cursor:pointer;
-}
-
-.social-menu.open{ display:block; }
-.social-item{
-  display:flex; align-items:center; gap:8px;
-  padding:8px 10px; border-radius:8px; text-decoration:none; color:#cfd3dd;
-}
-.social-item:hover{ background:#151922; }
-
-/* Grid variant for very small screens */
-@media (max-width: 420px){
-  .socials-wrap{
-    display:grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap:8px;
-  }
-  .social-chip, .social-more-btn{ justify-content:center; width:100%; }
-}
 
 /* ===== SOCIALS (desktop & mobile) ===== */
 .row-socials{ margin-top:10px; }
@@ -362,7 +321,30 @@ template.innerHTML = `
 @media (max-width: 360px){
   .social-chip, .social-more-btn { font-size:.8rem; }
 }
-    
+    /* mobile "Official Links" — тонкие чипсы и ровная сетка */
+.socials-section-mobile h3{
+  text-align:center;
+  margin: 6px 0 10px;
+  font-weight: 700;
+  letter-spacing: .2px;
+}
+
+.socials-section-mobile .socials-wrap{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap:10px;
+  justify-items: stretch;  /* чипсы одинаковой ширины */
+}
+
+.socials-section-mobile .social-chip{
+  justify-content:center;
+  width:100%;
+  height:38px;               /* одинаковая высота */
+  background: transparent;   /* легче визуально */
+  border-color: rgba(255,255,255,.08);
+  font-size:.9rem;
+}
+
   </style>
 
   <div id="root" style="text-align:center; padding:40px; color:var(--muted);">
@@ -869,57 +851,102 @@ const socialHTMLMobile = (socialPrimary.length || socialRest.length) ? `
     const share = this.shadowRoot.querySelector("#copy-link");
     share?.addEventListener("click", ()=> this.copy(window.location.href, share));
 
-// --- Socials: toggle "More" menu с фиксацией позиции (fixed)
+// --- Socials: "More" через портальный оверлей в <body> (с встроенным CSS) ---
 const moreBtn = this.shadowRoot.getElementById("social-more-btn");
-const menu = this.shadowRoot.getElementById("social-menu");
+const menuBlueprint = this.shadowRoot.getElementById("social-menu");
 
-function placeMenu(){
-  if (!moreBtn || !menu) return;
-  const r = moreBtn.getBoundingClientRect();
+let portalMenu = null; // контейнер в document.body
 
-  // показать, измерить и поставить
-  menu.style.display = "block";
-  menu.classList.add("open");
+// CSS, который применится внутри портала (вне Shadow-DOM)
+const PORTAL_CSS = `
+  .social-portal{
+    position: fixed; z-index: 2147483647;
+    min-width: 220px; max-width: 92vw;
+    background: #0e1014; border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px; padding: 6px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  }
+  .social-portal .social-item{
+    display:flex; align-items:center; gap:8px;
+    padding:8px 10px; border-radius:8px;
+    text-decoration:none; color:#cfd3dd;
+  }
+  .social-portal .social-item:hover{ background:#151922; }
+`;
 
-  const mw = menu.offsetWidth || 260;
-  const mh = menu.offsetHeight || 120;
-
-  // базовая позиция — под кнопкой
-  let top  = r.bottom + 8;
-  let left = r.left;
-
-  // держим меню в пределах окна
-  if (left + mw > window.innerWidth - 8) left = window.innerWidth - mw - 8;
-  if (left < 8) left = 8;
-  if (top + mh > window.innerHeight - 8) top = Math.max(8, r.top - mh - 8);
-
-  menu.style.top  = `${top}px`;
-  menu.style.left = `${left}px`;
+function ensurePortal(){
+  if (portalMenu) return portalMenu;
+  portalMenu = document.createElement("div");
+  portalMenu.className = "social-portal";
+  // добавляем локальные стили прямо внутрь портала
+  const st = document.createElement("style");
+  st.textContent = PORTAL_CSS;
+  portalMenu.appendChild(st);
+  document.body.appendChild(portalMenu);
+  return portalMenu;
 }
 
-if (moreBtn && menu){
-  const openClose = (e) => {
-    e?.stopPropagation?.();
-    if (menu.classList.contains("open")){
-      menu.classList.remove("open");
-      menu.style.display = "none";
-    } else {
-      placeMenu();
-    }
-  };
-  moreBtn.addEventListener("click", openClose);
+function openPortal(){
+  if (!moreBtn || !menuBlueprint) return;
+  const el = ensurePortal();
 
+  // переносим только содержимое пунктов (ссылки)
+  // (кнопку "More" не копируем)
+  const itemsHTML = menuBlueprint.innerHTML;
+  el.style.display = "block";
+  el.innerHTML = `<style>${PORTAL_CSS}</style>` + itemsHTML;
+
+  // позиционируем портал около кнопки, но внутри окна
+  const r = moreBtn.getBoundingClientRect();
+  const pad = 8;
+
+  // временно показать, чтобы получить точные размеры
+  const mw = el.offsetWidth || 260;
+  const mh = el.offsetHeight || 120;
+
+  let left = r.left;
+  let top  = r.bottom + 8;
+
+  if (left + mw > window.innerWidth - pad) left = window.innerWidth - mw - pad;
+  if (left < pad) left = pad;
+  if (top + mh > window.innerHeight - pad) top = Math.max(pad, r.top - mh - pad);
+
+  el.style.left = `${left}px`;
+  el.style.top  = `${top}px`;
+
+  // Закрываем портал при клике по пункту
+  el.querySelectorAll("a").forEach(a=>{
+    a.addEventListener("click", closePortal, { once:true });
+  });
+}
+
+function closePortal(){
+  if (!portalMenu) return;
+  portalMenu.style.display = "none";
+}
+
+if (moreBtn && menuBlueprint){
+  const onMoreClick = (e) => {
+    e.stopPropagation();
+    if (portalMenu && portalMenu.style.display === "block") closePortal();
+    else openPortal();
+  };
+  moreBtn.addEventListener("click", onMoreClick);
+
+  // закрыть по клику вне/scroll/resize/Escape
   const closeIfOpen = () => {
-    if (!menu.classList.contains("open")) return;
-    menu.classList.remove("open");
-    menu.style.display = "none";
+    if (!portalMenu || portalMenu.style.display !== "block") return;
+    closePortal();
   };
   document.addEventListener("click", (e) => {
-    if (!menu.contains(e.target) && e.target !== moreBtn) closeIfOpen();
+    if (!portalMenu || portalMenu.style.display !== "block") return;
+    if (!portalMenu.contains(e.target) && e.target !== moreBtn) closePortal();
   });
-  window.addEventListener("resize", closeIfOpen);
   window.addEventListener("scroll", closeIfOpen, { passive:true });
+  window.addEventListener("resize", closeIfOpen);
+  window.addEventListener("keydown", (e) => { if (e.key === "Escape") closeIfOpen(); });
 }
+
 
 // (оставь как было)
 const simBtn = this.shadowRoot.querySelector("#sim-btn");
