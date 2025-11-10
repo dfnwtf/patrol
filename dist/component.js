@@ -1,4 +1,4 @@
-console.log("[DFN Components] beta-v2.9 initialized");
+console.log("[DFN Components] beta-v3.0 initialized");
 
 /* ---------------- helpers ---------------- */
 function sanitizeHTML(str) {
@@ -344,6 +344,77 @@ template.innerHTML = `
   border-color: rgba(255,255,255,.08);
   font-size:.9rem;
 }
+
+/* --- FIX: socials polishing (mobile + hover/active, no underline) --- */
+
+/* Универсально для ссылок-чипсов — убираем подчёркивание в любых состояниях */
+.social-chip,
+.social-chip:link,
+.social-chip:visited,
+.social-chip:hover,
+.social-chip:active,
+.socials-section-mobile .social-chip,
+.socials-section-mobile .social-chip:link,
+.socials-section-mobile .social-chip:visited,
+.socials-section-mobile .social-chip:hover,
+.socials-section-mobile .social-chip:active{
+  text-decoration: none !important;
+  -webkit-tap-highlight-color: transparent; /* iOS серый блик */
+}
+
+/* Ховер/актив — как у кнопок Copy/Share */
+.social-chip:hover { 
+  background: #191c22 !important;
+  border-color: rgba(255,255,255,.14) !important;
+}
+
+/* ===== MOBILE: переносим вид к «легким кнопкам» и чёткую сетку ===== */
+@media (max-width: 768px){
+  /* В Hero соцки скрыты, показываем секцию Оfficial Links (у тебя уже есть) */
+  .hero .row-socials{ display:none !important; }
+  .socials-section-mobile{ display:block !important; }
+
+  /* Сетка 2 колонки, ровная ширина */
+  .socials-section-mobile .socials-wrap{
+    display:grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    justify-items: stretch !important;
+  }
+
+  /* Лёгкие чипсы: прямоугольные, как кнопки */
+  .socials-section-mobile .social-chip{
+    justify-content: center !important;
+    width: 100% !important;
+    height: 40px !important;
+    border-radius: 12px !important;         /* вместо 999px */
+    background: #111318 !important;          /* не прозрачные, без «призрачных овалов» */
+    border: 1px solid rgba(255,255,255,.08) !important;
+    font-size: .92rem !important;
+    box-shadow: inset 0 -1px 0 rgba(255,255,255,.04) !important;
+  }
+
+  /* hover/active на мобиле — то же поведение, что у «Share» */
+  .socials-section-mobile .social-chip:hover,
+  .socials-section-mobile .social-chip:active{
+    background: #191c22 !important;
+    border-color: rgba(255,255,255,.14) !important;
+  }
+
+  /* Заголовок секции — компактнее и ровно по центру */
+  .socials-section-mobile h3{
+    text-align:center;
+    margin: 6px 0 10px;
+    font-weight:700;
+    letter-spacing:.2px;
+  }
+}
+
+/* Очень узкие экраны */
+@media (max-width: 360px){
+  .socials-section-mobile .social-chip{ font-size:.85rem !important; height:38px !important; }
+}
+
 
   </style>
 
@@ -866,13 +937,28 @@ const PORTAL_CSS = `
     border-radius: 12px; padding: 6px;
     box-shadow: 0 8px 24px rgba(0,0,0,.35);
   }
-  .social-portal .social-item{
+  /* Ссылки без подчёркивания во всех состояниях */
+  .social-portal .social-item,
+  .social-portal .social-item:link,
+  .social-portal .social-item:visited,
+  .social-portal .social-item:hover,
+  .social-portal .social-item:active{
     display:flex; align-items:center; gap:8px;
     padding:8px 10px; border-radius:8px;
-    text-decoration:none; color:#cfd3dd;
+    text-decoration:none !important; color:#cfd3dd;
+    -webkit-tap-highlight-color: transparent;
   }
-  .social-portal .social-item:hover{ background:#151922; }
+  /* Ховер/фокус — как у кнопки */
+  .social-portal .social-item:hover{
+    background:#191c22; 
+  }
+  .social-portal .social-item:focus-visible{
+    outline: 2px solid rgba(255,255,255,.18);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
 `;
+
 
 function ensurePortal(){
   if (portalMenu) return portalMenu;
