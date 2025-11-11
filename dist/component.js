@@ -1,4 +1,4 @@
-console.log("[DFN Components] beta-v3.0 initialized");
+console.log("[DFN Components] beta-v3.1 initialized");
 
 /* ---------------- helpers ---------------- */
 function sanitizeHTML(str) {
@@ -415,6 +415,48 @@ template.innerHTML = `
   .socials-section-mobile .social-chip{ font-size:.85rem !important; height:38px !important; }
 }
 
+/* --- FIX: mobile socials spacing & hover (Safari overflow) --- */
+
+/* 1) Глобально для всех чипсов: ширина учитывает границы/паддинги */
+.social-chip{ box-sizing: border-box !important; }
+
+/* 2) Мобильная сетка + сами кнопки — ровные, не «слипаются» */
+@media (max-width: 768px){
+  /* сетка: две равные колонки, увеличим просвет чуть-чуть */
+  .socials-section-mobile .socials-wrap{
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    column-gap: 12px !important;
+    row-gap: 10px !important;
+    justify-items: stretch !important;
+  }
+
+  /* сами «кнопки» */
+  .socials-section-mobile .social-chip{
+    width: 100% !important;
+    height: 44px !important;
+    padding: 0 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    /* визуал как у Copy/Share */
+    border-radius: 12px !important;
+    background: #15171c !important;
+    border: 1px solid rgba(255,255,255,.10) !important;
+
+    /* финт против «подчёркиваний» */
+    text-decoration: none !important;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ховер/тап — как у кнопок */
+  .socials-section-mobile .social-chip:hover,
+  .socials-section-mobile .social-chip:active{
+    background: #191c22 !important;
+    border-color: rgba(255,255,255,.14) !important;
+  }
+}
 
   </style>
 
