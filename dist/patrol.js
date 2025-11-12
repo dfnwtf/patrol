@@ -1,5 +1,5 @@
 // patrol.js
-console.log("[DFN Patrol] beta-v3.1 initialized");
+console.log("[DFN Patrol] beta-v3.2 initialized");
 let ws;
 
 function connectToWebSocket(token) {
