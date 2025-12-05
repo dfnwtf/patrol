@@ -1,4 +1,4 @@
-console.log("[DFN Components] beta-v3.2 initialized");
+console.log("[DFN Components] beta-v3.3 initialized");
 
 /* ---------------- helpers ---------------- */
 function sanitizeHTML(str) {
@@ -363,7 +363,7 @@ template.innerHTML = `
 }
 
 /* Ховер/актив — как у кнопок Copy/Share */
-.social-chip:hover { 
+.social-chip:hover {
   background: #191c22 !important;
   border-color: rgba(255,255,255,.14) !important;
 }
@@ -626,7 +626,6 @@ _autoScrollToReportOnce(customOffset) {
   window.scrollTo({ top: targetTop, behavior: "smooth" });
 }
 
-
   /* ---------- RENDER ---------- */
   render(){
     const report = this.report;
@@ -706,11 +705,6 @@ const socialHTMLMobile = (socialPrimary.length || socialRest.length) ? `
         </a>`).join("")}
     </div>
   </section>` : "";
-
-
-
-
-
 
     const name = tokenInfo?.name || "Token";
     const nameShort = name.length > 22 ? name.slice(0,19) + "…" : name;
@@ -1001,7 +995,7 @@ const PORTAL_CSS = `
   }
   /* Ховер/фокус — как у кнопки */
   .social-portal .social-item:hover{
-    background:#191c22; 
+    background:#191c22;
   }
   .social-portal .social-item:focus-visible{
     outline: 2px solid rgba(255,255,255,.18);
@@ -1009,7 +1003,6 @@ const PORTAL_CSS = `
     border-radius: 8px;
   }
 `;
-
 
 function ensurePortal(){
   if (portalMenu) return portalMenu;
@@ -1083,7 +1076,6 @@ if (moreBtn && menuBlueprint){
   window.addEventListener("resize", closeIfOpen);
   window.addEventListener("keydown", (e) => { if (e.key === "Escape") closeIfOpen(); });
 }
-
 
 // (оставь как было)
 const simBtn = this.shadowRoot.querySelector("#sim-btn");
