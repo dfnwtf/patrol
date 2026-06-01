@@ -11,6 +11,9 @@
   <a href="https://dfn.wtf/patrol">
     <img src="https://img.shields.io/badge/service-online-success.svg" alt="Service Status">
   </a>
+  <a href="https://dfn.wtf/patrol">
+    <img src="https://img.shields.io/badge/demo-dfn.wtf%2Fpatrol-blue.svg" alt="Live demo">
+  </a>
   <a href="https://github.com/dfnwtf/patrol">
     <img src="https://img.shields.io/badge/platform-Solana-blueviolet.svg" alt="Platform">
   </a>
@@ -47,7 +50,7 @@ Nonsense Patrol evaluates tokens across several key vectors to determine its Tru
 ### 🚀 Showcase Your Trust Score
 
 Confident in your token’s security? Display your DFN Trust Score on your site with our official widget.  
-It ships with a transparent background and two color themes so it looks sharp on any design..
+It ships with a transparent background and two color themes so it looks sharp on any design.
 
 ---
 
